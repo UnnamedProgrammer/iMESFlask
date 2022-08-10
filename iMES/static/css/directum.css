@@ -1,0 +1,11 @@
+img {
+    width: 100%;
+}
+body {
+    background-color: #28354a; 
+}
+div {
+    margin: 20px auto;
+    border: solid 1px #ddd;
+    background-color: white;
+}

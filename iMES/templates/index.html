@@ -1,0 +1,25 @@
+{% extends 'index_template.html' %}
+
+{% block navbar %}
+{% include 'navbar/navbar.html' %}
+{% endblock %}
+
+{% block main_window %}
+<script src="{{ url_for('static', filename='js/ChartJS/chart.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/moment.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chartjs-adapter-moment.js') }}"></script>
+<div class="graph">
+    <canvas id="myChart" width="820" height="600"></canvas>
+    <script src="{{ url_for('static', filename='js/Graph/Graph.js') }}"></script>
+</div>
+{% endblock %}
+
+{% block access_blocked %}
+<p class="text-center h4">
+    {%if current_user.is_authenticated %}
+    {%else%}
+        Доступ к оператору и наладчику заблокирован,<br>
+        для разблокировки необходимо авторизоваться с помощью пропуска
+    {%endif%}
+</p>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'index_template.html' %}
+{% block navbar %}
+    {% include 'navbar/navbar.html' %}    
+{% endblock %}
+
+{% block main_window %}
+    <div class="row">
+        <div class="col">
+            <a class="btn btn__menu btn__menu_wide primary" href="/operator">Оператор</a>
+            <div class="btn btn__menu btn__menu_wide primary">Технолог</div>
+            <div class="btn btn__menu btn__menu_wide primary">Журнал распоряжений</div>
+            <div class="btn btn__menu btn__menu_wide primary">Заполнить бумагу для принтера</div>
+        </div>
+        <div class="col">
+            <a class="btn btn__menu btn__menu_wide primary" href="/adjuster">Наладчик</a>
+            <div class="btn btn__menu btn__menu_wide primary">Замена пресс-формы</div>
+            <div class="btn btn__menu btn__menu_wide primary">Очистить тестовый чек-лист</div>
+        </div>
+    </div>
+{% endblock %}

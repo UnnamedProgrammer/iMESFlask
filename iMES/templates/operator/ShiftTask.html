@@ -1,0 +1,41 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<div class="view-1"> 
+    <div class="view-header text-center primary">Сменное задание</div>
+    <div class="view-body-1 jsScroll"> 
+        <table class="table table-sm text-center border-collapse" border="1" bordercolor="black">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Номанклатура/Артикул</th>
+                    <th scope="col">Характеристика</th>
+                    <th scope="col">План пр.</th>
+                    <th scope="col">План цик.</th>
+                    <th scope="col">План вес</th>
+                </tr>
+            </thead>
+            <tbody id="">
+                <tr>
+                    <td>Контейнер вкладываемый 12.355F.62 (KV 5328)</td>
+                    <td>Высота: 280 мм, Длина: 490 мм, Ширина: 330 мм, Цвет: Синий дымчатый, Вес: 1,37, Модификация: Гладкое дно, вес 1.37 кг, 9240M+ ТПМ Б (Л) + Концентрат ПЭ RL-204362- 1%</td>
+                    <td>850</td>
+                    <td>51</td>
+                    <td>1.37</td>
+                </tr>
+            </tbody>
+        </table>     
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <button type="button" class="btn btn-light button-1 primary"></button>
+        </div>  
+        <div class="col-6">
+            <button type="button" class="btn btn-light button-1 secondary startLoad" onclick ="location.href='/operator'">
+                Выход
+            </button>
+        </div>  
+    </div>        
+</div>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}

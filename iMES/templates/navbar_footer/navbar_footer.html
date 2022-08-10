@@ -1,0 +1,22 @@
+{% block navbar_footer %}
+<div class="navbar-footer">
+    <button class="btn btn__navbar-footer_tpa col-5 red" type="button" data-bs-toggle="offcanvas"
+        data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
+        ТПА Engel 5500
+    </button>
+    <a class="btn btn__navbar-footer primary" href="/menu" style="font-size: 28pt;">
+        <p>МЕНЮ</p>
+    </a>
+    <a class="btn btn__navbar-footer primary" href="/">
+        <p>ВЫЙТИ БЕЗ<br>СОХРАНЕНИЯ</p>
+    </a>
+    <a class="btn btn__navbar-footer primary" href="/">
+        <p>ВЫЙТИ С<br>СОХРАНЕНИЕМ</p>
+    </a>
+</div>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+    <div class="offcanvas-body">
+        <a href="{tpa}" class="btn btn__left-menu">ТПА Engel 5500</a>
+    </div>
+</div>
+{% endblock %}

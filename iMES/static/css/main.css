@@ -1,0 +1,117 @@
+#ttpa {
+    font-size: 17pt;
+    font-weight: 500;
+}
+
+.tprod {
+    padding: 0px 0px 0px 0px;
+}
+
+.nplan {
+    color: #2b507c;
+    font-size: 55px;
+    font-weight: 400;
+    margin: -8px 0px;
+}
+
+.nvplan {
+    color: #4ca54e;
+    font-size: 45pt;
+    font-weight: 400;
+    margin: -13px 0px;
+}
+
+.nvDefect {
+    color: #a5634c;
+    font-size: 45pt;
+    font-weight: 400;
+    margin: -12px 0px;
+}
+
+.graph {
+    margin-bottom: 59px;
+    width: 820px;
+    height: 600px;
+    background-color: white;
+}
+
+.error{
+    margin-bottom: 59px;
+    width: 820px;
+    height: 600px;
+}
+
+#smena {
+    color: #444;
+    position: absolute;
+    text-align: center;
+    font-size: 22pt;
+    margin: -2px 0px;
+}
+
+#clock {
+    color: #444;
+    text-align: center;
+    font-size: 22pt;
+}
+
+.user-badge {
+    position: absolute;
+    z-index: 1;
+    margin-left: -5px;
+    width: 100px;
+    font-size: 12pt;
+    background-color: #17a2b8;
+}
+
+.user-card {
+    margin-top: 10px !important;
+}
+
+.user-fio {
+    margin-top: 10px;
+    color: #444;
+    text-align: center;
+    font-size: 16pt;
+}
+
+.footer {
+    margin: 0;
+    padding: 0;
+}
+
+#pointTC, #pointVCS {
+    margin: 12px 0px;
+    color: #5a445e;
+}
+
+
+.height100 {
+    height: 45px;
+    margin: 5px 0px;
+    overflow: hidden;
+}
+
+.height120 {
+    height: 115px;
+    margin: 5px 0;
+}
+
+.height150 {
+    height: 145px;
+    margin: 5px 0;
+}
+
+.height200 {
+    height: 177px;
+    margin: 5px 0px;
+}
+
+.height-bottom {
+    height: 130px;
+    margin: 0px 0px;
+}
+
+.width-bottom {
+    width: 200px;
+}

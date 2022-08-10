@@ -1,0 +1,206 @@
+.sk-chase {
+    width: 15px;
+    height: 15px;
+    position: relative;
+    animation: sk-chase 2.5s infinite linear both;
+  }
+  
+  .sk-chase-dot {
+    width: 60%;
+    height: 60%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    animation: sk-chase-dot 2.0s infinite ease-in-out both;
+  }
+  
+  .sk-chase-dot:before {
+    content: '';
+    display: block;
+    width: 25%;
+    height: 25%;
+    background-color: #fff;
+    border-radius: 100%;
+    animation: sk-chase-dot-before 2.0s infinite ease-in-out both;
+  }
+  
+  .sk-chase-dot:nth-child(1) { animation-delay: -1.1s; }
+  .sk-chase-dot:nth-child(2) { animation-delay: -1.0s; }
+  .sk-chase-dot:nth-child(3) { animation-delay: -0.9s; }
+  .sk-chase-dot:nth-child(4) { animation-delay: -0.8s; }
+  .sk-chase-dot:nth-child(5) { animation-delay: -0.7s; }
+  .sk-chase-dot:nth-child(6) { animation-delay: -0.6s; }
+  .sk-chase-dot:nth-child(1):before { animation-delay: -1.1s; }
+  .sk-chase-dot:nth-child(2):before { animation-delay: -1.0s; }
+  .sk-chase-dot:nth-child(3):before { animation-delay: -0.9s; }
+  .sk-chase-dot:nth-child(4):before { animation-delay: -0.8s; }
+  .sk-chase-dot:nth-child(5):before { animation-delay: -0.7s; }
+  .sk-chase-dot:nth-child(6):before { animation-delay: -0.6s; }
+  
+  @keyframes sk-chase {
+    70% { transform: rotate(360deg); }
+  }
+  
+  @keyframes sk-chase-dot {
+    80%, 100% { transform: rotate(360deg); }
+  }
+  
+  @keyframes sk-chase-dot-before {
+    50% {
+      transform: scale(0.4);
+    } 100%, 0% {
+      transform: scale(1.0);
+    }
+  }
+
+  .images {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 32px;
+    gap: 32px;
+    padding: 32px;
+  }
+  .images__image {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .images__image img {
+    width: 100%;
+    height: 100%;
+    -o-object-fit: cover;
+    object-fit: cover;
+    display: block;
+  }
+  
+  .preloader {
+    position: absolute;
+    left: -5px;
+    width: 832px;
+    height: 720px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: visible;
+    background: #ecf0f5;
+}
+  
+  /* Класс для скрытия Preloader */
+  .preloader_hidden {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s, visibility 0s 0.2s;
+  }
+  
+  /* Скопированый код анимации Preloader */
+  .sk-chase {
+    width: 64px;
+    height: 64px;
+    position: relative;
+    -webkit-animation: sk-chase 2.5s infinite linear both;
+    animation: sk-chase 2.5s infinite linear both;
+  }
+  .sk-chase-dot {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    -webkit-animation: sk-chase-dot 2s infinite ease-in-out both;
+    animation: sk-chase-dot 2s infinite ease-in-out both;
+  }
+  .sk-chase-dot:before {
+    content: '';
+    display: block;
+    width: 25%;
+    height: 25%;
+    background-color: #35bfd1;
+    border-radius: 100%;
+    -webkit-animation: sk-chase-dot-before 2s infinite ease-in-out both;
+    animation: sk-chase-dot-before 2s infinite ease-in-out both;
+  }
+  .sk-chase-dot:nth-child(1) {
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+  }
+  .sk-chase-dot:nth-child(2) {
+    -webkit-animation-delay: -1s;
+    animation-delay: -1s;
+  }
+  .sk-chase-dot:nth-child(3) {
+    -webkit-animation-delay: -0.9s;
+    animation-delay: -0.9s;
+  }
+  .sk-chase-dot:nth-child(4) {
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.8s;
+  }
+  .sk-chase-dot:nth-child(5) {
+    -webkit-animation-delay: -0.7s;
+    animation-delay: -0.7s;
+  }
+  .sk-chase-dot:nth-child(6) {
+    -webkit-animation-delay: -0.6s;
+    animation-delay: -0.6s;
+  }
+  .sk-chase-dot:nth-child(1):before {
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+  }
+  .sk-chase-dot:nth-child(2):before {
+    -webkit-animation-delay: -1s;
+    animation-delay: -1s;
+  }
+  .sk-chase-dot:nth-child(3):before {
+    -webkit-animation-delay: -0.9s;
+    animation-delay: -0.9s;
+  }
+  .sk-chase-dot:nth-child(4):before {
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.8s;
+  }
+  .sk-chase-dot:nth-child(5):before {
+    -webkit-animation-delay: -0.7s;
+    animation-delay: -0.7s;
+  }
+  .sk-chase-dot:nth-child(6):before {
+    -webkit-animation-delay: -0.6s;
+    animation-delay: -0.6s;
+  }
+  @-webkit-keyframes sk-chase {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes sk-chase {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  @-webkit-keyframes sk-chase-dot {
+    80%, 100% {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes sk-chase-dot {
+    80%, 100% {
+      transform: rotate(360deg);
+    }
+  }
+  @-webkit-keyframes sk-chase-dot-before {
+    50% {
+      transform: scale(0.4);
+    }
+    100%, 0% {
+      transform: scale(1);
+    }
+  }
+  @keyframes sk-chase-dot-before {
+    50% {
+      transform: scale(0.4);
+    }
+    100%, 0% {
+      transform: scale(1);
+    }
+  }
+  

@@ -1,0 +1,26 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<div class="error">
+    <img style="
+        position: absolute;
+        text-align: center;
+        left: 48%;
+        top: 40%;
+        " src="{{url_for('static',filename='error.png')}}" alt="">
+    <h1 style="text-align: center; position:absolute; top: 50%; background-color: #ecf0f5">{{error}}</h1>
+</div>
+<script>
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function Timer() {
+        for (let i = 0; i < 3; i++) {
+            await sleep(i * 1000);
+        }
+        document.location.href="{{ret}}";
+    }
+
+    Timer();
+</script>
+{% endblock %}

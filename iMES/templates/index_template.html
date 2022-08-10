@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/ShiftTask.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/tableWasteDefect.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/preload.css') }}">
+    <title>TERMINAL IPLAST</title>
+</head>
+
+<body>
+    {% block navbar %} {% endblock %}
+    <div class="main-page container">
+        <div class="row">
+            <div class="col-2">
+                <div class="card height120 shadow red">
+                    <div class="card-body" style="padding: 0.9rem 1.25rem">
+                        <p class="card-text text-center" id="ttpa">ТПА Engel 5500</p>
+                    </div>
+                </div>
+                <div class="card height150 shadow">
+                    <div class="card-header text-center primary">ПРЕСС-ФОРМА</div>
+                    <div class="card-body nopadding">
+                        <div class="card-text text-center" id="tpf"><b>test</b></div>
+                    </div>
+                </div>
+                <div class="card height150 shadow">
+                    <div class="card-header text-center primary">ПРОДУКТ</div>
+                    <p class="card-text text-center tprod" id="tprod"><b>test</b></p>
+                    <div class="card-body nopadding">
+                    </div>
+                </div>
+                <div class="card height120 shadow">
+                    <div class="card-header text-center primary">ПЛАН ПО ПРОД.</div>
+                    <div class="card-body nopadding d-flex align-items-center justify-content-center">
+                        <p class="card-text text-center nplan">150</p>
+                    </div>
+                </div>
+                <div class="card height120 shadow">
+                    <div class="card-header text-center card-h-uppercase primary">ВЫПУЩЕНО ПРОД.</div>
+                    <div class="card-body nopadding d-flex align-items-center justify-content-center">
+                        <p class="card-text text-center nvplan">110</p>
+                    </div>
+                </div>
+                <div class="card height120 shadow">
+                    <div class="card-header text-center card-h-uppercase primary">БРАК</div>
+                    <div class="card-body nopadding d-flex align-items-center justify-content-center">
+                        <p class="card-text text-center nvDefect">1</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-8">
+                <div class="main-window" style="position: relative;">
+                    <div class="preloader">
+
+                        <!-- Добавляем готовую структуру Preloader -->
+                        <div class="sk-chase">
+                          <div class="sk-chase-dot"></div>
+                          <div class="sk-chase-dot"></div>
+                          <div class="sk-chase-dot"></div>
+                          <div class="sk-chase-dot"></div>
+                          <div class="sk-chase-dot"></div>
+                          <div class="sk-chase-dot"></div>
+                        </div>
+                    </div>
+                    {% block main_window %}                
+                    {% endblock %}
+                </div>
+
+                {% block access_blocked %} {% endblock %}
+
+                <div class="row">
+                    <div class="col-6">
+                        <span class="badge user-badge">Оператор</span>
+                        <div class="card user-card height100 shadow primary" id="colorOperator">
+                            <div class="card-body nopadding">
+                                <p class="card-text text-right user-fio"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <span class="badge user-badge">Наладчик</span>
+                        <div class="card user-card height100 shadow accent" id="colorAdjuster">
+                            <div class="card-body nopadding">
+                                {%if current_user.is_authenticated %}
+                                    <p class="card-text user-fio">{{current_user.name}}</p>
+                                {%else%}
+                                    <p class="card-text user-fio"></p>
+                                {%endif%}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="card height200 shadow">
+                    <div class="card-header text-center primary">ПЛАНОВЫЙ ЦИКЛ</div>
+                    <div class="card-body nopadding">
+                        <p class="card-text text-center display-3" id="pointTC">20</p>
+                    </div>
+                </div>
+                <div class="card height200 shadow">
+                    <div class="card-header text-center primary">ЦИКЛ ЗА СМЕНУ</div>
+                    <div class="card-body nopadding">
+                        <p class="card-text text-center display-3" id="pointVCS">5</p>
+                    </div>
+                </div>
+                <div class="card height200 shadow">
+                    <div class="card-header text-center primary">ПЛАНОВЫЙ ВЕС</div>
+                    <div class="card-body nopadding d-flex align-items-center justify-content-center">
+                        <p class="card-text text-center display-3">5</p>
+                    </div>
+                </div>
+                <div class="card height200 shadow">
+                    <div class="card-header text-center card-h-uppercase primary">СРЕДНИЙ ВЕС</div>
+                    <div class="card-body nopadding d-flex align-items-center justify-content-center">
+                        <p class="card-text text-center display-3">
+                            0
+                        </p>
+                    </div>
+                </div>
+                <div class="card height100 shadow">
+                    <div class="card-body nopadding primary">
+                        <p class="card-text text-center" id="smena">Смена В (день)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer">
+                <div class="col-2">
+                    <div class="card height-bottom shadow">
+                        <div class="card-body primary">
+                            <p class="card-text text-center" id="clock">
+                                <script>
+                                    function formatDate(date) {
+
+                                        let dd = date.getDate();
+                                        if (dd < 10) dd = '0' + dd;
+
+                                        let mm = date.getMonth() + 1;
+                                        if (mm < 10) mm = '0' + mm;
+
+                                        let yy = date.getFullYear();
+
+                                        return dd + '.' + mm + '.' + yy;
+                                    }
+                                    function getCurrentTimeString() {
+                                        return formatDate(new Date()) + " " + new Date().toTimeString().replace(/ .*/, '');
+                                    }
+                                    window.onload = function () {
+                                        let timeNode = document.getElementById('clock');
+
+                                        setInterval(
+                                            () => timeNode.innerHTML = getCurrentTimeString(),
+                                            1000
+                                        );
+                                    }
+                                </script>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="card height-bottom shadow width-bottom">
+                        <div class="card-header text-center nopadding primary">ВЫПОЛНЕНИЕ ПЛАНА ЧЕРЕЗ:</div>
+                        <div class="card-body nopadding">
+                            <p class="card-text text-center display-5">03:42:56</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <a href="/menu">
+                        <div class="card height-bottom shadow">
+                            <div class="accent left-padding">УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ</div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-2">
+                    <div class="card height-bottom shadow">
+                        <div class="card-header text-center nopadding primary">БУМАГИ В ПРИНТЕРЕ ДЛЯ ПЕЧАТИ:</div>
+                        <div class="card-body nopadding ">
+                            <p class="card-text text-center display-4">675</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% block navbar_footer %}
+        
+    {% endblock %}
+</body>
+<script src="{{url_for('static', filename='/js/bootstrap.min.js')}}"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+    crossorigin="anonymous"></script>
+<script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
+<script>
+    var socket = io();
+    socket.on('connect', function() {
+        socket.emit('connecting', {data: 'I\'m connected!'});
+    });
+    socket.on('AnswerAfterConnection', function() {
+        window.location.href = '/menu';
+    });
+</script>
+<script>
+    window.addEventListener('load', () => { 
+        const preloader = document.querySelector('.preloader')
+        preloader.classList.add('preloader_hidden')
+    })
+    function LinkClick() {
+        const preloader = document.querySelector('.preloader')
+        preloader.classList.remove('preloader_hidden')
+    }
+</script>
+</html>

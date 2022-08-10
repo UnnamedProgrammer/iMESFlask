@@ -1,0 +1,33 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<link rel="stylesheet" href="{{ url_for('static', filename='/css/visualInstructions.css') }}">
+<div class="cancelWindow" id="js-shadow"></div>
+<div class="view-1"> 
+    <div class="view-header text-center primary">Визуальные инструкции</div>
+    <div class="view-body-1 jsScroll"> 
+        <table class="table text-center" border="1" bordercolor="black">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Наименование</th>
+                    <th scope="col">Просмотр</th>
+                </tr>
+            </thead>
+            <tbody>{{ table|safe }}</tbody>
+        </table>     
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <button type="button" class="btn btn-light button-1 primary btn-blue-1"></button>
+        </div>  
+        <div class="col-6">
+            <button type="button" class="btn btn-light button-1 btn-blue-2 secondary startLoad"
+                onclick="location.href='/operator'">
+                Выход
+            </button>
+        </div>  
+    </div>        
+</div>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
