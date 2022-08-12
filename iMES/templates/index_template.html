@@ -80,7 +80,7 @@
                         <span class="badge user-badge">Оператор</span>
                         <div class="card user-card height100 shadow primary" id="colorOperator">
                             <div class="card-body nopadding">
-                                <p class="card-text text-right user-fio"></p>
+                                <p id="operator" class="card-text text-right user-fio"></p>
                             </div>
                         </div>
                     </div>
@@ -88,11 +88,7 @@
                         <span class="badge user-badge">Наладчик</span>
                         <div class="card user-card height100 shadow accent" id="colorAdjuster">
                             <div class="card-body nopadding">
-                                {%if current_user.is_authenticated %}
-                                    <p class="card-text user-fio">{{current_user.name}}</p>
-                                {%else%}
-                                    <p class="card-text user-fio"></p>
-                                {%endif%}
+                                <p id="adjuster"  class="card-text user-fio"></p>
                             </div>
                         </div>
                     </div>
@@ -195,17 +191,18 @@
         
     {% endblock %}
 </body>
-<script src="{{url_for('static', filename='/js/bootstrap.min.js')}}"
-    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-    crossorigin="anonymous"></script>
+<script src="{{url_for('static', filename='/js/bootstrap.min.js')}}"></script>
 <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 <script>
     var socket = io();
     socket.on('connect', function() {
         socket.emit('connecting', {data: 'I\'m connected!'});
     });
-    socket.on('AnswerAfterConnection', function() {
-        window.location.href = '/menu';
+    socket.on('AnswerAfterConnection', function(data) {
+        if (data == "Оператор")
+        {
+            window.location.href = '/operator';
+        };
     });
 </script>
 <script>
@@ -217,5 +214,25 @@
         const preloader = document.querySelector('.preloader')
         preloader.classList.remove('preloader_hidden')
     }
+</script>
+<script>
+function RequestOperatorAndAdjuster() {
+    let url = "getOperatorAndAdjuster"
+    let request = new XMLHttpRequest()
+    request.open("GET", window.location.href + url, true)
+    request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    request.addEventListener("readystatechange", () => {
+        if (request.readyState === 4 && request.status === 200) {
+            OperatorAndAdjuster = JSON.parse(request.responseText);
+            console.log(OperatorAndAdjuster)
+            let operator = document.getElementById('operator');
+            let adjuster = document.getElementById('adjuster');
+            operator.textContent = OperatorAndAdjuster['Оператор']
+            adjuster.textContent = OperatorAndAdjuster['Наладчик']
+        }
+    });
+    request.send()
+}
+RequestOperatorAndAdjuster()
 </script>
 </html>

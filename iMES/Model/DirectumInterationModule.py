@@ -79,6 +79,10 @@ class DirectumIntegration():
         """
         error = ""
         try:
+            if (not os.path.exists('iMES/templates/Directum')):
+                os.mkdir('iMES/templates/Directum')
+            if (not os.path.exists('iMES/static/Directum')):
+                os.mkdir('iMES/static/Directum')
             # Проверяем есть ли такой документ в папке Directum
             if (os.path.exists(f"iMES/templates/Directum/doc_{DocumentId}")):
                 return
@@ -103,7 +107,7 @@ class DirectumIntegration():
                                         <meta http-equiv="X-UA-Compatible" content="IE=edge">
                                     </head>
                                     <body>
-                      """
+                                """
                     # Создаём папку документа
                     os.mkdir(f"iMES/templates/Directum/doc_{DocumentId}")
                     os.mkdir(f"iMES/static/Directum/doc_{DocumentId}")
@@ -120,36 +124,36 @@ class DirectumIntegration():
                         if (i == 1):
                             # Создаём фрейм в котором будем отображать документ
                             frame_html = f""" <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                                  <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/main.css') }}}}">
-                                  <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
-                                  <div class="container">
-                                      <div class="view__header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
-                                      <div class="d-flex justify-content-center">
-                                          <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
-                                              class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&Show"
-                                              style="height: 900px; width: 1240px"></iframe>
-                                      </div>
-                                      <div class="view-1">
-                                          <div class="row">
-                                              <div class="col">
-                                                  <button type="button" class="btn btn__menu btn__menu_wide btn__menu_height160 primary"></button>
-                                              </div>
-                                              <div class="col">
-                                                  <button class="btn btn__menu btn__menu_wide btn__menu_height160 secondary"
-                                                      onclick="location.href='/operator'">
-                                                      Выход
-                                                  </button>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              """
+                                    <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/main.css') }}}}">
+                                    <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
+                                    <div class="container">
+                                        <div class="view__header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
+                                        <div class="d-flex justify-content-center">
+                                            <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
+                                                class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&Show"
+                                                style="height: 900px; width: 1240px"></iframe>
+                                        </div>
+                                        <div class="view-1">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <button type="button" class="btn btn__menu btn__menu_wide btn__menu_height160 primary"></button>
+                                                </div>
+                                                <div class="col">
+                                                    <button class="btn btn__menu btn__menu_wide btn__menu_height160 secondary"
+                                                        onclick="location.href='/operator'">
+                                                        Выход
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                """
                             with open(
                                     f"iMES/templates/Directum/doc_{DocumentId}/{DocumentId}_frame.html",
                                     "w", encoding='utf-8') as htmldoc:
                                 htmldoc.write(frame_html)
                         doc_html = doc_html + \
-                                   f'<div><img style="display: block;-webkit-user-select: none; pointer-events: none" src="{{{{ url_for("static", filename="Directum/doc_{DocumentId}/{DocumentId}_{i}.png") }}}}" initwidth="819" initheight="1171" class="previewImage" id="page_1"></div>'
+                                    f'<div><img style="display: block;-webkit-user-select: none; pointer-events: none" src="{{{{ url_for("static", filename="Directum/doc_{DocumentId}/{DocumentId}_{i}.png") }}}}" initwidth="819" initheight="1171" class="previewImage" id="page_1"></div>'
                     doc_html = doc_html + "</body></html>"
                     # Создаём файл документа и прописываем туда стили
                     with open(
@@ -195,30 +199,30 @@ class DirectumIntegration():
 
                     # Создаём фрейм в котором будем отображать html файл документа
                     frame_html = f"""
-                                  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                                  <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/main.css') }}}}">
-                                  <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
-                                  <div class="container">
-                                      <div class="view__header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
-                                      <div class="d-flex justify-content-center">
-                                          <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
+                                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                                    <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/main.css') }}}}">
+                                    <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
+                                    <div class="container">
+                                        <div class="view__header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
+                                        <div class="d-flex justify-content-center">
+                                            <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
                                                 class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&Show"
                                                 style="height: 900px; width: 1240px"></iframe>
-                                      </div>
-                                      <div class="view-1">
-                                          <div class="row">
-                                              <div class="col">
-                                                  <button type="button" class="btn btn__menu btn__menu_wide btn__menu_height160 primary"></button>
-                                              </div>
-                                              <div class="col">
-                                                  <button class="btn btn__menu btn__menu_wide btn__menu_height160 secondary"
-                                                      onclick="location.href='/operator'">
-                                                      Выход
-                                                  </button>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
+                                        </div>
+                                        <div class="view-1">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <button type="button" class="btn btn__menu btn__menu_wide btn__menu_height160 primary"></button>
+                                                </div>
+                                                <div class="col">
+                                                    <button class="btn btn__menu btn__menu_wide btn__menu_height160 secondary"
+                                                        onclick="location.href='/operator'">
+                                                        Выход
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 """
                     # Аналогично пишем в файлы и прописываем стили
                     post_request = self.session.post(
