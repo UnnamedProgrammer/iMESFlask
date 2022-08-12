@@ -29,7 +29,12 @@ def index():
 @app.route("/tpa/<string:tpaIndex>")
 def mainView(tpaIndex):
     TPAList, deviceTPA = userModel.GetAllTPA(request)
-    return render_template("index.html", tpaIndex = tpaIndex, TPAList = TPAList, deviceTPA = deviceTPA)
+    tpaPressForm = userModel.GetTpaPressform(tpaIndex)
+    return render_template("index.html",
+                           tpaIndex = tpaIndex,
+                           TPAList = TPAList,
+                           deviceTPA = deviceTPA,
+                           tpaPressForm = tpaPressForm)
 
 @app.route("/getTrend")
 def GetTrend():
