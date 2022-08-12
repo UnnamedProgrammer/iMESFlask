@@ -3,17 +3,19 @@ import pyodbc
 
 
 class SQLManipulator():
-    def __init__(self) -> None:
+    @classmethod
+    def SQLExecute(self,sqlcode):
         self.connection_string = """
-            'EAM_Iplast': 'DRIVER={ODBC Driver 18 for SQL Server};
-            SERVER=WORK2-APPSERV-8;
-            DATABASE=EAM_Iplast;
+            DRIVER={ODBC Driver 18 for SQL Server};
+            SERVER=OFC-APPSERV-13;
+            DATABASE=MES_Iplast;
             UID=terminal;
             PWD=xAlTeS3dGrh7;
-            TrustServerCertificate=yes'
+            TrustServerCertificate=yes;
             """
         self.connection = pyodbc.connect(self.connection_string)
-
-    def SQLExecute(self,sqlcode: str):
-        self.connection.execute(sqlcode)
-        return self.connection.fetchall()
+        cursor = self.connection.cursor()
+        cursor.execute(sqlcode)
+        result = cursor.fetchall()
+        self.connection.close()
+        return result
