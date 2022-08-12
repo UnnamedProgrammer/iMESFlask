@@ -3,9 +3,9 @@
         <div class="container-fluid">
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav font-3">
-                    <li class="nav-item">
-                        <a class="nav-link nav-tpa nav-red active">ТПА Engel 5500</a>
-                    </li>
+                    {% for tpa in TPAList %}
+                    {{TPAList[tpa]['Name']}}
+                    {% endfor %}
                 </ul>
             </div>
         </div>
