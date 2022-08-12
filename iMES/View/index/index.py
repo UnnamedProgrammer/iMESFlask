@@ -12,7 +12,8 @@ userModel = ModelView()
 
 @app.route("/")
 def index():
-    TPAList = userModel.GetAllTPA(request)
+    deviceTPA = userModel.GetAllTPA(request)
+    tpaIndex = list(deviceTPA.keys())
     # Код закоментирован до тех пор пока не появится авторизация
     # for filename in os.listdir("iMES/templates/Directum"):
     #     shutil.rmtree('iMES/templates/Directum/'+filename)
@@ -22,11 +23,13 @@ def index():
     #     shutil.rmtree('iMES/static/Directum/images')
     # except:
     #     pass
-    
-    # return render_template("index.html",
-    #                        allTPAList = allTPAList,
-    #                        deviceTPAList = deviceTPAList)
-    return render_template("index.html", TPAList = TPAList)
+
+    return redirect(f"/tpa/{tpaIndex[0]}")
+
+@app.route("/tpa/<string:tpaIndex>")
+def mainView(tpaIndex):
+    TPAList, deviceTPA = userModel.GetAllTPA(request)
+    return render_template("index.html", tpaIndex = tpaIndex, TPAList = TPAList, deviceTPA = deviceTPA)
 
 @app.route("/getTrend")
 def GetTrend():

@@ -4,8 +4,9 @@ class ModelView():
         
     def GetAllTPA (self, request):
         allTPA = [] # Временный список всех ТПА
-        deviceTPAList = [] # Временный ТПА привязанных конкретному терминалу
-        TPAList = {} # Главный список ТПА
+        bindingTPA = [] # Временный ТПА привязанных конкретному терминалу
+        TPAList = {} # Финальный список всех ТПА
+        deviceTPA = {} # Финальный список привязанных к устройству ТПА
         
         ip_addr = request.remote_addr  # Получение IP-адресса пользователя
         
@@ -26,19 +27,17 @@ class ModelView():
                                                     WHERE [Equipment].[EquipmentType] = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D' ''')
         columns = [column[0] for column in cursor.description]
         for row in cursor.fetchall():
-            deviceTPAList.append(dict(zip(columns, row)))
+            bindingTPA.append(dict(zip(columns, row)))
                 
         # Формирование списка с ID ключами ТПА
         for tpa in allTPA:
-            for i in range(0, len(deviceTPAList)):
-                if tpa['Equipment'] == deviceTPAList[i]['Equipment']:
-                    tpa['Binding'] = 1
-                    TPAList[tpa['Equipment']] = tpa
-                elif 'Binding' not in tpa:
-                    tpa['Binding'] = 0
-                    TPAList[tpa['Equipment']] = tpa
+            TPAList[tpa['Equipment']] = tpa
+        for tpa in bindingTPA:
+            deviceTPA[tpa['Equipment']] = tpa
         
-        return TPAList
+
+        
+        return TPAList, deviceTPA
     
     # def GetTpaPressform(self, request, tpaIndex):
     #     connection = pyodbc.connect(сonnectionsStrings['EAM_Iplast'])
