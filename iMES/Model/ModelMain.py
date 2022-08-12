@@ -11,7 +11,7 @@ class ModelView():
         ip_addr = request.remote_addr  # Получение IP-адресса пользователя
         
         # Получение полного списка ТПА
-        cursor = SQLManipulator.SQLReturnCursor(f''' SELECT [RFIDBind].[RFIDEquipment], [RFIDBind].[Equipment], [Equipment].[Name]
+        cursor =SQLManipulator.SQLReturnCursor(f''' SELECT [RFIDBind].[RFIDEquipment], [RFIDBind].[Equipment], [Equipment].[Name]
                                                     FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding] AS [RFIDBind]
                                                     LEFT JOIN  [MES_Iplast].[dbo].[Equipment] AS [Equipment] ON [RFIDBind].[Equipment] = [Equipment].[Oid]
                                                     WHERE [Equipment].[EquipmentType] = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D' ''')
@@ -39,27 +39,31 @@ class ModelView():
         
         return TPAList, deviceTPA
     
-    def GetTpaPressform(self, tpaIndex):      
-        tpaPressForm = '' # Прессформа привязанная к ТПА
+    # def GetTpaPressform(self, request, tpaIndex):
+    #     connection = pyodbc.connect(сonnectionsStrings['EAM_Iplast'])
+    #     connections['EAM_Iplast'] = connection.cursor()
         
-        # Получение списка пресс-форм привязанных к ТПА
-        pressFormList = SQLManipulator.SQLExecute(f''' SELECT TOP(1) [Equipment].[Name]
-                                                        FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding] AS [RBinding]
-                                                        LEFT JOIN [MES_Iplast].[dbo].[RFIDClosureData] AS [RData] ON [RData].[Controller] = [RBinding].[RFIDEquipment]
-                                                        LEFT JOIN [MES_Iplast].[dbo].[Equipment] AS [Equipment] ON [Equipment].[Oid] =
-                                                        	(SELECT [RFIDEquipmentBinding].[Equipment]
-                                                        		FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding]
-                                                        		WHERE RFIDEquipment = [Rdata].[Label])
-                                                        WHERE [RBinding].[Equipment] = '{tpaIndex}'
-                                                        AND [RBinding].[State] = 1
-                                                        ORDER BY [RData].[Date] DESC ''')
+    #     tpaPressForm = '' # Список пресс-форм привязанных к ТПА
         
-        if pressFormList[0][0] != None:
-            tpaPressForm = pressFormList[0][0]
-        else:
-            tpaPressForm = ''
+    #     # Получение списка пресс-форм привязанных к ТПА
+    #     connections['EAM_Iplast'].execute(f'''  SELECT TOP(1) [OBR].[Наименование]
+	#                                             FROM [EAM_test].[dbo].[RFIDReader] AS [RFR]
+	#                                             LEFT JOIN [EAM_test].[dbo].[RFIDData] AS [RFD] ON [RFD].[Reader] = [RFR].[Oid]
+	#                                             LEFT JOIN [EAM_test].[dbo].[RFIDLabel] AS [RFL] ON [RFL].[Oid] = [RFD].[Label]
+	#                                             LEFT JOIN [EAM_Iplast].[dbo].[ОбъектРемонта] AS [OBR] ON [RFL].[Asset] = [OBR].[Oid]
+	#                                             WHERE [RFR].[Asset] = '{tpaIndex}' AND
+	#                                             	  [RFR].[Active] = '1'
+	#                                             ORDER BY [RFD].[Date] DESC ''')
+    #     pressFormList = connections['EAM_Iplast'].fetchall()
+        
+    #     connection.commit()
+        
+    #     if pressFormList[0][0] != None:
+    #         tpaPressForm = pressFormList[0][0]
+    #     else:
+    #         tpaPressForm = ''
   
-        return tpaPressForm
+    #     return tpaPressForm
     
     # # Получение сменного задания и ID продукта
     # def GetShiftTaskData(self, request, tpaIndex):
