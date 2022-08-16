@@ -3,12 +3,14 @@ from iMES import socketio
 from iMES import app
 from iMES import UserController
 from flask import redirect, render_template, request
-from flask_socketio import SocketIO, emit
 from iMES.Model.UserModel import UserModel
 from flask_login import login_required, login_user, logout_user,current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
+from iMES import OperatorAdjusterAtTerminals
+
+user = UserModel()
 
 @app.route("/")
 def index():
@@ -57,6 +59,7 @@ def Authorization(passnumber):
         EMPL.Oid = USR.[Employee] AND
         USR.[CardNumber] = '{passnumber}'
         """
+
     data = SQLManipulator.SQLExecute(sql)
     if (len(data) == 0):
         return 'User undefinded'
@@ -64,72 +67,60 @@ def Authorization(passnumber):
         UserController.CountUsers += 1
         userdata = list(data[0])
         userdata.insert(0,UserController.CountUsers)
-        UserModel.id = userdata[0]
-        UserModel.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
-        UserModel.username = userdata[4]
-        UserModel.CardNumber = userdata[5]
-        UserModel.role = userdata[6]
-        UserModel.interfaces = userdata[7]
-        user = UserModel()
-        login_user(user=user)
-        socketio.emit('AnswerAfterConnection',current_user.role)
-    return 'Logged'
+        sqlLastRole = f"""
+                SELECT [Role].[Name]
+                FROM [SavedRole],[User],[Role] 
+                WHERE [User].CardNumber = '{userdata[5]}' AND
+                    [SavedRole].[User] = [User].Oid AND
+                    [SavedRole].[Role] = [Role].Oid
+                """
+        LastRole = SQLManipulator.SQLExecute(sqlLastRole)
+        print(LastRole)
+        if(LastRole != []):
+            user.role = {0:LastRole[0][0]}
+        else:
+            sqlUserRoles = f"""
+                SELECT [Role].[Name]
+                FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
+                WHERE [User].CardNumber = '{userdata[5]}' AND 
+                    [Relation_UserRole].[User] = [User].Oid AND
+                    [Relation_UserRole].[Role] = [Role].Oid
+            """
+            roles = SQLManipulator.SQLExecute(sqlUserRoles)
+            user.role = {}
+            for i in range(0,len(roles)):
+                user.role[i] = roles[i][0]
+        print(user.role)
+        user.id = userdata[0]
+        user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
+        user.username = userdata[4]
+        user.CardNumber = userdata[5]
+        user.interfaces = userdata[7]
+        login_user(user)
+        socketio.emit('AnswerAfterConnection',json.dumps(current_user.role,ensure_ascii=False,indent=4))
+    return 'Authorization successful'
 
 @login_manager.user_loader
 def load_user(id):
-    return UserModel
+    return user
 
 @app.route('/login')
 def login():
-    return render_template('Show_error.html',error="Доступ запрещен, приложите ключ карту",ret='/')
+    return render_template('Show_error.html',error="Нет доступа, авторизируйтесь с помощью пропуска",ret='/')
 
 @app.route('/logout')
 @login_required
 def logout():
+    terminal = request.remote_addr
+    if (OperatorAdjusterAtTerminals[terminal][current_user.role] == current_user.name):
+        OperatorAdjusterAtTerminals[terminal][current_user.role] = ''
     logout_user()
-    UserController.CountUsers -= 1
     return redirect('/')
 
 @app.route('/getOperatorAndAdjuster')
 def ReturnOperatorAndAdjuster():    
-    TerminalSavedRoles = {}
-    devices = SQLManipulator.SQLExecute('select * from [MES_Iplast].[dbo].[Device]')
-    print(devices)
-    for device in devices:
-        operator = ''
-        Adjuster = '' 
-        users = SQLManipulator.SQLExecute(f'''
-                                SELECT Employee.LastName,
-                                    Employee.FirstName,
-                                    Employee.MiddleName,
-                                    [Role].Name
-                                FROM [MES_Iplast].[dbo].[SavedRole],
-                                    [MES_Iplast].[dbo].Device,
-                                    [MES_Iplast].[dbo].[User],
-                                    [MES_Iplast].[dbo].[Role],
-                                    [MES_Iplast].[dbo].[Employee]
-                                WHERE Device.DeviceId = '{device[3]}' AND
-                                    SavedRole.Device = Device AND
-                                    SavedRole.[Role] = [Role].Oid AND
-                                    SavedRole.[User] = [User].Oid AND
-                                    Employee.Oid = [User].Employee
-                                ''')                   
-        for user in users:
-            if(user[3] == 'Оператор'):
-                operator = f'{user[0]} {user[1]} {user[2]}'
-            if(user[3] == 'Наладчик'):
-                Adjuster = f'{user[0]} {user[1]} {user[2]}'
-        ip = request.remote_addr
-        print(ip)
-        if (operator != '' and Adjuster != ''):                             
-            TerminalSavedRoles[device[3]] = {'Оператор':operator,'Наладчик': Adjuster}
-        if (operator == '' and Adjuster == ''):                             
-            TerminalSavedRoles[device[3]] = {'Оператор':'','Наладчик': ''}
-        if (operator != '' and Adjuster == ''):                             
-            TerminalSavedRoles[device[3]] = {'Оператор':operator,'Наладчик': ''}
-        if (operator == '' and Adjuster != ''):                             
-            TerminalSavedRoles[device[3]] = {'Оператор':'','Наладчик': Adjuster}
-    return json.dumps(TerminalSavedRoles[ip],ensure_ascii=False,indent=4)
+    ip = request.remote_addr
+    return json.dumps(OperatorAdjusterAtTerminals[ip],ensure_ascii=False,indent=4)
 
 
 @socketio.on(message='connecting')

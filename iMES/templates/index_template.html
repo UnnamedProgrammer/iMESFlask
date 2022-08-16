@@ -199,9 +199,22 @@
         socket.emit('connecting', {data: 'I\'m connected!'});
     });
     socket.on('AnswerAfterConnection', function(data) {
-        if (data == "Оператор")
+        arr = JSON.parse(data)
+        let roles = []
+        for (let i = 0; i < Object.keys(arr).length; i++)
+        {
+            roles.push(arr[i])
+        }
+        if (roles.length > 1){
+            window.location.href = '/menu'
+        }
+        if (roles[0] == "Оператор" && roles.length == 1)
         {
             window.location.href = '/operator';
+        }
+        if (roles[0] == "Наладчик" && roles.length == 1)
+        {
+            window.location.href = '/adjuster';
         };
     });
 </script>
@@ -219,12 +232,11 @@
 function RequestOperatorAndAdjuster() {
     let url = "getOperatorAndAdjuster"
     let request = new XMLHttpRequest()
-    request.open("GET", window.location.href + url, true)
+    request.open("GET", url, true)
     request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     request.addEventListener("readystatechange", () => {
         if (request.readyState === 4 && request.status === 200) {
             OperatorAndAdjuster = JSON.parse(request.responseText);
-            console.log(OperatorAndAdjuster)
             let operator = document.getElementById('operator');
             let adjuster = document.getElementById('adjuster');
             operator.textContent = OperatorAndAdjuster['Оператор']

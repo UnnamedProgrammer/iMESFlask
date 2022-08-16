@@ -1,7 +1,8 @@
 from iMES import app
-from flask import render_template
-
+from flask_login import login_required
+from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 
 @app.route('/adjuster')
+@login_required
 def adjuster():
-    return render_template("adjuster/adjuster.html")
+    return CheckRolesForInterface('Наладчик','adjuster/adjuster.html')
