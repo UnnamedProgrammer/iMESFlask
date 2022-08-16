@@ -1,14 +1,19 @@
 import socketio
 from iMES import socketio
 from iMES import app
-from flask import redirect, render_template
+from flask import redirect, render_template, request
 from flask_socketio import SocketIO, emit
 from iMES.Model.UserModel import UserModel
+from iMES.Model.ModelMain import ModelView
 from flask_login import login_required, login_user, logout_user
 from iMES import login_manager
 
+userModel = ModelView()
+
 @app.route("/")
 def index():
+    deviceTPA = userModel.GetAllTPA(request)
+    tpaIndex = list(deviceTPA.keys())
     # Код закоментирован до тех пор пока не появится авторизация
     # for filename in os.listdir("iMES/templates/Directum"):
     #     shutil.rmtree('iMES/templates/Directum/'+filename)
@@ -18,7 +23,13 @@ def index():
     #     shutil.rmtree('iMES/static/Directum/images')
     # except:
     #     pass
-    return render_template("index.html")
+
+    return redirect(f"/tpa/{tpaIndex[0]}")
+
+@app.route("/tpa/<string:tpaIndex>")
+def mainView(tpaIndex):
+    TPAList, deviceTPA = userModel.GetAllTPA(request)
+    return render_template("index.html", tpaIndex = tpaIndex, TPAList = TPAList, deviceTPA = deviceTPA)
 
 @app.route("/getTrend")
 def GetTrend():

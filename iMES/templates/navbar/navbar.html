@@ -3,9 +3,17 @@
         <div class="container-fluid">
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav font-3">
-                    <li class="nav-item">
-                        <a class="nav-link nav-tpa nav-red active">ТПА Engel 5500</a>
-                    </li>
+                    {% for tpa in deviceTPA %}
+                        {% if tpaIndex == deviceTPA[tpa]['Equipment'] %}
+                            <li class="nav-item">
+                                <a class="nav-link nav-tpa nav-green active" href={{tpa}}>{{deviceTPA[tpa]['Name']}}</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link nav-tpa nav-green" href={{tpa}}>{{deviceTPA[tpa]['Name']}}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
                 </ul>
             </div>
         </div>
