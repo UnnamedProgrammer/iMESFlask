@@ -123,13 +123,13 @@ let trend = ''
 let plan = ''
 
 function RequestTrendPlan() {
-    let urlTrend = "/getTrend"
-    let urlPlan = "/getPlan"
+    let urlTrend = "getTrend"
+    let urlPlan = "getPlan"
     let requestplan = new XMLHttpRequest()
     let requesttrend = new XMLHttpRequest()
-    requestplan.open("GET", urlPlan, true)
+    requestplan.open("GET", window.location.href + urlPlan, true)
     requestplan.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    requesttrend.open("GET", urlTrend, true)
+    requesttrend.open("GET", window.location.href + urlTrend, true)
     requesttrend.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     requesttrend.addEventListener("readystatechange", () => {
         if (requesttrend.readyState === 4 && requesttrend.status === 200) {

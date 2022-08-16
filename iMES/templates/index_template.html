@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='/css/bootstrap.min.css') }}" >
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/ShiftTask.css') }}">
@@ -19,9 +19,9 @@
     <div class="main-page container">
         <div class="row">
             <div class="col-2">
-                <div class="card height120 shadow green">
+                <div class="card height120 shadow red">
                     <div class="card-body" style="padding: 0.9rem 1.25rem">
-                        <p class="card-text text-center" id="ttpa">{{TPAList[tpaIndex]['Name']}}</p>
+                        <p class="card-text text-center" id="ttpa">ТПА Engel 5500</p>
                     </div>
                 </div>
                 <div class="card height150 shadow">
@@ -195,7 +195,9 @@
         
     {% endblock %}
 </body>
-<script src="{{url_for('static', filename='/js/bootstrap.min.js')}}"></script>
+<script src="{{url_for('static', filename='/js/bootstrap.min.js')}}"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+    crossorigin="anonymous"></script>
 <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 <script>
     var socket = io();
