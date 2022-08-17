@@ -1,3 +1,4 @@
+from string import ascii_letters
 import socketio
 from iMES import socketio
 from iMES import app
@@ -8,7 +9,7 @@ from flask_login import login_required, login_user, logout_user,current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
-from iMES import OperatorAdjusterAtTerminals
+from iMES import TpaList
 
 user = UserModel()
 
@@ -112,17 +113,44 @@ def login():
 @login_required
 def logout():
     terminal = request.remote_addr
-    if (OperatorAdjusterAtTerminals[terminal][current_user.role] == current_user.name):
-        OperatorAdjusterAtTerminals[terminal][current_user.role] = ''
     logout_user()
     return redirect('/')
 
 @app.route('/getOperatorAndAdjuster')
 def ReturnOperatorAndAdjuster():    
     ip = request.remote_addr
-    return json.dumps(OperatorAdjusterAtTerminals[ip],ensure_ascii=False,indent=4)
+    sql = f"""
+        DECLARE @device uniqueidentifier
+        SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{ip}')
+        SELECT (Employee.LastName +' '+ Employee.FirstName + ' ' + Employee.MiddleName) as ФИО
+                ,[Role].[Name] AS Роль
+        FROM Employee, [Role], LastSavedRole, SavedRole, [User]
+
+        WHERE LastSavedRole.Device = @device AND
+            SavedRole.Oid = LastSavedRole.SavedRole AND
+            SavedRole.[Role] = [Role].Oid AND
+            [User].Oid = SavedRole.[User] AND
+            Employee.Oid = [User].Employee
+      """
+    sqlresult = SQLManipulator.SQLExecute(sql)
+    OperatorAdjusterAtTerminals = {'Оператор':'','Наладчик':''}
+    operator = ''
+    adjuster = ''
+    if(len(sqlresult) != 0):
+        for employee in sqlresult:
+            if employee[1] == 'Наладчик':
+                adjuster = employee[0]
+            if employee[1] == 'Оператор':
+                operator = employee[0]
+        OperatorAdjusterAtTerminals['Оператор'] = operator
+        OperatorAdjusterAtTerminals['Наладчик'] = adjuster
+    return json.dumps(OperatorAdjusterAtTerminals,ensure_ascii=False,indent=4)
 
 
 @socketio.on(message='connecting')
 def socket_connected(data):
     pass
+
+@socketio.on(message='getTpaList')
+def socket_connected(data):
+    socketio.emit('TpaList',json.dumps(TpaList[data['ipaddress']], ensure_ascii=False,indent=4))
