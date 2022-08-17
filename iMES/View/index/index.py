@@ -1,4 +1,3 @@
-from string import ascii_letters
 import socketio
 from iMES import socketio
 from iMES import app
@@ -9,12 +8,15 @@ from flask_login import login_required, login_user, logout_user,current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
-from iMES import TpaList
+from iMES import TpaList,current_tpa
 
 user = UserModel()
 
+
 @app.route("/")
 def index():
+    ip_addr = request.remote_addr  # Получение IP-адресса пользователя
+    device_tpa = TpaList[ip_addr]
     # Код закоментирован до тех пор пока не появится авторизация
     # for filename in os.listdir("iMES/templates/Directum"):
     #     shutil.rmtree('iMES/templates/Directum/'+filename)
@@ -24,7 +26,15 @@ def index():
     #     shutil.rmtree('iMES/static/Directum/images')
     # except:
     #     pass
-    return render_template("index.html")
+    return render_template("index.html",
+                           device_tpa = device_tpa,
+                           current_tpa = current_tpa[ip_addr])
+
+@app.route("/changeTpa", methods=["GET"])
+def ChangeTPA():
+    ip_addr = request.remote_addr
+    current_tpa[ip_addr] = request.args.getlist('oid')[0], request.args.getlist('name')[0]
+    return current_tpa
 
 @app.route("/getTrend")
 def GetTrend():
@@ -107,7 +117,7 @@ def load_user(id):
 
 @app.route('/login')
 def login():
-    return render_template('Show_error.html',error="Нет доступа, авторизируйтесь с помощью пропуска",ret='/')
+    return render_template('Show_error.html',error="Нет доступа, авторизируйтесь с помощью пропуска",ret='/', current_tpa = current_tpa[request.remote_addr])
 
 @app.route('/logout')
 @login_required

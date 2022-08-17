@@ -19,9 +19,9 @@
     <div class="main-page container">
         <div class="row">
             <div class="col-2">
-                <div class="card height120 shadow red">
+                <div class="card height120 shadow green">
                     <div class="card-body" style="padding: 0.9rem 1.25rem">
-                        <p class="card-text text-center" id="ttpa">ТПА Engel 5500</p>
+                        <p class="card-text text-center" id="ttpa">{{ current_tpa[1] }}</p>
                     </div>
                 </div>
                 <div class="card height150 shadow">
@@ -193,6 +193,7 @@
 </body>
 <script src="{{url_for('static', filename='/js/bootstrap.min.js')}}"></script>
 <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
+<script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
 <script>
     var socket = io();
     socket.on('connect', function() {
