@@ -16,6 +16,12 @@ class SQLManipulator():
         self.connection = pyodbc.connect(self.connection_string)
         cursor = self.connection.cursor()
         cursor.execute(sqlcode)
-        result = cursor.fetchall()
-        self.connection.close()
+        try:
+            result = cursor.fetchall()
+            cursor.commit()
+            self.connection.close()
+        except pyodbc.ProgrammingError:
+            cursor.commit()
+            self.connection.close() 
+            return 'Результат пуст'
         return result

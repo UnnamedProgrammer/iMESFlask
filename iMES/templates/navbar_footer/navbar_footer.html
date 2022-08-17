@@ -7,12 +7,19 @@
     <a class="btn btn__navbar-footer primary" href="/menu" style="font-size: 28pt;">
         <p>МЕНЮ</p>
     </a>
-    <a class="btn btn__navbar-footer primary" href="/">
-        <p>ВЫЙТИ БЕЗ<br>СОХРАНЕНИЯ</p>
+    <a class="btn btn__navbar-footer primary" href="/logoutWithoutDeleteRoles">
+        <p>ВЫХОД</p>
     </a>
-    <a class="btn btn__navbar-footer primary" href="/">
-        <p>ВЫЙТИ С<br>СОХРАНЕНИЕМ</p>
+    {% if current_user.savedrole == False%}
+    <a class="btn btn__navbar-footer primary" href="/exitwithsave">
+        <p>ЗАПОМНИТЬ<br>МЕНЯ(ВЫХОД)</p>
     </a>
+    {% endif %}
+    {% if current_user.savedrole == True%}
+    <a class="btn btn__navbar-footer primary" href="/logout">
+        <p>ОТВЯЗАТЬ<br>СЕБЯ</p>
+    </a>
+    {% endif %}
 </div>
 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
     <div class="offcanvas-body">

@@ -1,12 +1,15 @@
 from iMES import app
-from flask import render_template
-
+from flask_login import login_required,current_user
+from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 
 @app.route('/operator')
+@login_required
 def operator():
-    return render_template("operator/operator.html")
+    print(current_user.savedrole)
+    return CheckRolesForInterface('Оператор','operator/operator.html')
 
 
 @app.route('/operator/ShiftTask')
+@login_required
 def OperatorShiftTask():
-    return render_template("operator/ShiftTask.html")
+    return CheckRolesForInterface('Оператор','operator/ShiftTask.html')

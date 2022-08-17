@@ -80,7 +80,7 @@
                         <span class="badge user-badge">Оператор</span>
                         <div class="card user-card height100 shadow primary" id="colorOperator">
                             <div class="card-body nopadding">
-                                <p class="card-text text-right user-fio"></p>
+                                <p id="operator" class="card-text text-right user-fio"></p>
                             </div>
                         </div>
                     </div>
@@ -88,11 +88,7 @@
                         <span class="badge user-badge">Наладчик</span>
                         <div class="card user-card height100 shadow accent" id="colorAdjuster">
                             <div class="card-body nopadding">
-                                {%if current_user.is_authenticated %}
-                                    <p class="card-text user-fio">{{current_user.name}}</p>
-                                {%else%}
-                                    <p class="card-text user-fio"></p>
-                                {%endif%}
+                                <p id="adjuster"  class="card-text user-fio"></p>
                             </div>
                         </div>
                     </div>
@@ -204,9 +200,32 @@
     socket.on('connect', function() {
         socket.emit('connecting', {data: 'I\'m connected!'});
     });
-    socket.on('AnswerAfterConnection', function() {
-        window.location.href = '/menu';
+    address = location.hostname
+    socket.emit('getTpaList', {ipaddress: location.hostname});
+
+    socket.on('AnswerAfterConnection', function(data) {
+        arr = JSON.parse(data)
+        let roles = []
+        for (let i = 0; i < Object.keys(arr).length; i++)
+        {
+            roles.push(arr[i])
+        }
+        if (roles.length > 1){
+            window.location.href = '/menu'
+        }
+        if (roles[0] == "Оператор" && roles.length == 1)
+        {
+            window.location.href = '/operator';
+        }
+        if (roles[0] == "Наладчик" && roles.length == 1)
+        {
+            window.location.href = '/adjuster';
+        };
     });
+    socket.on('TpaList', function(data) {
+        TpaList = JSON.parse(data)
+        console.log(TpaList)
+    })
 </script>
 <script>
     window.addEventListener('load', () => { 
@@ -217,5 +236,24 @@
         const preloader = document.querySelector('.preloader')
         preloader.classList.remove('preloader_hidden')
     }
+</script>
+<script>
+function RequestOperatorAndAdjuster() {
+    let url = "getOperatorAndAdjuster"
+    let request = new XMLHttpRequest()
+    request.open("GET", url, true)
+    request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    request.addEventListener("readystatechange", () => {
+        if (request.readyState === 4 && request.status === 200) {
+            OperatorAndAdjuster = JSON.parse(request.responseText);
+            let operator = document.getElementById('operator');
+            let adjuster = document.getElementById('adjuster');
+            operator.textContent = OperatorAndAdjuster['Оператор']
+            adjuster.textContent = OperatorAndAdjuster['Наладчик']
+        }
+    });
+    request.send()
+}
+RequestOperatorAndAdjuster()
 </script>
 </html>
