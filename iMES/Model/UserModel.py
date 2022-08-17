@@ -8,6 +8,6 @@ class UserModel(UserMixin):
     CardNumber = NULL
     role = {}
     interfaces = NULL
-
+    savedrole = False
     def __repr__(self):
         return '<User %r>' % self.name

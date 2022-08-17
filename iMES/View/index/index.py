@@ -38,6 +38,7 @@ def GetPlan():
 
 @app.route("/Auth/PassNumber=<string:passnumber>")
 def Authorization(passnumber):
+    terminal = request.remote_addr
     sql = f"""
     SELECT
          EMPL.LastName
@@ -76,7 +77,6 @@ def Authorization(passnumber):
                     [SavedRole].[Role] = [Role].Oid
                 """
         LastRole = SQLManipulator.SQLExecute(sqlLastRole)
-        print(LastRole)
         if(LastRole != []):
             user.role = {0:LastRole[0][0]}
         else:
@@ -91,7 +91,31 @@ def Authorization(passnumber):
             user.role = {}
             for i in range(0,len(roles)):
                 user.role[i] = roles[i][0]
-        print(user.role)
+        sqlCheckSavedRole = f"""
+                DECLARE @device uniqueidentifier
+                DECLARE @user uniqueidentifier
+                SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{terminal}')
+                SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{userdata[4]}')
+                SELECT [Role].[Name] AS Роль
+                FROM Employee, [Role], LastSavedRole, SavedRole, [User]
+
+                WHERE LastSavedRole.Device = @device AND
+                    SavedRole.Oid = LastSavedRole.SavedRole AND
+                    SavedRole.[Role] = [Role].Oid AND
+                    [User].Oid = SavedRole.[User] AND
+                    Employee.Oid = [User].Employee AND
+                    [User].Oid = @user
+            """
+        try:
+            SavedRole = SQLManipulator.SQLExecute(sqlCheckSavedRole)[0][0]
+        except:
+            SavedRole = ''
+            pass
+        if SavedRole != '':
+            user.role = SavedRole
+            user.savedrole = True
+        else:
+            user.savedrole = False
         user.id = userdata[0]
         user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
         user.username = userdata[4]
@@ -113,6 +137,27 @@ def login():
 @login_required
 def logout():
     terminal = request.remote_addr
+    sqlRemoveSaveUser = f"""
+            DECLARE @user uniqueidentifier
+            DECLARE @device uniqueidentifier
+            /* Сам пользователь */
+            SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{current_user.username}')
+            /* Устройство на котором работает пользователь */
+            SET @device = (SELECT [Device].Oid FROM [Device] WHERE DeviceId = '{terminal}')
+        	DELETE FROM LastSavedRole WHERE LastSavedRole.Device = @device AND 
+            LastSavedRole.SavedRole = (SELECT SavedRole.Oid 
+                                    FROM SavedRole 
+                                    WHERE SavedRole.[User] = @user AND 
+                                            SavedRole.Device = @device)
+            DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
+    """
+    SQLManipulator.SQLExecute(sqlRemoveSaveUser)
+    logout_user()
+    return redirect('/')
+
+@app.route('/logoutWithoutDeleteRoles')
+@login_required
+def logoutWithoutDeleteRoles():
     logout_user()
     return redirect('/')
 
