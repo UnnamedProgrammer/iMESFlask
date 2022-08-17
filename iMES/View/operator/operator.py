@@ -1,10 +1,11 @@
 from iMES import app
-from flask_login import login_required
+from flask_login import login_required,current_user
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 
 @app.route('/operator')
 @login_required
 def operator():
+    print(current_user.savedrole)
     return CheckRolesForInterface('Оператор','operator/operator.html')
 
 

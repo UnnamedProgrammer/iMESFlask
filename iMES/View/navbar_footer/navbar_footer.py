@@ -1,6 +1,6 @@
 from iMES import app
 from flask import request, redirect, render_template
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from iMES.Model.SQLManipulator import SQLManipulator
 
 # Процедура кнопки "Выход с сохранением"
@@ -30,7 +30,7 @@ def ExitWithSave():
                 DECLARE @savedrole uniqueidentifier
                 DECLARE @device uniqueidentifier
                 DECLARE @olduser uniqueidentifier
-
+                DECLARE @newsavedrole uniqueidentifier
                 /* Новая роль пользователя */
                 SET @newrole = (SELECT Role.Oid FROM Role WHERE Role.Name = '{current_user.role}')
                 /* Сам пользователь */
@@ -43,68 +43,47 @@ def ExitWithSave():
                     FROM SavedRole 
                     WHERE SavedRole.Device = @device AND SavedRole.[Role] = @newrole
                 )
-                /* Находим последнее значение роли пользователя */
-                SET @oldrole = (SELECT SavedRole.[Role] FROM SavedRole WHERE SavedRole.Oid = @savedrole)
-                /* Находим кто был сохранён под данной ролью */
-                SET @olduser = (SELECT SavedRole.[User] FROM SavedRole WHERE SavedRole.Oid = @savedrole)
-                /*Если пользователь до этого не был привязан к какой-либо роли на устройстве, т.е @savedrole = NULL*/
-                DECLARE @newSavedRoleOid uniqueidentifier
-                if @savedrole IS NULL
-                    BEGIN
-                        /*То сохраняем его в таблицы SavedRole и LastSavedRole */
-                        INSERT INTO SavedRole (Oid,[User],[Role],Device) VALUES (NEWID(),@user,@newrole,@device)
-                        SET @newSavedRoleOid = (SELECT SavedRole.Oid 
-                                                FROM SavedRole 
-                                                WHERE SavedRole.Device = @device AND 
-                                                    SavedRole.[User] = @user AND 
-                                                    SavedRole.[Role] = @newrole)
-                        INSERT INTO LastSavedRole (Device,SavedRole) VALUES (@device,@newSavedRoleOid)
-                    END
-                /*Если найдена закрепленная роль на устройстве*/
-                if @savedrole IS NOT NULL
+                IF @savedrole IS NULL
                 BEGIN
-                    /* Если это тот же пользователь что и был сохранён, но роль у него другая*/
-                    IF @olduser = @user and @newrole != @oldrole
-                    BEGIN
-                        /* Удаляем записи пользователя и создаём новые записи с новой ролью */
-                        DELETE FROM LastSavedRole WHERE LastSavedRole.SavedRole = @savedrole
-                        DELETE FROM SavedRole WHERE SavedRole.Oid = @savedrole
-                        INSERT INTO SavedRole (Oid,[User],[Role],Device) VALUES (NEWID(),@user,@newrole,@device)
-                        SET @newSavedRoleOid = (SELECT SavedRole.Oid 
+                    DELETE FROM LastSavedRole WHERE LastSavedRole.Device = @device AND 
+                    LastSavedRole.SavedRole = (SELECT SavedRole.Oid 
+                                            FROM SavedRole 
+                                            WHERE SavedRole.[User] = @user AND 
+                                                    SavedRole.Device = @device)
+                    DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
+                    INSERT INTO SavedRole (Oid,[User],[Role],Device) VALUES (NEWID(),@user,@newrole,@device)
+                    SET @newsavedrole = (SELECT SavedRole.Oid 
                                         FROM SavedRole 
-                                        WHERE SavedRole.Device = @device AND 
-                                                SavedRole.[User] = @user AND 
-                                                SavedRole.[Role] = @newrole)
-                        INSERT INTO LastSavedRole (Device,SavedRole) VALUES (@device,@newSavedRoleOid)
-                        RETURN
-                    END
-                    /* Если пользователь другой и роль у него другая*/
-                    IF @olduser != @user and @newrole != @oldrole
-                    BEGIN
-                        DELETE FROM LastSavedRole WHERE LastSavedRole.SavedRole = @savedrole
-                        /*Меняем в записи пользователя и роль*/
-                        UPDATE SavedRole SET SavedRole.[User] = @user, SavedRole.[Role] = @newrole WHERE SavedRole.Oid = @savedrole
-                        RETURN
-                    END
-                    /* Если пользователь другой но роль у него та же что была у другого ранее сохранённого пользователя*/
-                    IF @olduser != @user and @newrole = @oldrole
-                    BEGIN
-                        DELETE FROM LastSavedRole WHERE LastSavedRole.SavedRole = @savedrole
-                        /*Меняем пользователя*/
-                        UPDATE SavedRole SET SavedRole.[User] = @user WHERE SavedRole.Oid = @savedrole
-                        RETURN
-                    END
-                    /* Если пользователь пытается сохраниться под одной и той же ролью снова */
-                    IF @olduser = @user AND @newrole = @oldrole
-                    BEGIN
-                        /* То ничего не делаем ибо он уже привязан */
-                        RETURN
-                    END
-                    INSERT INTO LastSavedRole (Device,SavedRole) VALUES (@device,@savedrole)
+                                        WHERE SavedRole.[User] = @user AND 
+                                            SavedRole.[Role] = @newrole AND 
+                                            SavedRole.Device = @device)
+                    INSERT INTO LastSavedRole (Device,SavedRole) VALUES (@device,@newsavedrole)
+                    RETURN
+                END
+                IF @savedrole IS NOT NULL
+                BEGIN
+                    DELETE FROM LastSavedRole WHERE LastSavedRole.Device = @device AND 
+                    LastSavedRole.SavedRole = (SELECT SavedRole.Oid 
+                                            FROM SavedRole 
+                                            WHERE SavedRole.[User] = @user AND 
+                                                    SavedRole.Device = @device)
+                    DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
+                    DELETE FROM LastSavedRole WHERE LastSavedRole.SavedRole = @savedrole
+                    DELETE FROM SavedRole WHERE SavedRole.[Role] = @newrole AND 
+                                                SavedRole.Device = @device
+                    INSERT INTO SavedRole (Oid,[User],[Role],Device) VALUES (NEWID(),@user,@newrole,@device)
+                    SET @newsavedrole = (SELECT SavedRole.Oid 
+                                        FROM SavedRole 
+                                        WHERE SavedRole.[User] = @user AND 
+                                            SavedRole.[Role] = @newrole AND 
+                                            SavedRole.Device = @device)
+                    INSERT INTO LastSavedRole (Device,SavedRole) VALUES (@device,@newsavedrole)
+                    RETURN
                 END
             """
         SQLManipulator.SQLExecute(sql)
     else:
         return render_template('Show_error.html',error="Недостаточно прав для данного интерфейса",ret='/menu')
+    logout_user()
     return redirect('/')
 
