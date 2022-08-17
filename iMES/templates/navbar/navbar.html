@@ -3,11 +3,34 @@
         <div class="container-fluid">
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav font-3">
-                    <li class="nav-item">
-                        <a class="nav-link nav-tpa nav-red active">ТПА Engel 5500</a>
-                    </li>
+                    {% for tpa in device_tpa %}
+                        {% if tpa['Oid'] == current_tpa[0]%}
+                            <li class="nav-item">
+                                <button class="nav-link nav-tpa nav-green active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <button class="nav-link nav-tpa nav-green" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
                 </ul>
             </div>
         </div>
     </nav>
 </header>
+<script>
+    function changeTPA(event){
+        let tpaOid = event.target.dataset.oid;
+        let tpaName = event.target.dataset.name;
+
+        xhr = new XMLHttpRequest()
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                location.reload()
+            }
+        }
+        xhr.open("GET", "/changeTpa?oid="+tpaOid+"&name="+tpaName, true)
+        xhr.send()
+    }
+</script>

@@ -1,12 +1,13 @@
 from iMES import app
-from flask import render_template,redirect
-from flask_login import login_required,current_user
+from flask import render_template, request
+from flask_login import login_required
+from iMES import current_tpa
+from iMES import TpaList
 
 @app.route('/menu')
 @login_required
 def menu():
-    if current_user.role == 'Оператор':
-        return redirect('operator')
-    if current_user.role == 'Наладчик':
-        return redirect('/adjuster')
-    return render_template("menu.html")
+    device_tpa = TpaList[request.remote_addr]
+    return render_template("menu.html",
+                           device_tpa = device_tpa,
+                           current_tpa = current_tpa[request.remote_addr])

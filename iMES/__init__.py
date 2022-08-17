@@ -20,11 +20,12 @@ sqldevices = """
             """
 
 Devices = SQLManipulator.SQLExecute(sqldevices)
+current_tpa = {}
 
 TpaList = {}
 for device in Devices:
     sqltpa = f"""
-                SELECT [Equipment].[Name]
+                SELECT [Equipment].[Oid],[Equipment].[Name]
                 FROM [MES_Iplast].[dbo].[Relation_DeviceEquipment], Equipment, Device 
                 WHERE 	Device.DeviceId = '{device[0]}' AND
                         Equipment.Oid = Relation_DeviceEquipment.Equipment AND
@@ -33,8 +34,11 @@ for device in Devices:
     tpas = SQLManipulator.SQLExecute(sqltpa)
     tpasresult = []
     for tpa in tpas:
-        tpasresult.append(tpa[0])
+        tpasresult.append({'Oid':tpa[0], 'Name':tpa[1]})
     TpaList[device[0]] = tpasresult
+    
+    current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],TpaList[device[0]][0]['Name']]
+print(current_tpa)
 
 from iMES.View.index import index
 from iMES.View.menu import menu

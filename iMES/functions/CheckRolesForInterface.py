@@ -1,10 +1,12 @@
 from iMES.Model.SQLManipulator import SQLManipulator
 from flask_login import current_user
-from flask import render_template
+from flask import render_template, request
+from iMES import current_tpa
 
 
 # Метод предназначенный для проверки доступных интерфейсов в зависимости от роли пользователя
 def CheckRolesForInterface(RequiredInterface,DirectPageTemplate):
+    ip_addr = request.remote_addr
     sql = f"""
     SELECT Interface.[Name]
     FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role],Interface,Relation_RoleInterface
@@ -24,6 +26,6 @@ def CheckRolesForInterface(RequiredInterface,DirectPageTemplate):
             current_user.role = "Оператор"
         if (RequiredInterface == "Наладчик"):
             current_user.role = "Наладчик"       
-        return render_template(f"{DirectPageTemplate}")
+        return render_template(f"{DirectPageTemplate}", current_tpa = current_tpa[ip_addr])
     else:
         return render_template('Show_error.html',error="Недостаточно прав для данного интерфейса",ret='/menu')
