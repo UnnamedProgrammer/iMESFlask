@@ -4,4 +4,4 @@ from flask_socketio import SocketIO
 
 
 if __name__ == "__main__":
-    socketio.run(app,host='192.168.118.41',debug=True)
+    socketio.run(app,host='192.168.118.68',port=8080,debug=True)

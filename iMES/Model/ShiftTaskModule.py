@@ -45,7 +45,6 @@ class UnloadShiftTaskFrom1C():
         tpa_dict = {} # Словарь формата: "'Номенклатурная группа': {'Oid': 'Значение','Наименование ТПА': 'Значение'}"
         for tpa in tpas:
             tpa_dict[tpa[0]] = {"Oid":tpa[1],"Name":tpa[2]}
-        print(tpa_dict)
         # for task in task_data:
         #     cursor.execute(f"""INSERT INTO ShiftTask (
         #                         Shift

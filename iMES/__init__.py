@@ -38,7 +38,6 @@ for device in Devices:
     TpaList[device[0]] = tpasresult
     
     current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],TpaList[device[0]][0]['Name']]
-print(current_tpa)
 
 from iMES.View.index import index
 from iMES.View.menu import menu

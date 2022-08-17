@@ -5,7 +5,6 @@ from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 @app.route('/operator')
 @login_required
 def operator():
-    print(current_user.savedrole)
     return CheckRolesForInterface('Оператор','operator/operator.html')
 
 
