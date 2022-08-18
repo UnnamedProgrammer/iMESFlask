@@ -197,36 +197,31 @@
 <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
 <script>
-    var socket = io();
-    socket.on('connect', function() {
-        socket.emit('connecting', {data: 'I\'m connected!'});
-    });
-    address = location.hostname
-    socket.emit('getTpaList', {ipaddress: location.hostname});
+        address = "{{request.remote_addr}}"
+        var socket = io();
+        socket.on('connect', function () {
+            socket.emit('connecting', { data: 'I\'m connected!' });
+        });
+        socket.emit('getTpaList', { ipaddress: address });
 
-    socket.on('AnswerAfterConnection', function(data) {
-        arr = JSON.parse(data)
-        let roles = []
-        for (let i = 0; i < Object.keys(arr).length; i++)
-        {
-            roles.push(arr[i])
-        }
-        if (roles.length > 1){
-            window.location.href = '/menu'
-        }
-        if (roles[0] == "Оператор" && roles.length == 1)
-        {
-            window.location.href = '/operator';
-        }
-        if (roles[0] == "Наладчик" && roles.length == 1)
-        {
-            window.location.href = '/adjuster';
-        };
-    });
-    socket.on('TpaList', function(data) {
-        TpaList = JSON.parse(data)
-        console.log(TpaList)
-    })
+        socket.on('AnswerAfterConnection', function (data) {
+            arr = JSON.parse(data)
+            if (address == Object.keys(arr)[0]) {
+                let roles = []
+                for (let i = 0; i < Object.keys(arr[address]).length; i++) {
+                    roles.push(arr[address][i])
+                }
+                if (roles.length > 1) {
+                    window.location.href = '/menu';
+                }
+                if (roles[0] == "Оператор" && roles.length == 1) {
+                    window.location.href = '/operator';
+                }
+                if (roles[0] == "Наладчик" && roles.length == 1) {
+                    window.location.href = '/adjuster';
+                };
+            }
+        });
 </script>
 <script>
     window.addEventListener('load', () => { 

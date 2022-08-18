@@ -1,4 +1,3 @@
-import socketio
 from iMES import socketio
 from iMES import app
 from iMES import UserController
@@ -132,7 +131,8 @@ def Authorization(passnumber):
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
         login_user(user)
-        socketio.emit('AnswerAfterConnection',json.dumps(current_user.role,ensure_ascii=False,indent=4))
+        packet = {request.remote_addr:current_user.role}
+        socketio.emit('AnswerAfterConnection',json.dumps(packet,ensure_ascii=False,indent=4))
     return 'Authorization successful'
 
 @login_manager.user_loader
@@ -205,7 +205,3 @@ def ReturnOperatorAndAdjuster():
 @socketio.on(message='connecting')
 def socket_connected(data):
     pass
-
-@socketio.on(message='getTpaList')
-def socket_connected(data):
-    socketio.emit('TpaList',json.dumps(TpaList[data['ipaddress']], ensure_ascii=False,indent=4))
