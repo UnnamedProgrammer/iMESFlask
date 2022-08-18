@@ -3,7 +3,7 @@ from flask import Flask
 from flask_login import LoginManager
 from iMES.Controller.UserCountController import UserCountController
 from iMES.Model.SQLManipulator import SQLManipulator
-
+from iMES.Model.UserModel import UserModel
 
 
 app = Flask(__name__)
@@ -13,6 +13,7 @@ login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.login_message_category = "info"
 login_manager.init_app(app=app)
+user = UserModel()
 UserController = UserCountController()
 sqldevices = """
                 SELECT[DeviceId]

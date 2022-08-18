@@ -5,7 +5,6 @@ from iMES import current_tpa
 from iMES import TpaList
 
 @app.route('/menu')
-@login_required
 def menu():
     device_tpa = TpaList[request.remote_addr]
     if current_user.role == 'Оператор':

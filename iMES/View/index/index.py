@@ -2,14 +2,11 @@ from iMES import socketio
 from iMES import app
 from iMES import UserController
 from flask import redirect, render_template, request
-from iMES.Model.UserModel import UserModel
 from flask_login import login_required, login_user, logout_user,current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
-from iMES import TpaList,current_tpa
-
-user = UserModel()
+from iMES import TpaList,current_tpa,user
 
 
 @app.route("/")
@@ -131,13 +128,29 @@ def Authorization(passnumber):
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
         login_user(user)
-        packet = {request.remote_addr:current_user.role}
-        socketio.emit('AnswerAfterConnection',json.dumps(packet,ensure_ascii=False,indent=4))
+        packet = {terminal:''}
+        socketio.emit('Auth',json.dumps(packet,ensure_ascii=False,indent=4))
     return 'Authorization successful'
 
 @login_manager.user_loader
 def load_user(id):
     return user
+
+@app.route('/Auth')
+def Auth():
+    ip_addr = request.remote_addr  # Получение IP-адресса пользователя
+    device_tpa = TpaList[ip_addr]
+    terminal = request.remote_addr
+    login_user(user)
+    packet = {terminal:current_user.role}
+    print(current_user.role)
+    if (current_user.role == 'Оператор'):
+        return redirect('/operator')
+    elif (current_user.role == 'Наладчик'):
+        return redirect('/adjuster')
+    else:
+        return redirect('/menu')
+
 
 @app.route('/login')
 def login():

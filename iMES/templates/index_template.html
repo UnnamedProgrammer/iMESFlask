@@ -203,7 +203,12 @@
             socket.emit('connecting', { data: 'I\'m connected!' });
         });
         socket.emit('getTpaList', { ipaddress: address });
-
+        socket.on('Auth',function(data) {
+            arr = JSON.parse(data)
+            if (address == Object.keys(arr)[0]) {
+                window.location.href = '/Auth'
+            }
+        })
         socket.on('AnswerAfterConnection', function (data) {
             arr = JSON.parse(data)
             if (address == Object.keys(arr)[0]) {
