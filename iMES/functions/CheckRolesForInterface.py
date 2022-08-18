@@ -28,4 +28,4 @@ def CheckRolesForInterface(RequiredInterface,DirectPageTemplate):
             current_user.role = "Наладчик"       
         return render_template(f"{DirectPageTemplate}", current_tpa = current_tpa[ip_addr])
     else:
-        return render_template('Show_error.html',error="Недостаточно прав для данного интерфейса",ret='/menu')
+        return render_template('Show_error.html',error="Недостаточно прав для данного интерфейса",ret='/menu',current_tpa = current_tpa[ip_addr])

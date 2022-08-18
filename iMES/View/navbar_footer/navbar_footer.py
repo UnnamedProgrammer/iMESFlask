@@ -4,6 +4,7 @@ from flask_login import login_required, current_user, logout_user
 from iMES.Model.SQLManipulator import SQLManipulator
 
 # Процедура кнопки "Выход с сохранением"
+# Закрепляет пользователя за выбранной ролью
 @app.route('/exitwithsave')
 @login_required
 def ExitWithSave():

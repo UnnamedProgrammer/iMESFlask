@@ -8,7 +8,7 @@ from iMES import current_tpa,TpaList
 DirectumConnection = DirectumIntegration()
 InstructionsId = [182675, 1057032, 277104, 1083964]
 
-
+# Метод отображающий окно со списком визуальных инструкций
 @app.route('/operator/visualinstructions/')
 @login_required
 def VisualInstructions():
