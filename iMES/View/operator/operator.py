@@ -1,5 +1,5 @@
 from iMES import app
-from flask_login import login_required,current_user
+from flask_login import login_required
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 
 # Отображение окна оператора

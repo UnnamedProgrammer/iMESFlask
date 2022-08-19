@@ -170,11 +170,19 @@
                     </div>
                 </div>
                 <div class="col-6">
-                    <a>
-                        <div class="card height-bottom shadow">
-                            <div class="accent left-padding">УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ</div>
-                        </div>
-                    </a>
+                    {%if current_user.is_authenticated and current_user.device_type == 'Веб'%}
+                        <a href="/menu">
+                            <div class="card height-bottom shadow">
+                                <div class="accent left-padding">УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ</div>
+                            </div>
+                        </a>
+                    {%else%}
+                        <a>
+                            <div class="card height-bottom shadow">
+                                <div class="accent left-padding">УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ</div>
+                            </div>
+                        </a>
+                    {%endif%}
                 </div>
                 <div class="col-2">
                     <div class="card height-bottom shadow">

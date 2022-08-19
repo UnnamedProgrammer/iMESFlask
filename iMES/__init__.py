@@ -4,8 +4,14 @@ from flask_login import LoginManager
 from iMES.Controller.UserCountController import UserCountController
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES.Model.UserModel import UserModel
+import configparser
 
 
+config = configparser.ConfigParser()
+config.read("iMES/config.cfg")
+
+host = config["Host-data"]["ip_address"]
+port = int(config["Host-data"]["port"])
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
