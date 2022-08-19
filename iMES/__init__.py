@@ -45,9 +45,10 @@ for device in Devices:
     TpaList[device[0]] = tpasresult
     
     current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],TpaList[device[0]][0]['Name']]
-
+   
 from iMES.View.index import index
 from iMES.View.menu import menu
 from iMES.View.operator import operator, tableWasteDefect,tableWeight,visualInstructions
 from iMES.View.adjuster import adjuster
 from iMES.View.navbar_footer import navbar_footer
+from iMES.View.bind_press_form import bind_press_form
