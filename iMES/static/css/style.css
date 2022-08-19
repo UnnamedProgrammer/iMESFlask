@@ -389,3 +389,200 @@ button {
       }
     }
   }
+
+  /* Атакишиев f-0001d стили для страницы /bindPressForm НАЧАЛО */
+  .my-scrollbar::-webkit-scrollbar{
+    width:80px;
+    height:60px
+  }
+  .my-scrollbar::-webkit-scrollbar-thumb{
+    background-color:#2b507c
+  }
+  .my-scrollbar::-webkit-scrollbar-track{
+    border-width:0
+  }
+  .my-scrollbar::-webkit-scrollbar-track:hover{
+    border-left:solid 1px #aaa;
+    background-color:#eee
+  }
+  select.clip {
+    white-space: nowrap; /* Запрещаем перенос строк */
+    overflow: hidden; /* Обрезаем все, что не помещается в область */
+   }
+  select {
+    width: 822px; /* Ширина блока */
+    float: right; /* Обтекание по правому краю */
+  }
+  option {
+      font: 20pt sans-serif;  
+  }
+  .name-label-2 {
+        display:inline-block;
+        width:20%;
+        height:52px;
+        text-align:center;
+        color:#fff;
+        background-color:#2b507c;
+        text-transform:uppercase;
+        padding:12px;
+        margin:0 0 6px 0
+  }
+  .name-data-2 {
+    display:inline-block;
+    width:79.3%;
+    height:52px;
+    text-align:center;
+    vertical-align:middle;
+    background-color:#fff;
+    text-transform:uppercase;
+    padding:12px
+  }
+  .view-header {
+    height:52px;
+    text-align:center;
+    background-color:#90c6d1;
+    text-transform:uppercase;
+    padding:12px;
+    font-size:16px
+  }
+  .btn-blue-1 {
+    background-color:#90c6d1
+  }
+  .btn-blue-2 {
+    background-color:#254063;
+    color:#fff
+  }
+  .select-for-name-2 {
+    height:430px!important;
+    font-size:16pt;
+    border-radius:0;
+    margin:0 0 6px 0
+  }
+  .row {
+    display:-ms-flexbox;
+    display:flex;
+    -ms-flex-wrap:wrap;
+    flex-wrap:wrap;
+    margin-right:-15px;
+    margin-left:-15px
+  }
+  .search-input {
+    width: 76%;
+    border: none;
+    font-size: 24pt;
+  }
+  .search-label {
+    display: inline-block;
+    width:20%;
+    height: 52px;
+    text-align: center;
+    color: white;
+    background-color: #2b507c;
+    text-transform: uppercase; 
+    padding: 12px;
+    margin: 0px 0px 0px 14px;
+  }
+  /* Стили клавиатур */
+
+  .keyboard {
+    position: absolute;
+    z-index: 150;
+    padding: 20px;
+    top: 600px;
+    left: 125px;
+    width: 1085px;
+    height: 270px;
+    background-color: white;
+    border: 2px solid #ced4da;
+    border-radius: 10px;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,1.15)!important;
+    }
+
+.word-keyboard {
+  position: absolute;
+  z-index: 150;
+  padding: 20px;
+  top: 600px;
+  left: 125px;
+  width: 1085px;
+  height: 270px;
+  background-color: white;
+  border: 2px solid #ced4da;
+  border-radius: 10px;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,1.15)!important;
+  }
+
+  .keyboard__keys {
+    text-align: center;
+  }
+
+  .material-icons {
+    display: contents;
+  }
+
+  .keyboard__key {
+    margin: 3px;
+    width: 70px;
+    height: 70px;
+    font-size: 24pt;
+    border: none;
+  }
+
+  .keyboard__key--wide {
+    width: 120px;
+    background-color: #90c6d1;
+  }
+
+  .keyboard__key--extra-wide {
+    width: 240px;
+    background-color: #90c6d1;
+  }
+
+  .keyboard__key--dark {
+    width: 95px;
+  }
+
+  .keyboard__key:active {
+    border-radius: 10px;
+    background-color: #e0a800;
+  }
+
+  .keyboard__key--wide:active {
+    border-radius: 5px;
+    background-color: #e0a800;
+  }
+
+  .keyboard--hidden {
+    display: none;
+  }
+
+  .word-kevyboard--hidden {
+    display: none;
+  }
+
+  .number-keyboard {
+    margin-top: 45px;
+    z-index: 150;
+  }
+
+  .number-keyboard .keyboard__key {
+    width: 140px;
+    height: 100px;
+  }
+
+  .number-keyboard .keyboard__key--wide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 50px;
+    width: 100%;
+  }
+
+  .number-keyboard--hidden {
+    display: none;
+  }
+  
+  .hidden {
+    display: none;
+  }
+/* Атакишиев f-0001d стили для страницы /bindPressForm КОНЕЦ */

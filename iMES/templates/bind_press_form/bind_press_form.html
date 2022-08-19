@@ -1,0 +1,101 @@
+{% extends 'index_template.html' %}
+
+{% block main_window %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script src="/static/js/BindPressForm/selected_PF.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<div class="cancelWindow" id="js-shadow"></div>
+<div class="view-1"> 
+    <div class="view-header">Привязка пресс-формы</div>
+    <div class="view-body-1"> 
+        <input id="conOid" type="hidden" value="99AD52D8-B3DD-432F-91BF-6E30A9939E52"></input>
+        <div class="row">
+            <div class="search-label" for="">Поиск</div>
+            <input class="search-input openKeyBig use-keyboard-input" id="searchPressForm" type="text">
+        </div>
+        <form action="bind_press_form.py" method="post" id="form">
+            <select class="custom-select jsScroll select-for-name-2 my-scrollbar" id="selectPressForm" size="12">
+                {% for press_form in press_forms %}
+                    <option value="{{ press_form[0] }}">{{ press_form[1] }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <button type="button" class="btn btn-light button-1 btn-blue-1" data="" id="bindPressForm">Привязать пресс-форму</button>
+        </div>  
+        <div class="col-6">
+            <button type="button" class="btn btn-light button-1 btn-blue-2 startLoad" id="exitNoSave" onclick="location.href='/'">
+                Выход
+            </button>
+        </div>  
+    </div>        
+</div>
+<script src="/static/js/keyboard.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {  
+        var selectPressForm = document.getElementById('selectPressForm'),
+            id = document.getElementById('adjuster').getAttribute('online'),
+            bindPressForm = document.getElementById('bindPressForm');
+
+        function openKeboard() {
+            let keyboard = document.getElementsByClassName('keyboard');  
+        }
+
+        //--------------------------СИСТЕМА ПОИСКА-----------------------------
+        document.addEventListener("click", function(e) {
+            let input = document.getElementById('searchPressForm');
+            let val = input.value.trim().toUpperCase();
+            let searchItems = document.querySelectorAll('#selectPressForm option');
+            if (e.target.classList.contains('keyboard__key')) {
+                if (val != '') {
+                    searchItems.forEach(function (elem){
+                        if (elem.innerText.toUpperCase().search(val) == -1) {
+                            elem.classList.add('hidden')
+                        }
+                        else {
+                            elem.classList.remove('hidden');
+                        }
+                    });
+                }
+                else {
+                    searchItems.forEach(function (elem){
+                        elem.classList.remove('hidden');
+                    });
+                }
+            }
+        });
+        //---------------------------------------------------------------------
+
+        function scroll(){
+            var jsScroll = document.getElementsByClassName('jsScroll');
+            if(jsScroll){
+                [].forEach.call(jsScroll, function(item) {
+                    var startX, startY;
+                    var listener = function(e) {
+                        startX = this.scrollLeft + e.pageX;
+                        startY = this.scrollTop + e.pageY;
+                        item.addEventListener('mousemove', endListener);
+                    };
+                
+                    var endListener = function(e) {
+                        this.scrollLeft = startX - e.pageX;
+                        this.scrollTop = startY - e.pageY;
+                        return false;
+                    };
+                
+                    item.addEventListener('mousedown', listener);
+                
+                    window.addEventListener("mouseup", function(){ 
+                        item.removeEventListener('mousemove', endListener);
+                    });
+                });
+            }
+        }  
+    });
+</script>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
