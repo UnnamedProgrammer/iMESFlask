@@ -1,7 +1,5 @@
-from iMES import socketio
-from iMES import app
-from flask_socketio import SocketIO
+from iMES import app,socketio,host,port
 
 
 if __name__ == "__main__":
-    socketio.run(app, host='192.168.118.81', port=8080, debug=True)
+    socketio.run(app,host=host,port=port,debug=True)

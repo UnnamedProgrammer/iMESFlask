@@ -7,24 +7,35 @@ from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
 from iMES import TpaList,current_tpa,user
+import requests
 
 # Метод возвращающий главную страницу
 @app.route("/")
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     device_tpa = TpaList[ip_addr]
-    # Код закоментирован до тех пор пока не появится авторизация
-    # for filename in os.listdir("iMES/templates/Directum"):
-    #     shutil.rmtree('iMES/templates/Directum/'+filename)
-    # for filename in os.listdir("iMES/static/Directum"):
-    #     shutil.rmtree('iMES/static/Directum/'+filename)
-    # try:
-    #     shutil.rmtree('iMES/static/Directum/images')
-    # except:
-    #     pass
+    sql_GetDeviceType = f"""SELECT DeviceType.[Name]
+                           FROM Device, DeviceType
+                           WHERE Device.DeviceId = '192.168.118.161' AND
+                                 Device.DeviceType = DeviceType.Oid
+                        """
+    user.device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
+    if(user.device_type == 'Веб' and current_user.is_authenticated == False):
+        sql_GetCardNumber = f"""
+                                SELECT [User].CardNumber
+                                FROM [User],Device WHERE 
+                                Device.DeviceId = '{ip_addr}' AND
+                                Device.[Name] = [User].UserName
+                            """
+        CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
+        from iMES import host,port
+        r = requests.get(f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}")
+        if(r.status_code == 200):
+            login_user(user)
     return render_template("index.html",
                            device_tpa = device_tpa,
                            current_tpa = current_tpa[ip_addr])
+
 
 #Метод возвращающий текущий ТПА в навбаре
 @app.route("/changeTpa", methods=["GET"])
@@ -55,6 +66,95 @@ def GetPlan():
 @app.route("/Auth/PassNumber=<string:passnumber>")
 def Authorization(passnumber):
     terminal = request.remote_addr
+    sql = f"""
+    SELECT
+         EMPL.LastName
+        ,EMPL.FirstName
+        ,EMPL.MiddleName
+        ,USR.[UserName]
+        ,USR.[CardNumber]
+        ,RL.Name
+        ,ITF.Name
+    FROM [MES_Iplast].[dbo].[User] as USR,
+        [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
+        [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
+        [MES_Iplast].[dbo].[Interface] as ITF,
+        [MES_Iplast].[dbo].[Role] as RL,
+        [MES_Iplast].[dbo].[Employee] as EMPL
+    WHERE RUR.[User] = USR.Oid AND 
+        RRI.[Role] = RUR.[Role] AND
+        ITF.Oid = RRI.Interface AND
+        RL.Oid = RUR.Role AND
+        EMPL.Oid = USR.[Employee] AND
+        USR.[CardNumber] = '{passnumber}'
+        """
+
+    data = SQLManipulator.SQLExecute(sql)
+    if (len(data) == 0):
+        return 'User undefinded'
+    else:
+        UserController.CountUsers += 1
+        userdata = list(data[0])
+        userdata.insert(0,UserController.CountUsers)
+        sqlLastRole = f"""
+                SELECT [Role].[Name]
+                FROM [SavedRole],[User],[Role] 
+                WHERE [User].CardNumber = '{userdata[5]}' AND
+                    [SavedRole].[User] = [User].Oid AND
+                    [SavedRole].[Role] = [Role].Oid
+                """
+        LastRole = SQLManipulator.SQLExecute(sqlLastRole)
+        if(LastRole != []):
+            user.role = {0:LastRole[0][0]}
+        else:
+            sqlUserRoles = f"""
+                SELECT [Role].[Name]
+                FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
+                WHERE [User].CardNumber = '{userdata[5]}' AND 
+                    [Relation_UserRole].[User] = [User].Oid AND
+                    [Relation_UserRole].[Role] = [Role].Oid
+            """
+            roles = SQLManipulator.SQLExecute(sqlUserRoles)
+            user.role = {}
+            for i in range(0,len(roles)):
+                user.role[i] = roles[i][0]
+        sqlCheckSavedRole = f"""
+                DECLARE @device uniqueidentifier
+                DECLARE @user uniqueidentifier
+                SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{terminal}')
+                SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{userdata[4]}')
+                SELECT [Role].[Name] AS Роль
+                FROM Employee, [Role], LastSavedRole, SavedRole, [User]
+
+                WHERE LastSavedRole.Device = @device AND
+                    SavedRole.Oid = LastSavedRole.SavedRole AND
+                    SavedRole.[Role] = [Role].Oid AND
+                    [User].Oid = SavedRole.[User] AND
+                    Employee.Oid = [User].Employee AND
+                    [User].Oid = @user
+            """
+        try:
+            SavedRole = SQLManipulator.SQLExecute(sqlCheckSavedRole)[0][0]
+        except:
+            SavedRole = ''
+            pass
+        if SavedRole != '':
+            user.role = SavedRole
+            user.savedrole = True
+        else:
+            user.savedrole = False
+        user.id = userdata[0]
+        user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
+        user.username = userdata[4]
+        user.CardNumber = userdata[5]
+        user.interfaces = userdata[7]
+        packet = {terminal:''}
+        socketio.emit('Auth',json.dumps(packet,ensure_ascii=False,indent=4))
+    return 'Authorization successful'
+
+@app.route("/Auth/PassNumber=<string:passnumber>/IP=<string:ipaddress>")
+def AuthorizationWhithoutPass(passnumber,ipaddress):
+    terminal = ipaddress
     sql = f"""
     SELECT
          EMPL.LastName
