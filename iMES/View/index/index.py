@@ -16,7 +16,7 @@ def index():
     device_tpa = TpaList[ip_addr]
     sql_GetDeviceType = f"""SELECT DeviceType.[Name]
                            FROM Device, DeviceType
-                           WHERE Device.DeviceId = '192.168.118.161' AND
+                           WHERE Device.DeviceId = '{ip_addr}' AND
                                  Device.DeviceType = DeviceType.Oid
                         """
     user.device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
