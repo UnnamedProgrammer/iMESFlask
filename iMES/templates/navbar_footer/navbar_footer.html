@@ -2,21 +2,22 @@
 <div class="navbar-footer">
     <button class="btn btn__navbar-footer_tpa col-5 red" type="button" data-bs-toggle="offcanvas"
         data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
-        ТПА Engel 5500
+        <span class="icon-menu me-3"></span>ТПА Engel 5500
     </button>
-    <a class="btn btn__navbar-footer primary" href="/menu" style="font-size: 28pt;">
-        <p>МЕНЮ</p>
+    <a class="btn btn__navbar-footer primary" href="/menu">
+        <p><span class="icon-list me-2"></span>МЕНЮ</p>
     </a>
     <a class="btn btn__navbar-footer primary" href="/logoutWithoutDeleteRoles">
-        <p>ВЫХОД</p>
+        <p><span class="icon-close"></span>ВЫХОД</p>
     </a>
     {% if current_user.savedrole == False%}
-    <a class="btn btn__navbar-footer primary" href="/exitwithsave">
+    <a class="btn btn__navbar-footer btn__navbar-footer_exit primary" href="/exitwithsave">
+        <span class="icon-save me-2"></span>
         <p>ЗАПОМНИТЬ<br>МЕНЯ(ВЫХОД)</p>
     </a>
     {% endif %}
     {% if current_user.savedrole == True%}
-    <a class="btn btn__navbar-footer primary" href="/logout">
+    <a class="btn btn__navbar-footer btn__navbar-footer_exit primary" href="/logout">
         <p>ОТВЯЗАТЬ<br>СЕБЯ</p>
     </a>
     {% endif %}

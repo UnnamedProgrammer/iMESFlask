@@ -6,6 +6,8 @@
     font-size: 18pt
     color: #212529
     border: none
+    &:hover
+        background-color: #dae0e5
 
     &__menu
         height: 170px
@@ -20,11 +22,21 @@
     &__navbar-footer
         margin-left: 5px
         width: 100%
-        font-size: 20pt
+        font-size: 28pt
         box-shadow: 2px 1px 4px 0px #223c50
         &_tpa
+            padding-left: 40px
+            display: flex
+            flex-direction: row
+            justify-content: flex-start
             box-shadow: 2px 1px 4px 0px #223c50
             font-size: 28pt
+        &_exit
+            display: flex
+            flex-direction: row
+            font-size: 18pt
+            & span
+                font-size: 28pt
 
     &__table
         display: flex
