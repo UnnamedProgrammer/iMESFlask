@@ -334,6 +334,17 @@ def ReturnOperatorAndAdjuster():
     return json.dumps(OperatorAdjusterAtTerminals,ensure_ascii=False,indent=4)
 
 # Метод сокета срабатывающий при соединении
-@socketio.on(message='connecting')
+@socketio.on(message='GetDeviceType')
 def socket_connected(data):
-    pass
+    ip_addr = request.remote_addr
+    sql_GetDeviceType = f"""SELECT DeviceType.[Name]
+                           FROM Device, DeviceType
+                           WHERE Device.DeviceId = '{ip_addr}' AND
+                                 Device.DeviceType = DeviceType.Oid
+                        """
+    device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
+    if(device_type == 'Веб'):
+        data = 'Веб'
+    else:
+        data = 'Терминал'
+    socketio.emit("DeviceType",json.dumps({ip_addr:data},ensure_ascii=False,indent=4))

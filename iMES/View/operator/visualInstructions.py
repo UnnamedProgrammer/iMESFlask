@@ -34,7 +34,8 @@ def VisualInstructions():
                 table = table + tr_table
     else:
         return render_template("Show_error.html", error=Authorization,
-                               ret="/operator")
+                               ret="/operator",device_tpa = device_tpa,
+                           current_tpa = current_tpa[request.remote_addr])
     return render_template("operator/tableVisualInstruction.html", table=table,device_tpa = device_tpa,
                            current_tpa = current_tpa[request.remote_addr])
 
@@ -42,6 +43,7 @@ def VisualInstructions():
 @app.route('/operator/visualinstructions/DAuth=<string:status>/ddoc=<string:instructionid>')
 @login_required
 def GetVisualInstruction(instructionid, status):
+    device_tpa = TpaList[request.remote_addr]
     if (status == "True"):
         if (os.path.exists(f"iMES/templates/Directum/doc_{instructionid}")):
             return render_template(
@@ -50,7 +52,8 @@ def GetVisualInstruction(instructionid, status):
             doc = DirectumConnection.DirectumGetDocument(instructionid)
             if (isinstance(doc, str)):
                 return render_template("Show_error.html", error=doc,
-                                       ret="/operator")
+                                       ret="/operator",device_tpa = device_tpa,
+                                       current_tpa = current_tpa[request.remote_addr])
             return render_template(
                 f"Directum/doc_{instructionid}/{instructionid}_frame.html")
     else:

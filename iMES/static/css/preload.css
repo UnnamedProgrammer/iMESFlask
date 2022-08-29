@@ -75,9 +75,9 @@
   .preloader {
     position: absolute;
     left: -5px;
-    width: 832px;
+    width: 836px;
     height: 720px;
-    z-index: 9999;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
