@@ -13,25 +13,35 @@ import requests
 @app.route("/")
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
-    device_tpa = TpaList[ip_addr]
-    sql_GetDeviceType = f"""SELECT DeviceType.[Name]
-                           FROM Device, DeviceType
-                           WHERE Device.DeviceId = '{ip_addr}' AND
-                                 Device.DeviceType = DeviceType.Oid
-                        """
-    user.device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
-    if(user.device_type == 'Веб' and current_user.is_authenticated == False):
-        sql_GetCardNumber = f"""
-                                SELECT [User].CardNumber
-                                FROM [User],Device WHERE 
-                                Device.DeviceId = '{ip_addr}' AND
-                                Device.[Name] = [User].UserName
+    # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
+    if ip_addr in TpaList.keys():
+        # Выгружаем список привязанных ТПА к клиенту
+        device_tpa = TpaList[ip_addr]
+        # Запрос определяющий тип устройства клиента из бд, веб или терминал
+        sql_GetDeviceType = f"""SELECT DeviceType.[Name]
+                            FROM Device, DeviceType
+                            WHERE Device.DeviceId = '{ip_addr}' AND
+                                    Device.DeviceType = DeviceType.Oid
                             """
-        CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
-        from iMES import host,port
-        r = requests.get(f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}")
-        if(r.status_code == 200):
-            login_user(user)
+        user.device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
+        # Если устройство является веб то находим пользователя привязаннаго за устройством
+        # И автоматически авторизуем его по его номеру карты
+        if(user.device_type == 'Веб' and current_user.is_authenticated == False):
+            sql_GetCardNumber = f"""
+                                    SELECT [User].CardNumber
+                                    FROM [User],Device WHERE 
+                                    Device.DeviceId = '{ip_addr}' AND
+                                    Device.[Name] = [User].UserName
+                                """
+            CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
+            from iMES import host,port
+            r = requests.get(f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}")
+            if(r.status_code == 200):
+                login_user(user)
+    # В противном случае уведомляем клиента о том что его нет в списках устройств
+    else:
+        return "Ваше устройство не находиться в списке допущенных, нет доступа."
+    # Рендерим страницу
     return render_template("index.html",
                            device_tpa = device_tpa,
                            current_tpa = current_tpa[ip_addr])
@@ -65,7 +75,9 @@ def GetPlan():
 # на переход по роутингу авторизации '/Auth'
 @app.route("/Auth/PassNumber=<string:passnumber>")
 def Authorization(passnumber):
+    # Определяем адресс клиента
     terminal = request.remote_addr
+    # Запрос на информацию о клиенте по его номеру карты
     sql = f"""
     SELECT
          EMPL.LastName
@@ -88,14 +100,16 @@ def Authorization(passnumber):
         EMPL.Oid = USR.[Employee] AND
         USR.[CardNumber] = '{passnumber}'
         """
-
+    # Отправляем запрос
     data = SQLManipulator.SQLExecute(sql)
+    # Если записей с таким номером пропуска нет выводим ошибку
     if (len(data) == 0):
         return 'User undefinded'
     else:
-        UserController.CountUsers += 1
-        userdata = list(data[0])
-        userdata.insert(0,UserController.CountUsers)
+        UserController.CountUsers += 1 # Прибавляем к счетчику пользователей 1 для задания ID пользователяUserController.CountUsers += 1
+        userdata = list(data[0]) # Помещаем данные о клиенте в список для удобства
+        userdata.insert(0,UserController.CountUsers) # Помещаем в начало спика ID
+        # Запрос на сохраненные роли пользователя
         sqlLastRole = f"""
                 SELECT [Role].[Name]
                 FROM [SavedRole],[User],[Role] 
@@ -143,15 +157,19 @@ def Authorization(passnumber):
             user.savedrole = True
         else:
             user.savedrole = False
+        # Добавляем данные в экземпляр пользователя
         user.id = userdata[0]
         user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
         packet = {terminal:''}
+        # Отправляем в сокет сообщение о успешной авторизации
         socketio.emit('Auth',json.dumps(packet,ensure_ascii=False,indent=4))
     return 'Authorization successful'
 
+# Метод предназначенный для авторизации без пропуска по запросу
+# Большинство операций аналогичны методу авторизации с пропуском
 @app.route("/Auth/PassNumber=<string:passnumber>/IP=<string:ipaddress>")
 def AuthorizationWhithoutPass(passnumber,ipaddress):
     terminal = ipaddress
