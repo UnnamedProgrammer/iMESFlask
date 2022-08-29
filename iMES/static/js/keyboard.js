@@ -98,7 +98,7 @@ const Keyboard = {
 
                 case "space":
                     keyElement.classList.add("keyboard__key--extra-wide");
-                    keyElement.innerHTML = createIconHTML('');
+                    keyElement.innerHTML = createIconHTML('_');
 
                     keyElement.addEventListener("click", () => {
                         this.properties.value += " ";

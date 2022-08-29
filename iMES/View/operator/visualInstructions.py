@@ -23,8 +23,8 @@ def VisualInstructions():
                 tr_table = f"""
                                 <tr>
                                     <td class="align-middle">{Name}</td>
-                                    <td>
-                                        <a class="table_button button-1 btn" onclick="LinkClick();"
+                                    <td class="nopadding">
+                                        <a class="btn__table" onclick="LinkClick();"
                                         href="/operator/visualinstructions/DAuth={Authorization}/ddoc={InstructionsId[i]}">
                                             Открыть
                                         </a>

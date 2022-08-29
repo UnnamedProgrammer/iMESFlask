@@ -6,11 +6,11 @@
                     {% for tpa in device_tpa %}
                         {% if tpa['Oid'] == current_tpa[0]%}
                             <li class="nav-item">
-                                <button class="nav-link nav-tpa nav-green active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                <button class="nav-link nav_tpa nav_green active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
                             </li>
                         {% else %}
                             <li class="nav-item">
-                                <button class="nav-link nav-tpa nav-green" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                <button class="nav-link nav_tpa nav_green" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
                             </li>
                         {% endif %}
                     {% endfor %}

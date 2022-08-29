@@ -124,10 +124,9 @@ class DirectumIntegration():
                         if (i == 1):
                             # Создаём фрейм в котором будем отображать документ
                             frame_html = f""" <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                                    <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/main.css') }}}}">
                                     <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
                                     <div class="container">
-                                        <div class="view__header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
+                                        <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
                                         <div class="d-flex justify-content-center">
                                             <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
                                                 class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&Show"
@@ -200,10 +199,9 @@ class DirectumIntegration():
                     # Создаём фрейм в котором будем отображать html файл документа
                     frame_html = f"""
                                     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                                    <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/main.css') }}}}">
                                     <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
                                     <div class="container">
-                                        <div class="view__header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
+                                        <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
                                         <div class="d-flex justify-content-center">
                                             <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
                                                 class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&Show"

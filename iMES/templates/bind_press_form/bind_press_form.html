@@ -14,7 +14,7 @@
             <input class="search-input openKeyBig use-keyboard-input" id="searchPressForm" type="text">
         </div>
         <form action="bind_press_form.py" method="post" id="form">
-            <select class="custom-select jsScroll select-for-name-2 my-scrollbar" id="selectPressForm" size="12">
+            <select class="custom-select jsScroll my-scrollbar" id="selectPressForm" size="12">
                 {% for press_form in press_forms %}
                     <option value="{{ press_form[0] }}">{{ press_form[1] }}</option>
                 {% endfor %}
@@ -23,10 +23,10 @@
     </div>
     <div class="row">
         <div class="col-6">
-            <button type="button" class="btn btn-light button-1 btn-blue-1" data="" id="bindPressForm">Привязать пресс-форму</button>
+            <button type="button" class="btn button-1 primary" data="" id="bindPressForm">Привязать пресс-форму</button>
         </div>  
         <div class="col-6">
-            <button type="button" class="btn btn-light button-1 btn-blue-2 startLoad" id="exitNoSave" onclick="location.href='/'">
+            <button type="button" class="btn button-1 secondary startLoad" id="exitNoSave" onclick="location.href='/'">
                 Выход
             </button>
         </div>  

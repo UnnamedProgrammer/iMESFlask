@@ -1,0 +1,67 @@
+.modal-window
+    &_list
+        border-color: black
+        position: absolute
+        z-index: 4
+        top: 70px
+        left: 265px
+        border-width: 10px
+        background-color: white
+        width: 740px
+        height: 800px
+
+    &__search
+        display: flex
+        height: 50px
+        &_label 
+            display: flex
+            justify-content: center
+            align-items: center
+            width: 20%
+        &_input
+            width: 80%
+            font-size: 24pt
+            border: none
+            border-bottom: 1px solid #ced4da
+
+    &__body
+        height: 490px
+        font-size: 18pt
+        flex-grow: 1
+
+    &__footer
+        display: flex
+        flex-direction: column
+        margin-top: 10px
+
+    &__button
+        display: flex
+        justify-content: center
+        align-items: center
+        height: 100px
+        font-size: 22pt
+
+    &_number
+        display: flex
+        flex-direction: column
+        position: absolute
+        z-index: 5
+        top: 100px
+        left: 390px
+        width: 500px
+        height: 650px
+        border-width: 10px
+        border-color: black
+        background-color: white
+
+    &__input 
+        width: 70%
+        height: 80px
+
+    &__enter-button
+        display: flex
+        justify-content: center
+        align-items: center
+        width: 30%
+        height: 80px
+        font-size: 22pt

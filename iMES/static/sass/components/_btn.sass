@@ -1,0 +1,78 @@
+.btn
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    font-size: 18pt
+    color: #212529
+    border: none
+
+    &__menu
+        height: 170px
+        margin: 5px 0px
+        &_wide
+            width: 100%
+        &_narrow
+            width: 49.4%
+        &_height160
+            height: 160px
+
+    &__navbar-footer
+        margin-left: 5px
+        width: 100%
+        font-size: 20pt
+        box-shadow: 2px 1px 4px 0px #223c50
+        &_tpa
+            box-shadow: 2px 1px 4px 0px #223c50
+            font-size: 28pt
+
+    &__table
+        display: flex
+        justify-content: center
+        align-items: center
+        vertical-align: middle
+        height: 45px
+        background-color: $color-blue-dark !important
+        color: #fff
+        & button
+            color: #fff
+        &:hover
+            background-color: #dae0e5 !important
+            color: black
+        &_checklist
+            background-color: #198754 !important
+            &:hover
+                background-color: #12613c !important
+                color: white
+        &_reason:hover
+            background-color: #dae0e5 !important
+
+    &__left-menu
+        height: 75px
+        border-radius: 0
+        border-bottom: .5px black solid
+        &:hover
+            background-color: #90c6d1
+
+    &__add-waste
+        margin-right: 1rem
+        width: 10%
+        height: 3.3rem
+    &__delete-waste
+        width: 10%
+        height: 3.3rem
+        background-color: $color-red-dark !important
+
+    &__view
+        font-size: 28pt
+        width: 100%
+        height: 120px
+        line-height: 1.2
+        box-shadow: 2px 1px 4px 0px #223c50
+        &_subtitle
+            font-size: 18pt
+
+
+.btn-row
+    display: flex
+    justify-content: space-between

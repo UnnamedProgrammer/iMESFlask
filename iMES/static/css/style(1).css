@@ -1,0 +1,588 @@
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css");
+
+body {
+    width: 1280px;
+    height: 1024px;
+    padding: 5px;
+    background-color: #ecf0f5;
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+}
+
+p {
+    margin: 0;
+    padding: 0;
+}
+
+button {
+    border: none;
+}
+
+.nav-link:focus, .nav-link:hover {
+    color: #000000;
+}
+
+.navbar {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 0;
+    border-bottom: 1px solid black;
+}
+
+.nav-tabs .nav-link {
+    border: 1px solid transparent;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+}
+
+.nav-tpa {
+    padding: .5rem 1rem !important;
+    font-weight: 600;
+    color: black;
+    opacity: 0.5;
+    height: 50px;
+}
+
+.nav-green {
+    background: #d6fcdd;
+}
+
+.nav-red {
+    background: #fcd5d0;
+}
+
+.navbar-footer {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 12px;
+}
+
+.main-window {
+    margin-top: 7px;
+    margin-bottom: 15px;
+}
+
+.view__header {
+    height: 52px;
+    text-align: center;
+    background-color: #90c6d1;
+    text-transform: uppercase;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.view__header__button {
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-transform: uppercase;
+    font-size: 14px;
+    box-shadow: 0 0 0 60px rgba(0,0,0,0) inset, 0.1em 0.1em 0.2em rgb(7, 0, 0);
+    background-color: #254063;
+    color: white;
+    text-align: center;
+    height: 50px;
+    width: 180px;
+    padding: 4px;
+}
+
+.idle-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 15px;
+    height: 965px;
+    background-color: #fff;
+}
+
+.form-control_idle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    font-size: 16pt;
+    
+}
+
+.input-group_double {
+    width: 50%;
+}
+
+.input-group-text_idle {
+    justify-content: center;
+    width: 30%;
+    height: 3.5rem;
+    font-size: 14pt;
+}
+
+
+.input-group-text_idle-min {
+    justify-content: center;
+    width: 35%;
+    height: 3.5rem;
+    font-size: 14pt;
+}
+
+.input-group-text_green {
+    background-color: #086649;
+    color: #fff;
+}
+
+.input-group-text_blue{
+    background-color: #254063;
+    color: #fff;
+}
+
+.input-group-text_waste {
+    width: 100%;
+}
+
+.weight-input {
+    width: 19%;
+}
+
+.inv-input {
+    border: 2px solid red;
+}
+
+.bg-blur {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 3;
+}
+
+.btn:hover {
+    background-color: #dae0e5;
+}
+
+.btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; 
+    font-size: 18pt;
+    color: #212529;
+    border: none;
+}
+
+.btn__menu {
+    height: 170px;
+    margin: 5px 0px;
+}
+
+.btn__menu_wide {
+    width: 100%;
+}
+
+.btn__menu_narrow {
+    width: 49.4%;
+}
+
+.btn__menu_height160 {
+    height: 160px;
+}
+
+.btn-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn__navbar-footer {
+    margin-left: 5px;
+    width: 100%;
+    font-size: 20pt;
+    box-shadow: 2px 1px 4px 0px rgb(34 60 80 / 70%);
+}
+
+.btn__navbar-footer_tpa {
+    box-shadow: 2px 1px 4px 0px rgb(34 60 80 / 70%);
+    font-size: 28pt;
+}
+
+.btn__table {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    vertical-align: middle;
+    background-color: #254063 !important;
+    color: #fff;
+    border-radius: 0.25rem;
+}
+
+.btn_add-waste {
+    margin-right: 1rem;
+    width: 10%;
+    height: 3.3rem;
+}
+.btn_delete-waste {
+    width: 10%;
+    height: 3.3rem;
+    background-color: #dc3545!important;
+}
+
+.btn__table button {
+    color: white;
+}
+
+.btn__table:hover {
+    background-color: #dae0e5 !important;
+    color: black;
+}
+
+.form-control:disabled, .form-control[readonly] {
+    background-color: #fff;
+    opacity: 1;
+}
+
+.hidden {
+    display: none;
+}
+
+.flex-end {
+    align-items: flex-end;
+}
+
+.active {
+    opacity: 1;
+}
+
+.primary {
+    background-color: #90c6d1;
+}
+
+.secondary  {
+    background-color: #254063;
+    color: #ffffff;
+}
+
+.accent {
+    color: black;
+    background-color: #f77 !important;
+}
+
+.green {
+    background-color: #BEF7C7;
+}
+
+.green-2 {
+    background-color: #086649;
+}
+
+.red {
+    background: #f77;
+}
+
+.grey {
+    background-color: #a5a5a5;
+}
+
+.link_white {
+    color: white;
+}
+
+.nopadding {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.left-padding {
+    padding-left: 1rem;
+}
+
+.display-3 {
+    font-size: 4.5rem;
+    font-weight: 300;
+    line-height: 1.2;
+}
+
+.font-3 {
+    font-size: 14pt !important;
+}
+
+.number-input input[type="number"] {
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  
+  .number-input input[type=number]::-webkit-inner-spin-button,
+  .number-input input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+  
+  .number-input {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  
+  .number-input button {
+    -webkit-appearance: none;
+    background-color: transparent;
+    border: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0;
+    position: relative;
+  }
+  
+  .number-input button:before,
+  .number-input button:after {
+    display: inline-block;
+    position: absolute;
+    content: '';
+    height: 2px;
+    transform: translate(-50%, -50%);
+  }
+  
+  .number-input button.plus:after {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+  
+  .number-input input[type=number] {
+    text-align: center;
+  }
+  
+  .number-input.number-input {
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+  }
+  
+  .number-input.number-input button {
+    height: .7rem;
+  }
+  
+  .number-input.number-input button.minus {
+    padding-left: 10px;
+  }
+  
+  .number-input.number-input button:before,
+  .number-input.number-input button:after {
+    width: .7rem;
+    background-color: #495057;
+  }
+  
+  .number-input.number-input input[type=number] {
+    max-width: 4rem;
+    padding: .5rem;
+    border: 1px solid #ced4da;
+    border-width: 0 1px;
+    font-size: 1.5rem;
+    height: 2rem;
+    color: #495057;
+  }
+  
+  @media not all and (min-resolution:.001dpcm) {
+    @supports (-webkit-appearance: none) and (stroke-color:transparent) {
+  
+      .number-input.def-number-input.safari_only button:before,
+      .number-input.def-number-input.safari_only button:after {
+        margin-top: -.3rem;
+      }
+    }
+  }
+
+  /* Атакишиев f-0001d стили для страницы /bindPressForm НАЧАЛО */
+  .my-scrollbar::-webkit-scrollbar{
+    width:80px;
+    height:60px
+  }
+  .my-scrollbar::-webkit-scrollbar-thumb{
+    background-color:#2b507c
+  }
+  .my-scrollbar::-webkit-scrollbar-track{
+    border-width:0
+  }
+  .my-scrollbar::-webkit-scrollbar-track:hover{
+    border-left:solid 1px #aaa;
+    background-color:#eee
+  }
+  select.clip {
+    white-space: nowrap; /* Запрещаем перенос строк */
+    overflow: hidden; /* Обрезаем все, что не помещается в область */
+   }
+  select {
+    width: 822px; /* Ширина блока */
+    float: right; /* Обтекание по правому краю */
+  }
+  option {
+      font: 20pt sans-serif;  
+  }
+  .name-label-2 {
+        display:inline-block;
+        width:20%;
+        height:52px;
+        text-align:center;
+        color:#fff;
+        background-color:#2b507c;
+        text-transform:uppercase;
+        padding:12px;
+        margin:0 0 6px 0
+  }
+  .name-data-2 {
+    display:inline-block;
+    width:79.3%;
+    height:52px;
+    text-align:center;
+    vertical-align:middle;
+    background-color:#fff;
+    text-transform:uppercase;
+    padding:12px
+  }
+  .view-header {
+    height:52px;
+    text-align:center;
+    background-color:#90c6d1;
+    text-transform:uppercase;
+    padding:12px;
+    font-size:16px
+  }
+  .btn-blue-1 {
+    background-color:#90c6d1
+  }
+  .btn-blue-2 {
+    background-color:#254063;
+    color:#fff
+  }
+  .select-for-name-2 {
+    height:430px!important;
+    font-size:16pt;
+    border-radius:0;
+    margin:0 0 6px 0
+  }
+  .row {
+    display:-ms-flexbox;
+    display:flex;
+    -ms-flex-wrap:wrap;
+    flex-wrap:wrap;
+    margin-right:-15px;
+    margin-left:-15px
+  }
+  .search-input {
+    width: 76%;
+    border: none;
+    font-size: 24pt;
+  }
+  .search-label {
+    display: inline-block;
+    width:20%;
+    height: 52px;
+    text-align: center;
+    color: white;
+    background-color: #2b507c;
+    text-transform: uppercase; 
+    padding: 12px;
+    margin: 0px 0px 0px 14px;
+  }
+  /* Стили клавиатур */
+
+  .keyboard {
+    position: absolute;
+    z-index: 150;
+    padding: 20px;
+    top: 600px;
+    left: 125px;
+    width: 1085px;
+    height: 270px;
+    background-color: white;
+    border: 2px solid #ced4da;
+    border-radius: 10px;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,1.15)!important;
+    }
+
+.word-keyboard {
+  position: absolute;
+  z-index: 150;
+  padding: 20px;
+  top: 600px;
+  left: 125px;
+  width: 1085px;
+  height: 270px;
+  background-color: white;
+  border: 2px solid #ced4da;
+  border-radius: 10px;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,1.15)!important;
+  }
+
+  .keyboard__keys {
+    text-align: center;
+  }
+
+  .material-icons {
+    display: contents;
+  }
+
+  .keyboard__key {
+    margin: 3px;
+    width: 70px;
+    height: 70px;
+    font-size: 24pt;
+    border: none;
+  }
+
+  .keyboard__key--wide {
+    width: 120px;
+    background-color: #90c6d1;
+  }
+
+  .keyboard__key--extra-wide {
+    width: 240px;
+    background-color: #90c6d1;
+  }
+
+  .keyboard__key--dark {
+    width: 95px;
+  }
+
+  .keyboard__key:active {
+    border-radius: 10px;
+    background-color: #e0a800;
+  }
+
+  .keyboard__key--wide:active {
+    border-radius: 5px;
+    background-color: #e0a800;
+  }
+
+  .keyboard--hidden {
+    display: none;
+  }
+
+  .word-kevyboard--hidden {
+    display: none;
+  }
+
+  .number-keyboard {
+    margin-top: 45px;
+    z-index: 150;
+  }
+
+  .number-keyboard .keyboard__key {
+    width: 140px;
+    height: 100px;
+  }
+
+  .number-keyboard .keyboard__key--wide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 50px;
+    width: 100%;
+  }
+
+  .number-keyboard--hidden {
+    display: none;
+  }
+  
+  .hidden {
+    display: none;
+  }
+/* Атакишиев f-0001d стили для страницы /bindPressForm КОНЕЦ */

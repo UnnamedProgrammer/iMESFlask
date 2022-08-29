@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block access_blocked %}
-<p class="text-center h4">
+<p class="text-center h4 acces-blocked">
     {%if current_user.is_authenticated %}
     {%else%}
         Доступ к оператору и наладчику заблокирован,<br>

@@ -1,0 +1,84 @@
+
+/* Стили клавиатур */
+.keyboard
+    position: absolute
+    z-index: 150
+    padding: 20px
+    top: 600px
+    left: 125px
+    width: 1085px
+    height: 270px
+    background-color: white
+    border: 2px solid #ced4da
+    border-radius: 10px
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,1.15)!important
+
+.keyboard--hidden 
+    display: none
+
+.word-keyboard 
+    position: absolute
+    z-index: 150
+    padding: 20px
+    top: 600px
+    left: 125px
+    width: 1085px
+    height: 270px
+    background-color: white
+    border: 2px solid #ced4da
+    border-radius: 10px
+
+.keyboard__keys 
+    text-align: center
+
+.keyboard__key 
+    margin: 3px
+    width: 70px
+    height: 70px
+    font-size: 24pt
+    border: none
+
+
+.keyboard__key--wide
+    width: 120px
+    background-color: #90c6d1
+
+.keyboard__key--extra-wide
+    width: 240px
+    background-color: #90c6d1
+
+.keyboard__key--dark
+    width: 95px
+
+.keyboard__key:active
+    border-radius: 10px
+    background-color: #e0a800
+
+.keyboard__key--wide:active 
+    border-radius: 5px
+    background-color: #e0a800
+
+.word-keyboard--hidden
+    display: none
+
+.number-keyboard
+    margin-top: 45px
+    z-index: 150
+
+.number-keyboard .keyboard__key 
+    width: 140px
+    height: 100px
+
+.number-keyboard .keyboard__key--wide
+    display: flex
+    justify-content: center
+    align-items: center
+    margin-top: 50px
+    width: 100%
+
+.number-keyboard--hidden 
+    display: none
+
+.outline-red
+    box-shadow: 0px 0px 0px 5px rgba(255, 0, 0, 0.7)
+    transition: all 0.1s ease
