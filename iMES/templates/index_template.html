@@ -211,9 +211,9 @@
         
     {% endblock %}
 </body>
-<script src="{{url_for('static', filename='/js/bootstrap.min.js')}}"></script>
 <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
+<script src="{{url_for('static', filename='/js/main.js')}}"></script>
 <script>
         address = "{{request.remote_addr}}"
         devicetype = "Терминал"
@@ -284,4 +284,6 @@ function RequestOperatorAndAdjuster() {
 }
 RequestOperatorAndAdjuster()
 </script>
+{% block script %}                
+{% endblock %}
 </html>
