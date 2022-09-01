@@ -64,8 +64,10 @@ option {
   font-size: 18pt;
   color: #212529;
   border: none; }
-  .btn:hover {
+  .btn:hover, .btn:active, .btn:focus {
     background-color: #dae0e5; }
+  .btn_wide {
+    width: 100%; }
   .btn__menu {
     height: 170px;
     margin: 5px 0px; }
@@ -98,6 +100,7 @@ option {
     justify-content: center;
     align-items: center;
     vertical-align: middle;
+    width: 100%;
     height: 45px;
     background-color: #254063 !important;
     color: #fff; }
@@ -132,9 +135,16 @@ option {
     width: 100%;
     height: 120px;
     line-height: 1.2;
-    box-shadow: 2px 1px 4px 0px #223c50; }
+    box-shadow: 2px 1px 4px 0px #7e7e7e; }
     .btn__view_subtitle {
       font-size: 18pt; }
+  .btn__modal {
+    font-size: 28pt;
+    width: 100%;
+    height: 120px;
+    line-height: 1.2;
+    box-shadow: 2px 1px 4px 0px #223c50;
+    border-radius: 0; }
 
 .btn-row {
   display: flex;
@@ -202,7 +212,7 @@ option {
   display: none; }
 
 .number-keyboard {
-  margin-top: 45px;
+  margin: 45px 0;
   z-index: 150; }
 
 .number-keyboard .keyboard__key {
@@ -223,72 +233,51 @@ option {
   box-shadow: 0px 0px 0px 5px rgba(255, 0, 0, 0.7);
   transition: all 0.1s ease; }
 
-.modal-window_list {
-  border-color: black;
-  position: absolute;
-  z-index: 4;
-  top: 70px;
-  left: 265px;
-  border-width: 10px;
-  background-color: white;
-  width: 740px;
-  height: 800px; }
-
-.modal-window__search {
-  display: flex;
-  height: 50px; }
-  .modal-window__search_label {
+.modal {
+  display: block;
+  box-sizing: border-box;
+  border-radius: 0; }
+  .modal__list {
+    position: absolute;
+    z-index: 4;
+    top: 70px;
+    left: 265px;
+    border-width: 10px;
+    background-color: white;
+    width: 740px;
+    height: 800px; }
+  .modal__number {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 20%; }
-  .modal-window__search_input {
-    width: 80%;
-    font-size: 24pt;
-    border: none;
-    border-bottom: 1px solid #ced4da; }
-
-.modal-window__body {
-  height: 490px;
-  font-size: 18pt;
-  flex-grow: 1; }
-
-.modal-window__footer {
-  display: flex;
-  flex-direction: column;
-  margin-top: 10px; }
-
-.modal-window__button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100px;
-  font-size: 22pt; }
-
-.modal-window_number {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  z-index: 5;
-  top: 100px;
-  left: 390px;
-  width: 500px;
-  height: 650px;
-  border-width: 10px;
-  border-color: black;
-  background-color: white; }
-
-.modal-window__input {
-  width: 70%;
-  height: 80px; }
-
-.modal-window__enter-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 30%;
-  height: 80px;
-  font-size: 22pt; }
+    flex-direction: column;
+    position: absolute;
+    z-index: 5;
+    top: 50px;
+    left: 390px;
+    width: 500px;
+    height: 650px;
+    border-width: 10px;
+    border-color: black;
+    background-color: white; }
+  .modal__input-number {
+    margin-left: 20px;
+    width: 65%;
+    height: 80px; }
+  .modal__enter-button {
+    margin-left: 5px;
+    width: 28%; }
+  .modal_header {
+    height: 52px;
+    text-align: center;
+    background-color: #90c6d1;
+    text-transform: uppercase;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 0; }
+  .modal_content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; }
 
 .main-window {
   margin-top: 7px;
@@ -374,7 +363,8 @@ option {
 .view {
   display: flex;
   flex-direction: column;
-  justify-content: space-between; }
+  justify-content: space-between;
+  background-color: #fff; }
   .view-header {
     height: 52px;
     text-align: center;
@@ -397,8 +387,7 @@ option {
       width: 180px;
       padding: 4px; }
   .view-body {
-    height: 530px;
-    background-color: #fff; }
+    height: 530px; }
 
 .idle-form {
   display: flex;
@@ -534,7 +523,8 @@ select {
   background-color: #BEF7C7; }
 
 .green-2 {
-  background-color: #086649; }
+  background-color: #086649;
+  color: #fff; }
 
 .red {
   background: #f77; }
@@ -542,7 +532,7 @@ select {
 .grey {
   background-color: #a5a5a5; }
 
-.height-65 {
+.height65 {
   height: 65px; }
 
 .height100 {

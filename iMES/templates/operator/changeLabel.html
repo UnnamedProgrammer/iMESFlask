@@ -1,0 +1,187 @@
+{% extends 'index_template.html' %}
+
+{% block main_window %}
+<div class="view"> 
+    <div class="view-header text-center primary">Этикетка</div>
+    <div class="view-body">
+        <table class="table table-bordered text-center" border="1" bordercolor="black">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Тип</th>
+                    <th scope="col">Описание</th>
+                    <th scope="col">Изменение</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Артикул</th>
+                    <td id="stickerProductCell">Поддон полимерный НД 02.202.91 (1470х1140х180)</td>
+                    <td class="nopadding">
+                        <button type="button" class="btn__table" data-toggle="modalOpen" data-target="changeProductModal" onClick="modalController(event)">Выбрать</button>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Дата</th>
+                    <td>29.08.2022 13:51:49</td>
+                </tr>
+                <tr>
+                    <th>Смена</th>
+                    <td>Смена Г (день)</td>
+                </tr>
+                <tr>
+                    <th>Количество</th>
+                    <td id="selectProductCountData">13</td>
+                    <td class="nopadding">
+                        <a href="#" class="btn__table" id="selectProductCount" onClick="numberModalControl(event)">Изменить</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Упаковщик</th>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>  
+    </div>
+    <div class="view-footer">
+        <div class="row">
+            <div class="col-6">
+                <a type="button" href="/operator" class="btn btn__view primary">Сохранить</a>
+            </div>
+            <div class="col-6">
+                <a type="button" href="/operator" class="btn btn__view secondary">Закрыть</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное (всплывающее) окно выбора продукта(артикула) -->
+    <div class="modal hidden" id="changeProductModal">
+        <div class="modal__list">
+            <div class="modal_header">
+                <h5 class="modal_title">Список продуктов</h5>
+            </div>
+            <div class="modal_content">
+                <div class="modal_body">
+                    <table class="table table-bordered text-center" id="selectStickerProduct" border="1" bordercolor="black">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Выбор</th>
+                                <th scope="col">Продукт</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="nopadding">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td>Поддон полимерного контейнера  Д202 900/1080</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td>Поддон полимерного контейнера  Д202 900/1080</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td>Поддон полимерного контейнера  Д202 900/1080</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td>Деталь поддона Д202  14.202.1.91</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td>Деталь поддона Д202  14.202.1.91</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td>Деталь поддона Д202  14.202.1.91</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="px-3">
+                        <button type="button" class="btn btn_wide green-2 height65 shadow" style="font-size: 12pt;">Нажмите чтобы загрузить обновленный список, может занять некоторое время.</button>
+                    </div>
+                </div>
+                <div class="modal_footer">
+                    <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="changeProductModal" onClick="modalController(event)"> Закрыть </button>
+                </div>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+    <!-- ----------------------------------------------------------- -->
+
+    <!--Всплывающее окно ввода числовых значений-->
+    <div class="modal hidden" id="numberModal">
+        <div class="modal__number">
+            <div class="modal_header">Количество</div>
+            <div class="modal-window__body">
+                <div class="row">
+                    <div class="btn modal__input-number"></div>
+                    <button type="button" class="btn modal__enter-button secondary">ВВОД</button>
+                </div>
+                <div class="number-keyboard">
+                    <div class="keyboard__keys">
+                        <div class="col">
+                            <button type="button" class="keyboard__key">7</button>
+                            <button type="button" class="keyboard__key">8</button>
+                            <button type="button" class="keyboard__key">9</button>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="keyboard__key">4</button>
+                            <button type="button" class="keyboard__key">5</button>
+                            <button type="button" class="keyboard__key">6</button>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="keyboard__key">1</button>
+                            <button type="button" class="keyboard__key">2</button>
+                            <button type="button" class="keyboard__key">3</button>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="keyboard__key">.</button>
+                            <button type="button" class="keyboard__key">0</button>
+                            <button type="button" class="keyboard__key keyboard__key_del">DEL</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal_footer">
+                <button type="button" class="btn btn__modal btn_wide secondary" onClick="numberModalControl(event)"> Закрыть </button>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+    <script>
+
+    </script>
+</div>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
+
+{% block script %}
+<script>
+    // Получения названия выбранного продукта
+    const tbody = document.querySelector('#selectStickerProduct tbody'); // Получение таблицы с продуктами
+    tbody.addEventListener('click', function (e) {
+        const cell = e.target.closest('td:first-child'); // Отслеживание нажатия на первую ячейку (кнопку "Выбрать")
+        if (!cell) {return;}
+        const row = cell.parentElement;
+        let selectedStickerProduct = row.cells[1].innerText // Получения значения второй ячейки (названия)
+
+        const stickerProductCell = document.querySelector('#stickerProductCell'); // Получение ячейки с артикулом 
+        stickerProductCell.innerText = selectedStickerProduct // Замена значения чейки артикула выбранным
+        modal.style.display='none' // Закрываем модальное окно
+    });
+</script>
+{% endblock %}

@@ -6,8 +6,10 @@
     font-size: 18pt
     color: #212529
     border: none
-    &:hover
+    &:hover, &:active, &:focus
         background-color: #dae0e5
+    &_wide
+        width: 100%
 
     &__menu
         height: 170px
@@ -43,6 +45,7 @@
         justify-content: center
         align-items: center
         vertical-align: middle
+        width: 100%
         height: 45px
         background-color: $color-blue-dark !important
         color: #fff
@@ -80,9 +83,17 @@
         width: 100%
         height: 120px
         line-height: 1.2
-        box-shadow: 2px 1px 4px 0px #223c50
+        box-shadow: 2px 1px 4px 0px #7e7e7e
         &_subtitle
             font-size: 18pt
+
+    &__modal
+        font-size: 28pt
+        width: 100%
+        height: 120px
+        line-height: 1.2
+        box-shadow: 2px 1px 4px 0px #223c50
+        border-radius: 0
 
 
 .btn-row

@@ -13,3 +13,9 @@ def operator():
 @login_required
 def OperatorShiftTask():
     return CheckRolesForInterface('Оператор','operator/ShiftTask.html')
+
+# Изменение этикетки
+@app.route('/operator/ChangeLabel')
+@login_required
+def OperatorChangeLabel():
+    return CheckRolesForInterface('Оператор','operator/changeLabel.html')
