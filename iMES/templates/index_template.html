@@ -269,7 +269,7 @@
 function RequestOperatorAndAdjuster() {
     let url = "getOperatorAndAdjuster"
     let request = new XMLHttpRequest()
-    request.open("GET", url, true)
+    request.open("GET", window.location.href.match(/^.*\//) + url, true)
     request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     request.addEventListener("readystatechange", () => {
         if (request.readyState === 4 && request.status === 200) {
