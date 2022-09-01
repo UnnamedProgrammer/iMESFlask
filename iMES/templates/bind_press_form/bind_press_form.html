@@ -1,14 +1,11 @@
 {% extends 'index_template.html' %}
 
 {% block main_window %}
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
-<script src="/static/js/BindPressForm/selected_PF.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <div class="cancelWindow" id="js-shadow"></div>
-<div class="view-1"> 
-    <div class="view-header">Привязка пресс-формы</div>
-    <div class="view-body-1"> 
-        <input id="conOid" type="hidden" value="99AD52D8-B3DD-432F-91BF-6E30A9939E52"></input>
+<div class="view"> 
+    <div class="view-header text-center primary">Привязка пресс-формы</div>
+    <div class="view-body"> 
+        <input id="conOid" type="hidden" value="99AD52D8-B3DD-432F-91BF-6E30A9939E52">
         <div class="row">
             <div class="search-label" for="">Поиск</div>
             <input class="search-input openKeyBig use-keyboard-input" id="searchPressForm" type="text">
@@ -21,17 +18,20 @@
             </select>
         </form>
     </div>
-    <div class="row">
-        <div class="col-6">
-            <button type="button" class="btn button-1 primary" data="" id="bindPressForm">Привязать пресс-форму</button>
-        </div>  
-        <div class="col-6">
-            <button type="button" class="btn button-1 secondary startLoad" id="exitNoSave" onclick="location.href='/'">
-                Выход
-            </button>
-        </div>  
+    <div class="view-footer">
+        <div class="row">
+            <div class="col-6">
+                <button type="button" class="btn btn__view primary fs-3" data="" id="bindPressForm">Привязать пресс-форму</button>
+            </div>  
+            <div class="col-6">
+                <button type="button" class="btn btn__view secondary startLoad" id="exitNoSave" onclick="location.href='/'">
+                    Выход
+                </button>
+            </div>  
+        </div>
     </div>        
 </div>
+<script src="/static/js/BindPressForm/selected_PF.js"></script>
 <script src="/static/js/keyboard.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {  
