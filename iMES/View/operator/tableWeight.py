@@ -9,7 +9,6 @@ import json
 
 @app.route('/operator/tableWeight')
 def tableWeight():
-    global ip_addr 
     global sql_GetDate
 
     ip_addr = request.remote_addr
@@ -37,6 +36,7 @@ def tableWeight():
 # Кнопка ввода веса изделия во всплывающей клавиатуре была нажата
 @socketio.on('product_weight_entering')
 def handle_entered_product_weight(data):
+    ip_addr = request.remote_addr
     entered_weight = str(data)
     # Получаем время нажатия
     current_date_e = SQLManipulator.SQLExecute(sql_GetDate)
@@ -64,6 +64,7 @@ def handle_entered_product_weight(data):
 # Кнопка печати введенных весов изделия во всплывающей клавиатуре была нажата
 @socketio.on('product_weight_printing')
 def handle_printed_product_weight():
+    ip_addr = request.remote_addr
     # Получаем время нажатия
     current_date_p = SQLManipulator.SQLExecute(sql_GetDate)
     # Получаем данные о введенных за смену весов изделия
