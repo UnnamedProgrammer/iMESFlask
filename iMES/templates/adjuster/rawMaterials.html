@@ -1,0 +1,64 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<div class="view"> 
+    <div class="view-header text-center primary">Сырье до конца смены</div>
+    <div class="view-body jsScroll"> 
+        <table class="table table-sm table-bordered text-center" border="1" bordercolor="black">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Наименование</th>
+                    <th scope="col">кг.</th>
+                    <th scope="col">%</th>
+                </tr>
+            </thead>
+            <tbody id="" class="fs-5">
+                <tr>
+                    <td>Количество продукта до конца плана</td>
+                    <td colspan="2" class="green">960 шт.</td>
+                </tr>
+                <tr>
+                    <td>Полипропилен РР 9240М (давальческое сырье) 5,053 кг</td>
+                    <td>4851</td>
+                    <td>29</td>
+                </tr>
+                <tr>
+                    <td>ПП Б3.03.М.80 5,227 кг</td>
+                    <td>5018</td>
+                    <td>30</td>
+                </tr>
+                <tr>
+                    <td>ПЭ Б4.05.M.91 5,227 кг</td>
+                    <td>5018</td>
+                    <td>30</td>
+                </tr>
+                <tr>
+                    <td>Топласт ПП МН 80-2 1,742 кг</td>
+                    <td>1672</td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td>Концентрат "БАСКО" П1807/83-ПЭ темно-серый 0,174 кг</td>
+                    <td>167</td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td>Количество продукта до конца плана</td>
+                    <td colspan="2" class="primary">00:00:00</td>
+                </tr>
+            </tbody>
+        </table>     
+    </div>
+    <div class="view-footer">
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn__view secondary startLoad" onclick ="location.href='/adjuster'">
+                    Выход
+                </button>
+            </div>
+        </div> 
+    </div>       
+</div>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}

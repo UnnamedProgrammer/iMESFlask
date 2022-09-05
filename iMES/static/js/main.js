@@ -1,5 +1,32 @@
 let numberModal = document.getElementById('numberModal')
 
+function changeTPA(event){
+    let tpaOid = event.target.dataset.oid;
+    let tpaName = event.target.dataset.name;
+
+    xhr = new XMLHttpRequest()
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            location.reload()
+        }
+    }
+    xhr.open("GET", "/changeTpa?oid="+tpaOid+"&name="+tpaName, true)
+    xhr.send()
+}
+
+// Управдление панелями
+function offcanvasControl(event) {
+    offcanvasPanel = document.querySelectorAll('.offcanvas')
+
+    for ( let i = 0; i <= offcanvasPanel.length; i++) {
+        if(offcanvasPanel[i].id == event.target.id) {
+            offcanvasPanel[i] = !offcanvasPanel[i].classList.contains('show') ? offcanvasPanel[i].classList.add('show') : offcanvasPanel[i].classList.remove('show')
+        }
+        if ( i <= offcanvasPanel.length) break
+    }
+    
+}
+
 // Управление модальным окном
 function modalController(event){ 
     toggler = event.target.dataset.toggle // Кнопка открытия/закрытия модального окна

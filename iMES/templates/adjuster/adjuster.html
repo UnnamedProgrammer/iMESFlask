@@ -3,16 +3,16 @@
 {% block main_window %}
     <div class="row">
         <div class="col">
-            <a class="btn btn__menu btn__menu_wide primary" href="/adjuster/journal/{{tpaIndex}}">Простои, неполадки <br> и чек-листы</a>
-            <div class="btn btn__menu btn__menu_wide primary">Сырье до конца выпуска</div>
-            <div class="btn btn__menu btn__menu_wide primary">Зафиксировать <br> брак и отход</div>
-            <div class="btn btn__menu btn__menu_wide primary">Замена пресс-формы</div>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();" href="/adjuster/journal/{{tpaIndex}}">Простои, неполадки <br> и чек-листы</a>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();" href="/adjuster/RawMaterials">Сырье до конца выпуска</a>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();" href="/adjuster/WasteDefectFix">Зафиксировать <br> брак и отход</a>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();" href="/bindPressForms">Замена пресс-формы</a>
         </div>
         <div class="col">
-            <a class="btn btn__menu btn__menu_wide primary" href="">Сменное задание</a>
-            <div class="btn btn__menu btn__menu_wide primary">Нормативная документация</div>
-            <div class="btn btn__menu btn__menu_wide primary">Фиксация изменений в <br> технологической <br> системе</div>
-            <div class="btn btn__menu btn__menu_wide primary">Вызов специалистов</div>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();" href="/adjuster/shiftTask">Сменное задание</a>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();">Нормативная документация</a>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();">Фиксация изменений в <br> технологической <br> системе</a>
+            <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();">Вызов специалистов</a>
         </div>
     </div>
 {% endblock %}

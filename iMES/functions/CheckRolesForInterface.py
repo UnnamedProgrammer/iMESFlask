@@ -1,6 +1,7 @@
 from iMES.Model.SQLManipulator import SQLManipulator
 from flask_login import current_user
 from flask import render_template, request
+from iMES import TpaList
 from iMES import current_tpa
 
 
@@ -26,6 +27,6 @@ def CheckRolesForInterface(RequiredInterface,DirectPageTemplate):
             current_user.role = "Оператор"
         if (RequiredInterface == "Наладчик"):
             current_user.role = "Наладчик"       
-        return render_template(f"{DirectPageTemplate}", current_tpa = current_tpa[ip_addr])
+        return render_template(f"{DirectPageTemplate}", device_tpa = TpaList[request.remote_addr] , current_tpa = current_tpa[ip_addr])
     else:
         return render_template('Show_error.html',error="Недостаточно прав для данного интерфейса",ret='/menu',current_tpa = current_tpa[ip_addr])

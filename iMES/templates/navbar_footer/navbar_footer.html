@@ -1,7 +1,6 @@
 {% block navbar_footer %}
 <div class="navbar-footer">
-    <button class="btn btn__navbar-footer_tpa col-5 red" type="button" data-bs-toggle="offcanvas"
-        data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
+    <button class="btn btn__navbar-footer_tpa col-5 red" id="tpaPanel" type="button" onClick="offcanvasControl(event)">
         <span class="icon-menu me-3"></span>ТПА Engel 5500
     </button>
     <a class="btn btn__navbar-footer primary" href="/menu">
@@ -22,9 +21,15 @@
     </a>
     {% endif %}
 </div>
-<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+<div class="offcanvas offcanvas-start shadow" tabindex="-1" id="tpaPanel">
     <div class="offcanvas-body">
-        <a href="{tpa}" class="btn btn__left-menu">ТПА Engel 5500</a>
+        {% for tpa in device_tpa %}
+            {% if tpa['Oid'] == current_tpa[0]%}
+                <a class="btn btn__left-menu btn__left-menu_active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</a>
+            {% else %}
+                <a class="btn btn__left-menu" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</a>
+            {% endif %}
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

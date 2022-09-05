@@ -19,18 +19,3 @@
         </div>
     </nav>
 </header>
-<script>
-    function changeTPA(event){
-        let tpaOid = event.target.dataset.oid;
-        let tpaName = event.target.dataset.name;
-
-        xhr = new XMLHttpRequest()
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                location.reload()
-            }
-        }
-        xhr.open("GET", "/changeTpa?oid="+tpaOid+"&name="+tpaName, true)
-        xhr.send()
-    }
-</script>

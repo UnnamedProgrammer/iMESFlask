@@ -20,6 +20,13 @@ button {
 option {
   font: 20pt sans-serif; }
 
+.offcanvas-container {
+  display: none; }
+
+.offcanvas-body {
+  padding: 0;
+  box-shadow: 100vw 0px 0px 100vw rgba(0, 0, 0, 0.5); }
+
 .display-3 {
   font-size: 4.5rem;
   font-weight: 300;
@@ -118,10 +125,13 @@ option {
       background-color: #dae0e5 !important; }
   .btn__left-menu {
     height: 75px;
+    background-color: #e6e6e6;
     border-radius: 0;
     border-bottom: .5px black solid; }
     .btn__left-menu:hover {
       background-color: #90c6d1; }
+    .btn__left-menu_active {
+      background-color: #BEF7C7; }
   .btn__add-waste {
     margin-right: 1rem;
     width: 10%;
@@ -471,6 +481,12 @@ select {
   padding: 12px;
   margin: 0px 0px 0px 14px; }
 
+table .green {
+  background-color: #BEF7C7; }
+
+table .primary {
+  background-color: #90c6d1; }
+
 .my-scrollbar::-webkit-scrollbar {
   width: 80px;
   height: 60px; }
@@ -511,13 +527,13 @@ select {
 
 .secondary {
   background-color: #254063;
-  color: #ffffff !important; }
+  color: #ffffff; }
   .secondary:hover {
     color: black !important; }
 
 .accent {
   color: black;
-  background-color: #f77 !important; }
+  background-color: #f77; }
 
 .green {
   background-color: #BEF7C7; }

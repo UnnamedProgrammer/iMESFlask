@@ -19,3 +19,9 @@ def OperatorShiftTask():
 @login_required
 def OperatorChangeLabel():
     return CheckRolesForInterface('Оператор','operator/changeLabel.html')
+
+# Схема упаковки
+@app.route('/operator/PackingScheme')
+@login_required
+def OperatorPackingScheme():
+    return CheckRolesForInterface('Оператор','operator/packingScheme.html')
