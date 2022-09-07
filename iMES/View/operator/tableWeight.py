@@ -1,3 +1,4 @@
+import logging
 from iMES import app
 from iMES import socketio
 from flask import request
@@ -5,8 +6,10 @@ from flask import render_template
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES import current_tpa
 from flask_login import current_user
+from flask_login import login_required
 import json
 
+@login_required
 @app.route('/operator/tableWeight')
 def tableWeight():
     global sql_GetDate
