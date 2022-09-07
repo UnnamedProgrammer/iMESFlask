@@ -1,4 +1,3 @@
-import logging
 from iMES import app
 from iMES import socketio
 from flask import request
