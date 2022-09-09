@@ -8,6 +8,8 @@ $(document).ready(function(){
     // При нажатии на кнопку отправляю идентификаторы контроллера и выбранной пресс-формы на сервер
     $('#bindPressForm').click(function(){
         var socket = io();
+        pressForm.innerHTML = $( "#selectPressForm option:selected" ).text(); // Визуальная замена пресс-формы
+        console.log(tpaOid)
         socket.emit('press_form_binding', [selected_press_form, document.getElementById('conOid').value]);
     })
 })
