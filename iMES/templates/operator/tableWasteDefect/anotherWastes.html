@@ -1,0 +1,119 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<!-- <script src="/static/js/EnterTableWeight/entered_TW.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<div class="cancelWindow" id="js-shadow"></div>
+<div class="view">
+    <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
+    <div class="view-body jsScroll">
+        <table class="table text-center" border="1" bordercolor="black">
+            <div class="row">
+                <div class="search-label" for="">Поиск</div>
+                <input class="search-input openKeyBig use-keyboard-input" id="searchAnotherWastes" type="text">
+            </div>
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Наименование отхода</th>
+                    <th scope="col">Добавить</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyAnotherWastes">
+                <tr>
+                    <td>Привет</td>
+                    <td>
+                        <button type="button" class="btn btn-light button-2 secondary"  id="addAnotherWaste" onclick="location.href='/operator/tableWasteDefect/wastes'">
+                            Добавить
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Пока</td>
+                    <td>
+                        <button type="button" class="btn btn-light button-2 secondary"  id="addAnotherWaste" onclick="location.href='/operator/tableWasteDefect/wastes'">
+                            Добавить
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Другое</td>
+                    <td>
+                        <button type="button" class="btn btn-light button-2 secondary"  id="addAnotherWaste" onclick="location.href='/operator/tableWasteDefect/wastes'">
+                            Добавить
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- <div class="d-flex justify-content-between px-3"> -->
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn__view secondary startLoad" onclick="location.href='/operator/tableWasteDefect/wastes'">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    <!-- </div> -->
+</div>
+<script src="/static/js/keyboard.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function openKeboard() {
+            let keyboard = document.getElementsByClassName('keyboard');  
+        }
+        //--------------------------СИСТЕМА ПОИСКА-----------------------------
+        document.addEventListener("click", function(e) {
+            let input = document.getElementById('searchAnotherWastes');
+            let val = input.value.trim().toUpperCase();
+            let searchItems = document.querySelectorAll('#tbodyAnotherWastes tr');
+            if (e.target.classList.contains('keyboard__key')) {
+                if (val != '') {
+                    searchItems.forEach(function (elem){
+                        if (elem.innerText.toUpperCase().search(val) == -1) {
+                            elem.classList.add('hidden')
+                        }
+                        else {
+                            elem.classList.remove('hidden');
+                        }
+                    });
+                }
+                else {
+                    searchItems.forEach(function (elem){
+                        elem.classList.remove('hidden');
+                    });
+                }
+            }
+        });
+        //---------------------------------------------------------------------
+        function scroll(){
+            var jsScroll = document.getElementsByClassName('jsScroll');
+            if(jsScroll){
+                [].forEach.call(jsScroll, function(item) {
+                    var startX, startY;
+                    var listener = function(e) {
+                        startX = this.scrollLeft + e.pageX;
+                        startY = this.scrollTop + e.pageY;
+                        item.addEventListener('mousemove', endListener);
+                    };
+                
+                    var endListener = function(e) {
+                        this.scrollLeft = startX - e.pageX;
+                        this.scrollTop = startY - e.pageY;
+                        return false;
+                    };
+                
+                    item.addEventListener('mousedown', listener);
+                
+                    window.addEventListener("mouseup", function(){ 
+                        item.removeEventListener('mousemove', endListener);
+                    });
+                });
+            }
+        }  
+    });
+</script>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
