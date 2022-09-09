@@ -1,0 +1,42 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<div class="view"> 
+    <div class="view-header text-center primary">Изменения в технологической системе</div>
+    <div class="view-body jsScroll"> 
+        <table class="table table-bordered text-center" border="1" bordercolor="black">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Время</th>
+                    <th scope="col">Причина изменения</th>
+                    <th>Параметр</th>
+                    <th>Было</th>
+                    <th>Стало</th>
+                    <th>Примечание</th>
+                    <th>Наладчик</th>
+                </tr>
+            </thead>
+            <tbody id="">
+            </tbody>
+        </table>     
+    </div>
+    <div class="view-footer">
+        <div class="row">
+            <div class="col-6">
+                <a type="button" class="btn btn__view primary startLoad fs-3" onclick ="location.href='/adjuster/techSystemEnter'">
+                    Ввод изменений в
+                    <br>
+                    технологийской системе
+                </a>
+            </div>
+            <div class="col-6">
+                <button type="button" class="btn btn__view secondary startLoad" onclick ="location.href='/adjuster'">
+                    Выход
+                </button>
+            </div>
+        </div> 
+    </div>       
+</div>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}

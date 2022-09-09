@@ -26,3 +26,15 @@ def adjusterWasteDefectFix():
 def adjusterShiftTask():
     return CheckRolesForInterface('Наладчик','adjuster/shiftTask.html')
 
+# Фиксация изменений в тех. системе
+@app.route('/adjuster/techSystem')
+@login_required
+def adjusterTechSystem():
+    return CheckRolesForInterface('Наладчик','adjuster/techSystem.html')
+
+# Ввод изменений в тех. системе
+@app.route('/adjuster/techSystemEnter')
+@login_required
+def adjusterTechSystemEnter():
+    return CheckRolesForInterface('Наладчик','adjuster/techSystemEnter.html')
+

@@ -11,16 +11,18 @@ select.clip
   white-space: nowrap // Запрещаем перенос строк
   overflow: hidden // Обрезаем все, что не помещается в область 
 
-select 
-    width: 822px // Ширина блока
-    float: right // Обтекание по правому краю
-
 .custom-select
     padding: 15px
-    height: 470px!important
-    font-size: 16pt
+    width: 100%
+    font-size: 20pt
+    border: 1px solid #ced4da
+    border-radius: 0
+
+.custom-input
+    width: 100%
     border: none
     border-radius: 0
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .15) !important
 
 .search-input 
     width: 76%
@@ -36,7 +38,18 @@ select
     background-color: $color-blue-dark
     text-transform: uppercase
     padding: 12px
-    margin: 0px 0px 0px 14px
+    margin: 0px 0px 0px 12px
+
+.name-label
+    display: block
+    height: 52px
+    text-align: center
+    background-color: $color-blue-dark
+    color: #fff
+    text-transform: uppercase
+    padding: 12px
+    &_lg
+        width: 100%
 
 table .green
     background-color: $color-green

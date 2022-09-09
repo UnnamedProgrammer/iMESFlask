@@ -1,0 +1,87 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<div class="view"> 
+    <div class="view-header text-center primary">Ввод изменений в технологийской системе</div>
+    <div class="view-body p-3"> 
+        <select class="form-select form-select-lg mb-3" aria-label="Выберите причину изменения">
+            <option selected>Выберите причину изменения</option>
+            <option value="1">По указанию начальника смены</option>
+            <option value="2">Переход на другой рецепт</option>
+            <option value="3">Отладка технологического режима</option>
+        </select>
+        <select class="form-select form-select-lg mb-3" aria-label="Выберите изменяемый параметр">
+            <option selected>Выберите изменяемый параметр</option>
+            <option value="1">Температура</option>
+            <option value="2">Расход</option>
+            <option value="3">Параметр</option>
+        </select>
+        <div class="name-label">Введите начальный параметр</div>
+        <input class="custom-input form-control-lg text-center mb-3" type="number" onClick="numberModalControl(event)" readonly>
+
+        <div class="name-label">Введите конечный параметр</div>
+        <input class="custom-input form-control-lg text-center mb-3" type="number" onClick="numberModalControl(event)" readonly>
+
+        <div class="name-label">Введите примечание если необходимо</div>
+        <input class="custom-input form-control-lg text-center mb-3 use-keyboard-input" type="text">
+    </div>
+    <div class="view-footer">
+        <div class="row">
+            <div class="col-6">
+                <a type="button" class="btn btn__view primary startLoad" onclick ="location.href='/adjuster'">
+                    Ввод данных
+                </a>
+            </div>
+            <div class="col-6">
+                <button type="button" class="btn btn__view secondary startLoad" onclick ="location.href='/adjuster'">
+                    Выход
+                </button>
+            </div>
+        </div> 
+    </div>       
+</div>
+
+<!--Всплывающее окно ввода числовых значений-->
+<div class="modal hidden" id="numberModal">
+    <div class="modal__number">
+        <div class="modal_header">Количество</div>
+        <div class="modal-window__body">
+            <div class="row">
+                <div class="btn modal__input-number"></div>
+                <button type="button" class="btn modal__enter-button secondary">ВВОД</button>
+            </div>
+            <div class="number-keyboard">
+                <div class="keyboard__keys">
+                    <div class="col">
+                        <button type="button" class="keyboard__key">7</button>
+                        <button type="button" class="keyboard__key">8</button>
+                        <button type="button" class="keyboard__key">9</button>
+                    </div>
+                    <div class="col">
+                        <button type="button" class="keyboard__key">4</button>
+                        <button type="button" class="keyboard__key">5</button>
+                        <button type="button" class="keyboard__key">6</button>
+                    </div>
+                    <div class="col">
+                        <button type="button" class="keyboard__key">1</button>
+                        <button type="button" class="keyboard__key">2</button>
+                        <button type="button" class="keyboard__key">3</button>
+                    </div>
+                    <div class="col">
+                        <button type="button" class="keyboard__key">.</button>
+                        <button type="button" class="keyboard__key">0</button>
+                        <button type="button" class="keyboard__key keyboard__key_del">DEL</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal_footer">
+            <button type="button" class="btn btn__modal btn_wide secondary" onClick="numberModalControl(event)"> Закрыть </button>
+        </div>
+    </div>
+    <div class="bg-blur"></div>
+</div>
+<script src="/static/js/keyboard.js"></script>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
