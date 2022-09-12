@@ -287,9 +287,9 @@
 </script>
 <script>
 function RequestOperatorAndAdjuster() {
-    let url = "getOperatorAndAdjuster"
+    let url = "http://"+window.location.host + "/getOperatorAndAdjuster"
     let request = new XMLHttpRequest()
-    request.open("GET", url, true)
+    request.open("GET",url)
     request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     request.addEventListener("readystatechange", () => {
         if (request.readyState === 4 && request.status === 200) {
