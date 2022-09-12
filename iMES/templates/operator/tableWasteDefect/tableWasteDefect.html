@@ -1,0 +1,165 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
+<div class="cancelWindow" id="js-shadow"></div>
+<div class="view">
+    <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
+    <div class="view-body jsScroll">
+        <table class="table table-sm text-center" border="1" bordercolor="black">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Продукт</th>
+                    <th scope="col">Вид</th>
+                    <th scope="col">Кол.</th>
+                    <th scope="col">Кг.</th>
+                    <th scope="col">Причина</th>
+                    <th scope="col">Время</th>
+                    <th scope="col">Оператор</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyWasteDefect"></tbody>
+        </table>
+    </div>
+    <div class="d-flex justify-content-between px-3">
+        <div class="col-6 row">
+            <button type="button" class="btn btn-light button-2 primary me-1" id="defectPrint1">
+                Ввод отхода<br>за смену
+            </button>
+            <button type="button" class="btn btn-light button-2 primary" data="wasteDefect2" data2="Ввод кол."
+                data3="Ввод кг." id="defectPrint2">
+                Ввод брака<br>за смену
+            </button>
+        </div>
+        <div class="col-6 row">
+            <button type="button" class="btn btn-light button-2 primary me-1" id="printWasteDefect">
+                Печать
+            </button>
+            <button type="button" class="btn btn-light button-2 secondary" onclick="location.href='/operator'">
+                Выход
+            </button>
+        </div>
+    </div>
+    <!--Всплывающее окно ввода числовых значений-->
+    <div class="modal hidden" id="numberModal">
+        <div class="modal__number">
+            <div class="modal_header">Брак</div>
+            <div class="modal-window__body">
+                <div class="row">
+                    <div class="btn modal__input-number" id="inputDefect"></div>
+                    <button type="button" class="btn modal__enter-button secondary" id="defectEntering">ВВОД</button>
+                </div>
+                <div class="number-keyboard">
+                    <div class="keyboard__keys">
+                        <div class="col">
+                            <button type="button" class="keyboard__key">7</button>
+                            <button type="button" class="keyboard__key">8</button>
+                            <button type="button" class="keyboard__key">9</button>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="keyboard__key">4</button>
+                            <button type="button" class="keyboard__key">5</button>
+                            <button type="button" class="keyboard__key">6</button>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="keyboard__key">1</button>
+                            <button type="button" class="keyboard__key">2</button>
+                            <button type="button" class="keyboard__key">3</button>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="keyboard__key">.</button>
+                            <button type="button" class="keyboard__key">0</button>
+                            <button type="button" class="keyboard__key keyboard__key_del">DEL</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal_footer">
+                <button type="button" class="btn btn__modal btn_wide secondary" onClick="numberModalControl(event)"> Закрыть </button>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {  
+    var printWasteDefect = document.getElementById('printWasteDefect'),
+        defectPrint1 = document.getElementById('defectPrint1'),
+        defectPrint2 = document.getElementById('defectPrint2');
+
+    printWasteDefect.onclick = function() {
+        if(!this.classList.contains("background-3")){
+            this.classList.add("background-3");
+            defectPrint1.classList.add("background-3");
+            defectPrint2.classList.add("background-3");
+            defectPrint1.classList.add("buttonPrint");
+            defectPrint2.classList.add("buttonPrint");
+            defectPrint1.classList.add("js-printPaper");
+            defectPrint2.classList.add("js-printPaper");
+            defectPrint1.innerHTML = 'Печать<br>отхода';
+            defectPrint2.innerHTML = 'Печать<br>брака';
+            }
+        else {
+            this.classList.remove("background-3");
+            defectPrint1.classList.remove("background-3");
+            defectPrint2.classList.remove("background-3");
+            defectPrint1.classList.remove("js-printPaper");
+            defectPrint2.classList.remove("js-printPaper");
+            defectPrint1.classList.remove("buttonPrint");
+            defectPrint2.classList.remove("buttonPrint");
+            defectPrint1.innerHTML = 'Ввод отхода<br>за смену';
+            defectPrint2.innerHTML = 'Ввод брака<br>за смену';
+            }
+        }
+        defectPrint1.onclick = function() {
+        if(this.classList.contains("buttonPrint")){
+            var mywindow = window.open('', 'PRINT', 'height=400, width=600, left=300, top=300');
+
+            getAjax("index.php?r=post/create-print-fm&print=1&tpa="+tpa, function(data){
+                var json = JSON.parse(data);
+
+                if(json !== false)
+                {
+                    printSticker(json, mywindow);
+                }
+                else
+                {
+                    mywindow.close();
+                }
+            });
+        }
+        else {
+            var loadContainer = document.getElementById('load-container');
+            if(loadContainer)
+            {
+                loadContainer.style.display = 'inline';
+            }
+            location.href='/operator/tableWasteDefect/wastes';
+        }
+    }
+    defectPrint2.onclick = function() {
+        if(this.classList.contains("buttonPrint"))
+        {
+            var mywindow = window.open('', 'PRINT', 'height=400, width=600, left=300, top=300');
+            getAjax("index.php?r=post/create-print-fm&print=2&tpa="+tpa, function(data)
+            {
+                var json = JSON.parse(data);
+
+                if(json !== false)
+                {
+                    printSticker(json, mywindow);
+                }
+                else
+                {
+                    mywindow.close();
+                }
+            });
+        }
+        else {
+            numberModalControl(event)
+        }
+    }
+    })
+</script>
+{% endblock %}
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}

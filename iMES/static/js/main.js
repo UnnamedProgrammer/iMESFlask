@@ -1,4 +1,6 @@
 let numberModal = document.getElementById('numberModal')
+let tpaOid = document.getElementById('ttpa').dataset.oid // Oid текущего ТПА 
+let pressForm = document.getElementById('tpf') // Текущая пресс-форма
 
 function changeTPA(event){
     let tpaOid = event.target.dataset.oid;
