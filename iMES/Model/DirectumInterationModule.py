@@ -129,7 +129,7 @@ class DirectumIntegration():
                                         <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
                                         <div class="d-flex justify-content-center">
                                             <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
-                                                class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&Show"
+                                                class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&show"
                                                 style="height: 900px; width: 1240px"></iframe>
                                         </div>
                                         <div class="view-1">
@@ -204,7 +204,7 @@ class DirectumIntegration():
                                         <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
                                         <div class="d-flex justify-content-center">
                                             <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
-                                                class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&Show"
+                                                class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&show"
                                                 style="height: 900px; width: 1240px"></iframe>
                                         </div>
                                         <div class="view-1">
