@@ -1,6 +1,5 @@
 {% extends 'index_template.html' %}
 {% block main_window %}
-<div class="cancelWindow" id="js-shadow"></div>
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
@@ -21,21 +20,29 @@
     </div>
     <div class="d-flex justify-content-between px-3">
         <div class="col-6 row">
-            <button type="button" class="btn btn-light button-2 primary me-1" id="defectPrint1">
-                Ввод отхода<br>за смену
-            </button>
-            <button type="button" class="btn btn-light button-2 primary" data="wasteDefect2" data2="Ввод кол."
-                data3="Ввод кг." id="defectPrint2">
-                Ввод брака<br>за смену
-            </button>
+            <div class="col nopadding me-1">
+                <button type="button" class="btn btn__view primary fs-4" id="defectPrint1">
+                    Ввод отхода<br>за смену
+                </button>
+            </div>
+            <div class="col nopadding ms-1">
+                <button type="button" class="btn btn__view primary fs-4" data="wasteDefect2" data2="Ввод кол."
+                    data3="Ввод кг." id="defectPrint2">
+                    Ввод брака<br>за смену
+                </button>
+            </div>
         </div>
         <div class="col-6 row">
-            <button type="button" class="btn btn-light button-2 primary me-1" id="printWasteDefect">
-                Печать
-            </button>
-            <button type="button" class="btn btn-light button-2 secondary" onclick="location.href='/operator'">
-                Выход
-            </button>
+            <div class="col nopadding me-1">
+                <button type="button" class="btn btn__view primary fs-4" id="printWasteDefect">
+                    Печать
+                </button>
+            </div>
+            <div class="col nopadding ms-1">
+                <button type="button" class="btn btn__view secondary fs-4" onclick="location.href='/operator'">
+                    Выход
+                </button>
+            </div>
         </div>
     </div>
     <!--Всплывающее окно ввода числовых значений-->
