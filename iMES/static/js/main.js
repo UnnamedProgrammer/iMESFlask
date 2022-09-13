@@ -58,12 +58,16 @@ function numberModalControl(event){
     // Строка в которую будут вносится введенные данные должна иметь ID кнопки отрытия окна +Data, вида: exmapleData (например, wasteData)
     enter.onclick = function(){
         data = document.getElementById(buttonID+'Data');
-        console.log(event.target.tagName)
         if(display.textContent != "")
         {
-            if(event.target.tagName == 'INPUT')
+            if(event.target.id == 'addWasteWeight'){
+                let count = event.target.parentNode.parentNode.cells[2]
+                count.innerHTML = display.textContent;
+                count.dataset.weight = display.textContent;
+            }
+            else if(event.target.tagName == 'INPUT')
             {
-                event.target.value = display.textContent
+                event.target.value = display.textContent;
             } else {
                 data.textContent = display.textContent;
             }
@@ -92,8 +96,6 @@ function stickerPrint() {
         clock = document.getElementById('clock').innerHTML,
 
     html ="";
-    
-    console.log(clock)
 
     html += '<div>----------------------------------</div>'
     +'<b>Артикул</b> '+tprod+'<br>'
@@ -120,8 +122,6 @@ function stickerPrintTotal() {
 
     html ="";
     
-    console.log(clock)
-
     html += '<div>----------------------------------</div>'
     +smena+'<br>'
     +tpa+ '<br>'

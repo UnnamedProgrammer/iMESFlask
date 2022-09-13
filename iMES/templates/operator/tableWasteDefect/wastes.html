@@ -1,69 +1,123 @@
 {% extends 'index_template.html' %}
 {% block main_window %}
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
-<!-- <script src="/static/js/EnterTableWeight/entered_TW.js"></script> -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-<div class="cancelWindow" id="js-shadow"></div>
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
-        <table class="table text-center" border="1" bordercolor="black">
+        <table class="table table-bordered text-center" id="currentWastes" border="1" bordercolor="black">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Продукт</th>
                     <th scope="col">Наименование отхода</th>
-                    <th scope="col">Кг. на ед.</th>
                     <th scope="col">Килограмм</th>
                     <th scope="col">Ввод</th>
                 </tr>
             </thead>
-            <tbody id="tbodyWastes">
+            <tbody>
                 <tr>
-                    <td>Апельсин</td>
-                    <td>Цедра</td>
-                    <td>0.05</td>
-                    <td>1</td>
-                    <td>
-                        <button type="button" class="btn btn-light button-2 secondary" onclick="numberModalControl(event)">
-                            Ввод
-                        </button>
+                    <td>Поддон полимерного контейнера  Д202 900/1080</td>
+                    <td>Отходы литьевые ПП 150.91</td>
+                    <td id="wasteCount_Data" data-oid="Oid-1" data-weight=""></td>
+                    <td class="nopadding col-2 table__button">
+                        <button type="button" class="btn__table" id="addWasteWeight">Ввод</button>
                     </td>
                 </tr>
                 <tr>
-                    <td>Яблоко</td>
-                    <td>Корка</td>
-                    <td>0.02</td>
-                    <td>5</td>
-                    <td>
-                        <button type="button" class="btn btn-light button-2 secondary" onclick="numberModalControl(event)">
-                            Ввод
-                        </button>
+                    <td>Поддон полимерного контейнера  Д202 900/1080</td>
+                    <td>Отходы литьевые ПП 150.91</td>
+                    <td id="wasteCount_Data"  data-oid="Oid-2" data-weight=""></td>
+                    <td class="nopadding col-2 table__button">
+                        <button type="button" class="btn__table" id="addWasteWeight">Ввод</button>
                     </td>
                 </tr>
                 <tr>
-                    <td>Змея</td>
-                    <td>Чешуа</td>
-                    <td>0.001</td>
-                    <td>0.2</td>
-                    <td>
-                        <button type="button" class="btn btn-light button-2 secondary" onclick="numberModalControl(event)">
-                            Ввод
-                        </button>
+                    <td>Поддон полимерного контейнера  Д202 900/1080</td>
+                    <td>Отходы литьевые ПП 150.91</td>
+                    <td id="wasteCount_Data"  data-oid="Oid-3" data-weight=""></td>
+                    <td class="nopadding col-2 table__button">
+                        <button type="button" class="btn__table" id="addWasteWeight">Ввод</button>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <!-- <div class="d-flex justify-content-between px-3"> -->
-        <div class="row">
-            <button type="button" class="btn btn-light button-2 primary me-1" id="defectPrint1" onclick="location.href='/operator/tableWasteDefect/wastes/anotherWastes'">
+    <div class="row">
+        <div class="col-6">
+            <button type="button" class="btn btn__view primary" data-toggle="modalOpen" data-target="addOtherWaste" onclick="modalController(event)">
                 Другие отходы
             </button>
-            <button type="button" class="btn btn-light button-2 secondary" onclick="location.href='/operator/tableWasteDefect'">
+        </div>
+        <div class="col-6">
+            <button type="button" class="btn btn__view secondary" onclick="location.href='/operator/tableWasteDefect'">
                 Назад
             </button>
         </div>
-    <!-- </div> -->
+    </div>
+
+    <!-- Модальное (всплывающее) окно выбора продукта(артикула) -->
+    <div class="modal hidden" id="addOtherWaste">
+        <div class="modal__list">
+            <div class="modal_header">
+                <h5 class="modal_title">Список продуктов</h5>
+            </div>
+            <div class="modal_content">
+                <div class="modal_body">
+                    <table class="table table-bordered text-center" id="selectStickerProduct" border="1" bordercolor="black">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Выбор</th>
+                                <th scope="col">Продукт</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="nopadding table__button">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td value="0001">1 Отходы литьевые ПЭНД 154.10</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding table__button">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td value="0002">2 Отходы литьевые ПЭНД 154.10</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding table__button">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td value="0003">3 Отходы литьевые ПЭНД 154.10</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding table__button">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td value="0004">4 Отходы литьевые ПЭНД 154.10</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding table__button">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td value="0005">5 Отходы литьевые ПЭНД 154.10</td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding table__button">
+                                    <button type="button" class="btn__table">Выбрать</button>
+                                </td>
+                                <td value="0006">6 Отходы литьевые ПЭНД 154.10</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal_footer">
+                    <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="addOtherWaste" onClick="modalController(event)"> Закрыть </button>
+                </div>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+    <!-- ----------------------------------------------------------- -->
+
+
     <!--Всплывающее окно ввода числовых значений-->
     <div class="modal hidden" id="numberModal">
         <div class="modal__number">
@@ -108,4 +162,31 @@
 {% endblock %}
 {% block navbar_footer %}
     {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
+
+{% block script %}
+<script>
+    const table = document.querySelector('#currentWastes'); // Получение главной таблицы с отходами
+    const tableTbody = document.querySelector('#currentWastes tbody'); // Получение тела главной таблицы с отходами
+    const otherTbody = document.querySelector('#addOtherWaste tbody') // Получение таблицы с другими отходами из вспылвающего окна
+
+    //--------------Отслеживание нажатия на кнопку удаления и отправка IP-------------------------------
+    tableTbody.addEventListener('click', function (e) {
+        const cell = e.target.closest('td:last-child');
+        if (!cell) {return;}
+        const row = cell.parentElement;
+        let wasteData = row.cells[2]; // Получение значения первой ячейки
+        numberModalControl(event)
+    });
+    //--------------------------------------------------------------------------------------------------
+
+    otherTbody.addEventListener('click', function (e) {
+        const cell = e.target.closest('td:first-child'); // Отслеживание нажатия на первую ячейку (кнопку "Выбрать")
+        if (!cell) {return;}
+        const row = cell.parentElement;
+        let selectedWaste = row.cells[1].innerText // Получения значения второй ячейки (названия)
+
+        $(table).find('tbody').append('<tr> <td>Поддон полимерного контейнера  Д202 900/1080</td> <td data-oid="12312321">'+ selectedWaste + '</td> <td id="wasteCount_Data"></td> <td class="nopadding col-2 table__button"> <button type="button" class="btn__table" id="addWasteWeight">Ввод</button></td> </tr>'); // Добавление новой строки в таблицу
+    });
+</script>
 {% endblock %}

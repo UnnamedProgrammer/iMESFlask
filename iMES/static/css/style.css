@@ -17,6 +17,9 @@ p {
 button {
   border: none; }
 
+.table__button {
+  position: relative; }
+
 .offcanvas-container {
   display: none; }
 
@@ -100,12 +103,13 @@ button {
       .btn__navbar-footer_exit span {
         font-size: 28pt; }
   .btn__table {
+    position: absolute;
     display: flex;
     justify-content: center;
     align-items: center;
     vertical-align: middle;
     width: 100%;
-    height: 45px;
+    height: 100%;
     background-color: #254063 !important;
     color: #fff; }
     .btn__table button {
@@ -519,8 +523,7 @@ table .primary {
   display: contents; }
 
 .nopadding {
-  padding: 0 !important;
-  margin: 0 !important; }
+  padding: 0 !important; }
 
 .left-padding {
   padding-left: 1rem; }
