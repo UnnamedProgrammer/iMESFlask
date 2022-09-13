@@ -349,6 +349,7 @@ def ReturnOperatorAndAdjuster():
                 operator = employee[0]
         OperatorAdjusterAtTerminals['Оператор'] = operator
         OperatorAdjusterAtTerminals['Наладчик'] = adjuster
+    print(OperatorAdjusterAtTerminals)
     return json.dumps(OperatorAdjusterAtTerminals,ensure_ascii=False,indent=4)
 
 # Метод сокета срабатывающий при соединении
