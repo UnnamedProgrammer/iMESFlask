@@ -10,5 +10,6 @@ $(document).ready(function(){
         var socket = io();
         pressForm.innerHTML = $( "#selectPressForm option:selected" ).text(); // Визуальная замена пресс-формы
         socket.emit('press_form_binding', [selected_press_form, document.getElementById('conOid').value]);
+        socket.emit('press_form_binding', [selected_press_form, tpaOid]);
     })
 })

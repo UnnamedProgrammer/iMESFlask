@@ -25,7 +25,7 @@ def VisualInstructions():
                                     <td class="align-middle">{Name}</td>
                                     <td class="nopadding">
                                         <a class="btn__table" onclick="LinkClick();"
-                                        href="/operator/visualinstructions/DAuth={Authorization}/ddoc={InstructionsId[i]}">
+                                        href="/operator/visualinstructions/ddoc={InstructionsId[i]}&get">
                                             Открыть
                                         </a>
                                     </td>
@@ -40,32 +40,23 @@ def VisualInstructions():
                            current_tpa = current_tpa[request.remote_addr])
 
 
-@app.route('/operator/visualinstructions/DAuth=<string:status>/ddoc=<string:instructionid>')
+@app.route('/operator/visualinstructions/ddoc=<string:instructionid>&get')
 @login_required
-def GetVisualInstruction(instructionid, status):
+def GetVisualInstruction(instructionid):
     device_tpa = TpaList[request.remote_addr]
-    if (status == "True"):
-        if (os.path.exists(f"iMES/templates/Directum/doc_{instructionid}")):
-            return render_template(
-                f"Directum/doc_{instructionid}/{instructionid}_frame.html")
-        else:
-            doc = DirectumConnection.DirectumGetDocument(instructionid)
-            if (isinstance(doc, str)):
-                return render_template("Show_error.html", error=doc,
-                                       ret="/operator",device_tpa = device_tpa,
-                                       current_tpa = current_tpa[request.remote_addr])
-            return render_template(
-                f"Directum/doc_{instructionid}/{instructionid}_frame.html")
+    if (os.path.exists(f"iMES/templates/Directum/doc_{instructionid}")):
+        return render_template(f"Directum/doc_{instructionid}/{instructionid}_frame.html")
     else:
-        if (DirectumConnection.Authorization()):
-            return redirect("/operator/visualinstructions/")
-        else:
-            return render_template("Show_error.html",
-                                   error='Не удалось авторизоваться в СЭД "Directum"',
-                                   ret="/operator")
+        doc = DirectumConnection.DirectumGetDocument(instructionid)
+        if (isinstance(doc, str)):
+            return render_template("Show_error.html", error=doc,
+                                    ret="/operator",device_tpa = device_tpa,
+                                    current_tpa = current_tpa[request.remote_addr])
+        return render_template(
+            f"Directum/doc_{instructionid}/{instructionid}_frame.html")
 
 
-@app.route('/operator/visualinstructions/ddoc=<string:instructionid>&Show')
+@app.route('/operator/visualinstructions/ddoc=<string:instructionid>&show')
 @login_required
 def ShowVisualInstruction(instructionid):
     return render_template(f"Directum/doc_{instructionid}/{instructionid}.html")
