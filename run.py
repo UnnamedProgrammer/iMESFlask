@@ -30,10 +30,9 @@ while installed == False:
         from iMES import app,socketio,host,port
         from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
         installed = True
-
-        if __name__ == "__main__":
-            ShiftTaskMonitoring = ShiftTaskDaemon().Start()
-            socketio.run(app,host=host,port=port,debug=True)
-            print(installed)
     except ModuleNotFoundError:
         pass
+    print(installed)
+    if __name__ == "__main__":
+        ShiftTaskMonitoring = ShiftTaskDaemon().Start()
+        socketio.run(app,host=host,port=port,debug=True)
