@@ -5,6 +5,7 @@ from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
 from progress.bar import IncrementalBar
 from iMES.Model.SQLManipulator import SQLManipulator
 import datetime
+from iMES import app
 
 
 
@@ -83,7 +84,7 @@ class ShiftTaskLoader():
     def CheckingRequiredValuesInTheDataBase(self,ShiftTask) -> bool:
         # Проверка основных полей на None значение
         progressbar = IncrementalBar()
-        print(f"Валидация обязательных значений сменного задания № {ShiftTask.Ordinal}")
+        app.logger.info(f"Валидация обязательных значений сменного задания № {ShiftTask.Ordinal}")
         args_cantbe_null = {"Shift":ShiftTask.Shift,
                             "Equipment":ShiftTask.Equipment,
                             "ProductCode":ShiftTask.ProductCode,
@@ -102,16 +103,16 @@ class ShiftTaskLoader():
                 continue
             else:
                 error = f"Значение self.{key} в сменном задании №{ShiftTask.Ordinal} является None, что недопустимо."
-                print(f"Ошибка: {error}")
+                app.logger.critical(f"Ошибка: {error}")
                 raise Exception(error)
         progressbar.finish()
-        print("Валидация полей закончена.")
+        app.logger.info("Валидация полей закончена.")
 
         # Поиск записей в базе данных от которых зависит сменное задание
         # чтобы предотвратить ошибки вставки записи сменного задания в таблицу
-        print(f"Проверка наличия записей на которые ссылается сменное задание № {ShiftTask.Ordinal}:",end="\n")
-        print(f"    Проверка наличия требуемых записей:",end="\r\n")
-        print(f"        Проверка оборудования {ShiftTask.Equipment}")
+        app.logger.info(f"Проверка наличия записей на которые ссылается сменное задание № {ShiftTask.Ordinal}:")
+        app.logger.info(f"    Проверка наличия требуемых записей:")
+        app.logger.info(f"        Проверка оборудования {ShiftTask.Equipment}")
         equipment_sql = f"""
             SELECT [Equipment].[Oid],
                 EquipmentType.[Name]
@@ -126,36 +127,36 @@ class ShiftTaskLoader():
         if len(equipment) > 0:
             pass
         else:
-            print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
+            app.logger.warning(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
             return False 
         if equipment[0][1] == "Термопластавтомат": 
-            print(f"        Термопластавтомат {ShiftTask.Equipment} найден", end="\n")              
-            print(f"        Проверка продукта {ShiftTask.ProductCode}",end="\r\n")
+            app.logger.info(f"        Термопластавтомат {ShiftTask.Equipment} найден")              
+            app.logger.info(f"        Проверка продукта {ShiftTask.ProductCode}")
             productsql = f"""
                 SELECT [Oid]
                 FROM [MES_Iplast].[dbo].[Product] WHERE Code = '{ShiftTask.ProductCode}'
             """
             product = SQLManipulator.SQLExecute(productsql)
             if (len(product) > 0):
-                print(f"        Продукт {ShiftTask.ProductCode} найден",end="\n")
-                print(f"        Проверка спецификации {ShiftTask.Specification}",end="\r\n")
+                app.logger.info(f"        Продукт {ShiftTask.ProductCode} найден")
+                app.logger.info(f"        Проверка спецификации {ShiftTask.Specification}")
                 sql = f"""
                         SELECT [Oid]
                         FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{ShiftTask.Specification}'
                       """
                 specification = SQLManipulator.SQLExecute(sql)
                 if len(specification) > 0:
-                    print(f"        Спецификация {ShiftTask.Specification} найдена",end="\n")
-                    print(f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
+                    app.logger.info(f"        Спецификация {ShiftTask.Specification} найдена")
+                    app.logger.info(f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
                     return True
                 else:
-                    print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification} ")
+                    app.logger.warning(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification} ")
                     return False
             else:
-                print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
+                app.logger.warning(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
                 return False
         else:
-            print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
+            app.logger.warning(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
             return False
 
     # Главный метод который создаёт записи сменных заданий
@@ -169,7 +170,7 @@ class ShiftTaskLoader():
         # Проверяем длинну списка сменных заданий
         if len(self.shift_task_list) == 0:
             # Если заданий нет
-            print("В списке отсутсвуют сменные задания для выгрузки")
+            app.logger.warning("В списке отсутсвуют сменные задания для выгрузки")
             return
         else:
             # Если есть то единожды в название смены 
@@ -360,6 +361,6 @@ class ShiftTaskLoader():
                         '{task.ProductURL}',
                         '{task.PackingURL}')
                     """
-                print("Вставка сменного задания №" + task.Ordinal)
+                app.logger.info("Вставка сменного задания №" + task.Ordinal)
                 SQLManipulator.SQLExecute(ShiftTaskInsertSQL)
         

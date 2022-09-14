@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_socketio import SocketIO
 from flask import Flask
 from flask_login import LoginManager
@@ -5,7 +6,14 @@ from iMES.Controller.UserCountController import UserCountController
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES.Model.UserModel import UserModel
 import configparser
+import logging, os
 
+if (not os.path.exists('log/')):
+    os.mkdir('log/')
+file_log = logging.FileHandler("log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log")
+console_out = logging.StreamHandler()
+
+logging.basicConfig(handlers=(file_log,console_out),level=logging.NOTSET)
 
 config = configparser.ConfigParser()
 config.read("iMES/config.cfg")
