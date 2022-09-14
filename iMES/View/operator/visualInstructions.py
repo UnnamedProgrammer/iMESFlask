@@ -23,11 +23,11 @@ def VisualInstructions():
                 tr_table = f"""
                                 <tr>
                                     <td class="align-middle">{Name}</td>
-                                    <td class="nopadding">
-                                        <a class="btn__table" onclick="LinkClick();"
+                                    <td class="table__button nopadding">
+                                        <button class="btn__table" onclick="LinkClick();"
                                         href="/operator/visualinstructions/ddoc={InstructionsId[i]}&get">
                                             Открыть
-                                        </a>
+                                        </button>
                                     </td>
                                 </tr>
                             """
