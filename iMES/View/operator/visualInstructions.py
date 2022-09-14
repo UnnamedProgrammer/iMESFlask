@@ -1,14 +1,16 @@
 from iMES import app
-from flask import redirect, render_template, send_file,request
+from flask import redirect, render_template, send_file, request
 from iMES.Model.DirectumInterationModule import DirectumIntegration
 import os
 from flask_login import login_required
-from iMES import current_tpa,TpaList
+from iMES import current_tpa, TpaList
 
 DirectumConnection = DirectumIntegration()
 InstructionsId = [182675, 1057032, 277104, 1083964]
 
 # Метод отображающий окно со списком визуальных инструкций
+
+
 @app.route('/operator/visualinstructions/')
 @login_required
 def VisualInstructions():
@@ -34,10 +36,10 @@ def VisualInstructions():
                 table = table + tr_table
     else:
         return render_template("Show_error.html", error=Authorization,
-                               ret="/operator",device_tpa = device_tpa,
-                           current_tpa = current_tpa[request.remote_addr])
-    return render_template("operator/tableVisualInstruction.html", table=table,device_tpa = device_tpa,
-                           current_tpa = current_tpa[request.remote_addr])
+                               ret="/operator", device_tpa=device_tpa,
+                               current_tpa=current_tpa[request.remote_addr])
+    return render_template("operator/tableVisualInstruction.html", table=table, device_tpa=device_tpa,
+                           current_tpa=current_tpa[request.remote_addr])
 
 
 @app.route('/operator/visualinstructions/ddoc=<string:instructionid>&get')
@@ -50,8 +52,8 @@ def GetVisualInstruction(instructionid):
         doc = DirectumConnection.DirectumGetDocument(instructionid)
         if (isinstance(doc, str)):
             return render_template("Show_error.html", error=doc,
-                                    ret="/operator",device_tpa = device_tpa,
-                                    current_tpa = current_tpa[request.remote_addr])
+                                   ret="/operator", device_tpa=device_tpa,
+                                   current_tpa=current_tpa[request.remote_addr])
         return render_template(
             f"Directum/doc_{instructionid}/{instructionid}_frame.html")
 

@@ -1,7 +1,10 @@
-import importlib,os
+import importlib
+import os
 
 
 installed = False
+
+
 def Dependency_check():
     dependences = ['flask',
                    'flask_login',
@@ -22,17 +25,19 @@ def Dependency_check():
             os.system(install_str)
         except:
             pass
+
+
 Dependency_check()
 while installed == False:
     print(installed)
-    try:    
+    try:
         import importlib
-        from iMES import app,socketio,host,port
+        from iMES import app, socketio, host, port
         from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
         installed = True
     except ModuleNotFoundError:
         pass
     print(installed)
     if __name__ == "__main__":
-        ShiftTaskMonitoring = ShiftTaskDaemon().Start()
-        socketio.run(app,host=host,port=port,debug=True)
+        #ShiftTaskMonitoring = ShiftTaskDaemon().Start()
+        socketio.run(app, host=host, port=port, debug=True)

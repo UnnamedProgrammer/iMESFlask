@@ -5,6 +5,8 @@ from iMES.Model.SQLManipulator import SQLManipulator
 
 # Процедура кнопки "Выход с сохранением"
 # Закрепляет пользователя за выбранной ролью
+
+
 @app.route('/exitwithsave')
 @login_required
 def ExitWithSave():
@@ -84,7 +86,6 @@ def ExitWithSave():
             """
         SQLManipulator.SQLExecute(sql)
     else:
-        return render_template('Show_error.html',error="Недостаточно прав для данного интерфейса",ret='/menu')
+        return render_template('Show_error.html', error="Недостаточно прав для данного интерфейса", ret='/menu')
     logout_user()
     return redirect('/')
-

@@ -4,12 +4,12 @@ import os
 from bs4 import BeautifulSoup
 
 
-
 class DirectumIntegration():
     """
         Класс предназначенный для получения
         документов с СЭД "Directum" через веб-доступ
     """
+
     def __init__(self):
         self.urls = {
             'Авторизация': 'https://dm.iplast.com/Authentication.asmx/Login'
@@ -152,7 +152,7 @@ class DirectumIntegration():
                                     "w", encoding='utf-8') as htmldoc:
                                 htmldoc.write(frame_html)
                         doc_html = doc_html + \
-                                    f'<div><img style="display: block;-webkit-user-select: none; pointer-events: none" src="{{{{ url_for("static", filename="Directum/doc_{DocumentId}/{DocumentId}_{i}.png") }}}}" initwidth="819" initheight="1171" class="previewImage" id="page_1"></div>'
+                            f'<div><img style="display: block;-webkit-user-select: none; pointer-events: none" src="{{{{ url_for("static", filename="Directum/doc_{DocumentId}/{DocumentId}_{i}.png") }}}}" initwidth="819" initheight="1171" class="previewImage" id="page_1"></div>'
                     doc_html = doc_html + "</body></html>"
                     # Создаём файл документа и прописываем туда стили
                     with open(

@@ -5,6 +5,7 @@ from iMES import current_tpa
 from iMES.Model.SQLManipulator import SQLManipulator
 from flask_login import login_required
 
+
 @login_required
 @app.route("/bindPressForms")
 def bindPressForms():
@@ -16,8 +17,9 @@ def bindPressForms():
                                                 WHERE EquipmentType.Name = 'Пресс-форма' 
                                                 ORDER BY Equipment.Name"""
     Press_Forms = SQLManipulator.SQLExecute(sql_GetPressForms)
-    
+
     return render_template("/bind_press_form/bind_press_form.html", current_tpa=current_tpa[ip_addr], press_forms=Press_Forms)
+
 
 @socketio.on('press_form_binding')
 def handle_selected_press_forms(json):

@@ -2,14 +2,16 @@ from iMES import socketio
 from iMES import app
 from iMES import UserController
 from flask import redirect, render_template, request
-from flask_login import login_required, login_user, logout_user,current_user
+from flask_login import login_required, login_user, logout_user, current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
-from iMES import TpaList,current_tpa,user
+from iMES import TpaList, current_tpa, user
 import requests
 
 # Метод возвращающий главную страницу
+
+
 @app.route("/")
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
@@ -34,8 +36,9 @@ def index():
                                     Device.[Name] = [User].UserName
                                 """
             CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
-            from iMES import host,port
-            r = requests.get(f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}")
+            from iMES import host, port
+            r = requests.get(
+                f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}")
             if(r.status_code == 200):
                 login_user(user)
     # В противном случае уведомляем клиента о том что его нет в списках устройств
@@ -43,20 +46,23 @@ def index():
         return "Ваше устройство не находиться в списке допущенных, нет доступа."
     # Рендерим страницу
     return render_template("index.html",
-                           device_tpa = device_tpa,
-                           current_tpa = current_tpa[ip_addr])
+                           device_tpa=device_tpa,
+                           current_tpa=current_tpa[ip_addr])
 
 
-#Метод возвращающий текущий ТПА в навбаре
+# Метод возвращающий текущий ТПА в навбаре
 @app.route("/changeTpa", methods=["GET"])
 def ChangeTPA():
     ip_addr = request.remote_addr
-    current_tpa[ip_addr] = request.args.getlist('oid')[0], request.args.getlist('name')[0]
+    current_tpa[ip_addr] = request.args.getlist(
+        'oid')[0], request.args.getlist('name')[0]
     return current_tpa
 
 # Метод возвращающий данные о текущей выпущенной продукции на графике
 # по запросу с главной страницы с помощью JS
 # Запрос на этот роутинг выполняется их кода JS в index_template.html
+
+
 @app.route("/getTrend")
 def GetTrend():
     trend = '[{ "y": "0", "x": "2022-07-01 07:01:08.637" },{ "y": "15", "x": "2022-07-01 14:00:08.570" }]'
@@ -65,6 +71,8 @@ def GetTrend():
 # Метод возвращающий данные о плане выпускаемой продукции на графике
 # по запросу с главной страницы с помощью JS
 # Запрос на этот роутинг выполняется их кода JS в index_template.html
+
+
 @app.route("/getPlan")
 def GetPlan():
     plan = '[{ "y": "0", "x": "2022-07-01 07:00:00" },{ "y": "25", "x": "2022-07-01 19:00:00" }]'
@@ -73,6 +81,8 @@ def GetPlan():
 # Метод создания пользователя для сессии при прикладываении пропуска.
 # Отправляет устройству на котором прикладывается пропуск команду
 # на переход по роутингу авторизации '/Auth'
+
+
 @app.route("/Auth/PassNumber=<string:passnumber>")
 def Authorization(passnumber):
     # Определяем адресс клиента
@@ -106,9 +116,12 @@ def Authorization(passnumber):
     if (len(data) == 0):
         return 'User undefinded'
     else:
-        UserController.CountUsers += 1 # Прибавляем к счетчику пользователей 1 для задания ID пользователяUserController.CountUsers += 1
-        userdata = list(data[0]) # Помещаем данные о клиенте в список для удобства
-        userdata.insert(0,UserController.CountUsers) # Помещаем в начало спика ID
+        # Прибавляем к счетчику пользователей 1 для задания ID пользователяUserController.CountUsers += 1
+        UserController.CountUsers += 1
+        # Помещаем данные о клиенте в список для удобства
+        userdata = list(data[0])
+        # Помещаем в начало спика ID
+        userdata.insert(0, UserController.CountUsers)
         # Запрос на сохраненные роли пользователя
         sqlLastRole = f"""
                 SELECT [Role].[Name]
@@ -119,7 +132,7 @@ def Authorization(passnumber):
                 """
         LastRole = SQLManipulator.SQLExecute(sqlLastRole)
         if(LastRole != []):
-            user.role = {0:LastRole[0][0]}
+            user.role = {0: LastRole[0][0]}
         else:
             sqlUserRoles = f"""
                 SELECT [Role].[Name]
@@ -130,7 +143,7 @@ def Authorization(passnumber):
             """
             roles = SQLManipulator.SQLExecute(sqlUserRoles)
             user.role = {}
-            for i in range(0,len(roles)):
+            for i in range(0, len(roles)):
                 user.role[i] = roles[i][0]
         sqlCheckSavedRole = f"""
                 DECLARE @device uniqueidentifier
@@ -163,15 +176,17 @@ def Authorization(passnumber):
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
-        packet = {terminal:''}
+        packet = {terminal: ''}
         # Отправляем в сокет сообщение о успешной авторизации
-        socketio.emit('Auth',json.dumps(packet,ensure_ascii=False,indent=4))
+        socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
 
 # Метод предназначенный для авторизации без пропуска по запросу
 # Большинство операций аналогичны методу авторизации с пропуском
+
+
 @app.route("/Auth/PassNumber=<string:passnumber>/IP=<string:ipaddress>")
-def AuthorizationWhithoutPass(passnumber,ipaddress):
+def AuthorizationWhithoutPass(passnumber, ipaddress):
     terminal = ipaddress
     sql = f"""
     SELECT
@@ -202,7 +217,7 @@ def AuthorizationWhithoutPass(passnumber,ipaddress):
     else:
         UserController.CountUsers += 1
         userdata = list(data[0])
-        userdata.insert(0,UserController.CountUsers)
+        userdata.insert(0, UserController.CountUsers)
         sqlLastRole = f"""
                 SELECT [Role].[Name]
                 FROM [SavedRole],[User],[Role] 
@@ -212,7 +227,7 @@ def AuthorizationWhithoutPass(passnumber,ipaddress):
                 """
         LastRole = SQLManipulator.SQLExecute(sqlLastRole)
         if(LastRole != []):
-            user.role = {0:LastRole[0][0]}
+            user.role = {0: LastRole[0][0]}
         else:
             sqlUserRoles = f"""
                 SELECT [Role].[Name]
@@ -223,7 +238,7 @@ def AuthorizationWhithoutPass(passnumber,ipaddress):
             """
             roles = SQLManipulator.SQLExecute(sqlUserRoles)
             user.role = {}
-            for i in range(0,len(roles)):
+            for i in range(0, len(roles)):
                 user.role[i] = roles[i][0]
         sqlCheckSavedRole = f"""
                 DECLARE @device uniqueidentifier
@@ -255,41 +270,49 @@ def AuthorizationWhithoutPass(passnumber,ipaddress):
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
-        packet = {terminal:''}
-        socketio.emit('Auth',json.dumps(packet,ensure_ascii=False,indent=4))
+        packet = {terminal: ''}
+        socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
 
 # Метод загружающий пользователя по его ID в сессии при запросе login_manager'a
+
+
 @login_manager.user_loader
 def load_user(id):
     return user
 
 # Метод аутентификации пользователя и редирект на страницы в зависимости от роли
+
+
 @app.route('/Auth')
 def Auth():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     device_tpa = TpaList[ip_addr]
     terminal = request.remote_addr
     login_user(user)
-    packet = {terminal:current_user.role}
-    
+    packet = {terminal: current_user.role}
+
     if (current_user.role == 'Оператор'):
         return redirect('/operator')
     elif (current_user.role == 'Наладчик'):
         return redirect('/adjuster')
-    elif (current_user.role == {0:'Наладчик'}):
+    elif (current_user.role == {0: 'Наладчик'}):
         return redirect('/adjuster')
-    elif (current_user.role == {0:'Оператор'}):
+    elif (current_user.role == {0: 'Оператор'}):
         return redirect('/operator')
     else:
         return redirect('/menu')
 
 # Метод вызываемый при переходе на роутинг требующий авторизации будучи не авторизованным
+
+
 @app.route('/login')
 def login():
-    return render_template('Show_error.html',error="Нет доступа, авторизируйтесь с помощью пропуска",ret='/', current_tpa = current_tpa[request.remote_addr])
+    return render_template('Show_error.html', error="Нет доступа, авторизируйтесь с помощью пропуска", ret='/', current_tpa=current_tpa[request.remote_addr])
 
 # Метод выхода из аккаунта с откреплением от терминала
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -313,6 +336,8 @@ def logout():
     return redirect('/')
 
 # Метод выхода из аккаунта без открепления от терминала
+
+
 @app.route('/logoutWithoutDeleteRoles')
 @login_required
 def logoutWithoutDeleteRoles():
@@ -321,8 +346,10 @@ def logoutWithoutDeleteRoles():
 
 # Метод возвращающий текущего оператора и наладчика на устройстве
 # Запрос на этот роутинг выполняется их кода JS в index_template.html
+
+
 @app.route('/getOperatorAndAdjuster')
-def ReturnOperatorAndAdjuster():    
+def ReturnOperatorAndAdjuster():
     ip = request.remote_addr
     sql = f"""
         DECLARE @device uniqueidentifier
@@ -338,7 +365,7 @@ def ReturnOperatorAndAdjuster():
             Employee.Oid = [User].Employee
       """
     sqlresult = SQLManipulator.SQLExecute(sql)
-    OperatorAdjusterAtTerminals = {'Оператор':'','Наладчик':''}
+    OperatorAdjusterAtTerminals = {'Оператор': '', 'Наладчик': ''}
     operator = ''
     adjuster = ''
     if(len(sqlresult) != 0):
@@ -350,9 +377,11 @@ def ReturnOperatorAndAdjuster():
         OperatorAdjusterAtTerminals['Оператор'] = operator
         OperatorAdjusterAtTerminals['Наладчик'] = adjuster
     print(OperatorAdjusterAtTerminals)
-    return json.dumps(OperatorAdjusterAtTerminals,ensure_ascii=False,indent=4)
+    return json.dumps(OperatorAdjusterAtTerminals, ensure_ascii=False, indent=4)
 
 # Метод сокета срабатывающий при соединении
+
+
 @socketio.on(message='GetDeviceType')
 def socket_connected(data):
     ip_addr = request.remote_addr
@@ -366,4 +395,5 @@ def socket_connected(data):
         data = 'Веб'
     else:
         data = 'Терминал'
-    socketio.emit("DeviceType",json.dumps({ip_addr:data},ensure_ascii=False,indent=4))
+    socketio.emit("DeviceType", json.dumps(
+        {ip_addr: data}, ensure_ascii=False, indent=4))

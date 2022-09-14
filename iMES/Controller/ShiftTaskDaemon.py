@@ -5,6 +5,7 @@ from time import sleep
 from datetime import datetime
 from threading import Thread
 
+
 class ShiftTaskDaemon():
     def __init__(self):
         self.tpa_list = []
@@ -12,7 +13,7 @@ class ShiftTaskDaemon():
         self.insertedToDay = False
 
     def Start(self):
-        thread = Thread(target=self.DoWork,args=())
+        thread = Thread(target=self.DoWork, args=())
         thread.start()
         print("Демон сменных заданий запущен")
 
@@ -22,7 +23,7 @@ class ShiftTaskDaemon():
             self.insertedToDay = self.CheckShift()
             now = datetime.now()
             if ((now.hour == 18 and now.minute >= 55) or
-               (now.hour == 6 and now.minute >= 55) or 
+               (now.hour == 6 and now.minute >= 55) or
                (self.insertedToDay == False)):
                 get_tpa_list = """
             SELECT NomenclatureGroup.Code
@@ -50,14 +51,14 @@ class ShiftTaskDaemon():
                 elif hour >= 7 and hour < 19:
                     self.shift = 0
                 if len(tpa_list) > 0:
-                    Loader = ShiftTaskLoader(self.tpa_list,date,self.shift)
+                    Loader = ShiftTaskLoader(self.tpa_list, date, self.shift)
                     Loader.Get_ShiftTask()
                     Loader.InsertToDataBase()
 
     def CheckShift(self):
         now = datetime.now()
         hour = now.hour
-        if ((hour >= 1 and hour < 7) or 
+        if ((hour >= 1 and hour < 7) or
            (hour >= 19 and hour <= 24)):
             self.shift = 1
         elif hour >= 7 and hour < 19:
@@ -93,4 +94,3 @@ class ShiftTaskDaemon():
             return False
         else:
             return True
-
