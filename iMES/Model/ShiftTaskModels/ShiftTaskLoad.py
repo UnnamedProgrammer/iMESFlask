@@ -45,16 +45,17 @@ class ShiftTaskLoader():
             self.shift = _shift
         self.shift_task_list = []
         self.shift_task_parsed = None
+        self.data = None
 
     # Метод парсит сменные задания в зависимости от переданного аргумента
     # _nomenclature_group и добавляет их в список self.shift_task_list
     def Get_ShiftTask(self) -> list:
-        data = self.ShiftTask_Update()
+        self.data = self.ShiftTask_Update()
         if isinstance(self.nomenclature_group, list):
             for NomGroup in self.nomenclature_group:
-                self.Find_ShiftTask(NomGroup, data)
+                self.Find_ShiftTask(NomGroup, self.data)
         elif isinstance(self.nomenclature_group, str):
-            self.Find_ShiftTask(NomGroup, data)
+            self.Find_ShiftTask(NomGroup, self.data)
 
     # Делает запрос в веб-сервис 1С получая json файл, парсит его
     # и возвращает в виде dict
@@ -148,11 +149,11 @@ class ShiftTaskLoader():
                     f"        Продукт {ShiftTask.ProductCode} найден")
                 app.logger.info(
                     f"        Проверка спецификации {ShiftTask.Specification}")
-                sql = f"""
+                get_spec_sql = f"""
                         SELECT [Oid]
                         FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{ShiftTask.Specification}'
                       """
-                specification = SQLManipulator.SQLExecute(sql)
+                specification = SQLManipulator.SQLExecute(get_spec_sql)
                 if len(specification) > 0:
                     app.logger.info(
                         f"        Спецификация {ShiftTask.Specification} найдена")
@@ -160,9 +161,43 @@ class ShiftTaskLoader():
                         f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
                     return True
                 else:
+                    ['SpecCode']
                     app.logger.warning(
-                        f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification} ")
-                    return False
+                        f"Внимание: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
+                    app.logger.info(f"  Поиск спецификации {ShiftTask.Specification} в массиве 1С")
+                    for specification_1C in self.data['Spec']:
+                        spec1C_code = specification_1C['SpecCode']
+                        if len(spec1C_code) < 11:
+                            while len(spec1C_code) != 11:
+                                spec1C_code = '0' + spec1C_code
+                        if spec1C_code == ShiftTask.Specification:
+                            app.logger.info(f"  Спецификация {ShiftTask.Specification} найдена")
+                            isActive = 0
+                            if specification_1C['IsActive'] == "Да":
+                                isActive = 1
+                            insert_specsql = f"""                            
+                                INSERT INTO ProductSpecification 
+                                    (Oid, Code, [Name], Product, UseFactor,IsActive) 
+                                VALUES (NEWID(),'{spec1C_code}','{specification_1C['Spec']}',
+                                    '{product[0][0]}',{float(specification_1C['UseFactor'])},
+                                    {isActive})              
+                                """
+                            app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
+                            SQLManipulator.SQLExecute(insert_specsql)
+                            break
+                    app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
+                    specification = SQLManipulator.SQLExecute(get_spec_sql)
+                    if len(specification) > 0:
+                        app.logger.info(
+                            f"        Спецификация {ShiftTask.Specification} найдена")
+                        app.logger.info(
+                            f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
+                        app.logger.info(f"\r\n")
+                        return True
+                    else:
+                        app.logger.warning(
+                            f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
+                        return False
             else:
                 app.logger.warning(
                     f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
@@ -284,7 +319,7 @@ class ShiftTaskLoader():
                                            task['Packing'],
                                            task['PackingCount'],
                                            task['Socket'],
-                                           task['PackingCount'],
+                                           task['ProductPlan'],
                                            task['ProductCycle'],
                                            task['ProductWeight'],
                                            task['nomencURL'],
