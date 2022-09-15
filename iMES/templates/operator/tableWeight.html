@@ -8,7 +8,7 @@
 <div class="view"> 
     <div class="view-header text-center primary">Вес изделия за смену</div>
     <div class="view-body jsScroll"> 
-        <table class="table table-sm text-center" border="1" bordercolor="black">
+        <table class="table table-bordered text-center" id="productWeightTable" border="1" bordercolor="black">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Продукт</th>
@@ -17,7 +17,7 @@
                     <th scope="col">Оператор</th>
                 </tr>
             </thead>
-            <tbody class="table_ProductWeight" id="tbodyWeight">
+            <tbody>
                 {% for tableWeight_row in table_info %}
                     <tr>
                         {% for tableWeight_column in tableWeight_row.values() %}
@@ -32,22 +32,18 @@
     </div>
     <div class="d-flex justify-content-between px-3">
         <div class="col-6 row">
-            <div class="btn-row">
-                <button type="submit" class="btn btn-light button-2 btn-blue-1 primary me-1 form-control" data="weight" data2="ввод" onclick="numberModalControl(event)">
+            <div class="col nopadding me-1">
+                <button type="button" class="btn btn__view primary fs-4" onClick="numberModalControl(event)">
                     Ввод веса<br>изделия
                 </button>
-                {% if table_info %}
-                    <button type="submit" class="btn btn-light button-2 btn-blue-1 primary" id="printWeight" onclick="javascript:CallPrint('print-content')">Печать<br>вес изделия</button>
-                {% else %}
-                    <button type="submit" class="btn btn-light button-2 btn-blue-1 primary">Печать<br>вес изделия</button>
-                {% endif %}
+            </div>
+            <div class="col nopadding me-1">
+                <button type="button" class="btn btn__view primary fs-4" onClick="weightPrint()">Печать<br>вес изделия</button>
             </div>
         </div>  
         <div class="col-6 row">
-            <button type="button" class="btn btn-light button-1 startLoad secondary"
-                onclick="location.href='/operator';">
-                <div class="view-exit-1 js-break">&#8617;</div>
-                <div class="view-check-text-exit js-break">Назад</div>
+            <button type="button" class="btn btn btn__view secondary startLoad" onclick="location.href='/operator';">
+                <span class="icon-back"></span> Назад
             </button>
         </div>  
     </div>
@@ -58,7 +54,7 @@
             <div class="modal-window__body">
                 <div class="row">
                     <div class="btn modal__input-number" id="inputWeight"></div>
-                    <button type="button" class="btn modal__enter-button secondary" id="weightEntering">ВВОД</button>
+                    <button type="button" class="btn modal__enter-button secondary" id="productWeight">ВВОД</button>
                 </div>
                 <div class="number-keyboard">
                     <div class="keyboard__keys">
@@ -93,26 +89,38 @@
     </div>       
 </div>
 <script src="/static/js/numberModal.js"></script>
-<!-- Печатная форма НАЧАЛО -->
-<pre class="hidden">-------------------------------------------
-    <div class="hidden print_ProductWeight" id="print-content"></div>
--------------------------------------------</pre>
+<script>
 
-    <script>
-        function CallPrint(strid) {
-            var prtContent = document.getElementById(strid);
-            var WinPrint = window.open('','','left=50, top=50, width=800, height=640, toolbar=0, scrollbars=1, status=0');
-            WinPrint.document.write('');
-            WinPrint.document.write(prtContent.innerHTML);
-            WinPrint.document.write('');
-            WinPrint.document.close();
-            WinPrint.focus();
-            WinPrint.print();
-            WinPrint.close();
+    let productWeightTable = document.querySelector('#productWeightTable'); // Получение таблицы с весом продукта
+    let productWeightRows = document.querySelector('#productWeightTable tbody').rows; // Получение тела таблицы с весом продукта
+    let enteredWeight = document.querySelectorAll('#productWeightTable'); // Получение значений введного веса
+
+    // Печать веса продукта
+    function weightPrint() {
+
+        console.log(productWeightRows[0].cells[0])
+        let weightHTML = ''
+
+        for ( let i = 0; i < productWeightRows.length; i++) {
+            weightHTML += productWeightRows[i].cells[1].innerHTML+' кг. '+ productWeightRows[i].cells[2].innerHTML.substr(productWeightRows[i].cells[2].innerHTML.indexOf(" ") + 1) +'<br>';
         }
-    </script>
+        
+        mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
 
-<!-- Печатная форма КОНЕЦ -->
+        let tpa = document.getElementById('ttpa').innerHTML,
+            clock = document.getElementById('clock').innerHTML,
+
+        html ="";
+
+        html += '<div>----------------------------------</div>'
+        +clock+'<br>'
+        +tpa+'<br>'
+        +weightHTML
+        var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+
+        printStickerWindow(div, mywindow);
+    }
+</script>
 {% endblock %}
 {% block navbar_footer %}
     {% include 'navbar_footer/navbar_footer.html' %}        

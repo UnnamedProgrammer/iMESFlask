@@ -10,6 +10,22 @@ from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 def operator():
     return CheckRolesForInterface('Оператор', 'operator/operator.html')
 
+@login_required
+@app.route('/operator/tableWasteDefect')
+def tableWasteDefect():
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html')
+
+@login_required
+@app.route('/operator/tableWasteDefect/wastes')
+def wastes():
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/wastes.html')
+
+
+@login_required
+@app.route('/operator/tableWasteDefect/wastes/anotherWastes')
+def otherWastes():
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/anotherWastes.html')
+
 # Отображение окна сменного задания
 
 

@@ -179,7 +179,7 @@
 
         const stickerProductCell = document.querySelector('#stickerProductCell'); // Получение ячейки с артикулом 
         stickerProductCell.innerText = selectedStickerProduct // Замена значения чейки артикула выбранным
-        modal.style.display='none' // Закрываем модальное окно
+        modal.classList.add('hidden') // Закрываем модальное окно
     });
 </script>
 {% endblock %}

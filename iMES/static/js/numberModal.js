@@ -48,6 +48,11 @@ function numberModalControl(event){
                 $(wasteDefectTable).find('tbody').append('<tr> <td>Поддон полимерного контейнера  Д202 900/1080</td> <td class="red">Брак</td> <td id="defectCount_Data">'+ defectCount +'</td> <td id="defectWeight_Data">'+ defectWeight +'</td> <td></td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
 
+            else if (enter.id == 'productWeight') {
+                let productWeight = display.textContent;
+                $(productWeightTable).find('tbody').append('<tr> <td>Поддон полимерного контейнера  Д202 900/1080</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
+            }
+
             else if(event.target.tagName == 'INPUT')
             {
                 event.target.value = display.textContent;

@@ -38,56 +38,6 @@ function modalController(event){
     modal.classList.toggle('hidden');
 }
 
-// Печать этикетки
-function stickerPrint() {
-
-    mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
-
-    let tprod = document.getElementById('tprod').innerHTML,
-        smena = document.getElementById('smena').innerHTML,
-        nvplan = document.getElementById('nvplan').innerHTML,
-        operator = document.getElementById('operator').innerHTML,
-        clock = document.getElementById('clock').innerHTML,
-
-    html ="";
-
-    html += '<div>----------------------------------</div>'
-    +'<b>Артикул</b> '+tprod+'<br>'
-    +'<b>Дата</b> '+ clock +' <br>'
-    +'<b>Смена</b> '+ smena +'<br>'
-    +'<b>Количество</b> '+ nvplan +'<br>'
-    +'<b>Упаковщик</b> '+ operator +'<br>';
-    var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-
-    printStickerWindow(div, mywindow);
-}
-
-// Печать итогов за смену
-function stickerPrintTotal() {
-
-    mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
-
-    let tpa = document.getElementById('ttpa').innerHTML,
-        tprod = document.getElementById('tprod').innerHTML,
-        smena = document.getElementById('smena').innerHTML,
-        nvplan = document.getElementById('nvplan').innerHTML,
-        operator = document.getElementById('operator').innerHTML,
-        clock = document.getElementById('clock').innerHTML,
-
-    html ="";
-    
-    html += '<div>----------------------------------</div>'
-    +smena+'<br>'
-    +tpa+ '<br>'
-    +'План на смену: <br>'
-    +'Оператор: '+'<br>'
-    +'Наладчик: '+'<br>'
-    +'Простои: '+'<br>'
-    var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-
-    printStickerWindow(div, mywindow);
-}
-
 // Окно печати
 function printStickerWindow(elem, mywindow){  
     mywindow.document.write(elem);
