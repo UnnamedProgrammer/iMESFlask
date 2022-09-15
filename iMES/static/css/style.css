@@ -161,6 +161,9 @@ button {
   display: flex;
   justify-content: space-between; }
 
+.btn-light {
+  border: 2px dashed black !important; }
+
 /* Стили клавиатур */
 .keyboard {
   position: absolute;
@@ -502,6 +505,9 @@ table .green {
 
 table .primary {
   background-color: #90c6d1; }
+
+table .red {
+  background: #f77; }
 
 .my-scrollbar::-webkit-scrollbar {
   width: 80px;
