@@ -57,7 +57,7 @@ for device in Devices:
     current_tpa[device[0]] = [TpaList[device[0]]
                               [0]['Oid'], TpaList[device[0]][0]['Name']]
 
-from iMES.View.operator import operator, tableWasteDefect, tableWeight, visualInstructions
+from iMES.View.operator import operator, tableWeight, visualInstructions
 from iMES.View.navbar_footer import navbar_footer
 from iMES.View.adjuster import adjuster
 from iMES.View.menu import menu

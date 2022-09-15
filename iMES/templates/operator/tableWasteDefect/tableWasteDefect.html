@@ -3,7 +3,7 @@
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
-        <table class="table table-sm text-center" border="1" bordercolor="black">
+        <table class="table table-bordered text-center" id="tableWasteDefect" border="1">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Продукт</th>
@@ -15,26 +15,25 @@
                     <th scope="col">Оператор</th>
                 </tr>
             </thead>
-            <tbody id="tbodyWasteDefect"></tbody>
+            <tbody></tbody>
         </table>
     </div>
     <div class="d-flex justify-content-between px-3">
         <div class="col-6 row">
             <div class="col nopadding me-1">
-                <button type="button" class="btn btn__view primary fs-4" id="defectPrint1">
+                <button type="button" class="wasteButton btn btn__view primary fs-4" id="wasteEnterButton">
                     Ввод отхода<br>за смену
                 </button>
             </div>
             <div class="col nopadding ms-1">
-                <button type="button" class="btn btn__view primary fs-4" data="wasteDefect2" data2="Ввод кол."
-                    data3="Ввод кг." id="defectPrint2">
+                <button type="button" class="defectButton btn btn__view primary fs-4" id="defectEnterButton">
                     Ввод брака<br>за смену
                 </button>
             </div>
         </div>
         <div class="col-6 row">
             <div class="col nopadding me-1">
-                <button type="button" class="btn btn__view primary fs-4" id="printWasteDefect">
+                <button type="button" class="btn btn__view primary fs-4" onClick="printWasteDefect(event)">
                     Печать
                 </button>
             </div>
@@ -52,7 +51,7 @@
             <div class="modal-window__body">
                 <div class="row">
                     <div class="btn modal__input-number" id="inputDefect"></div>
-                    <button type="button" class="btn modal__enter-button secondary" id="defectEntering">ВВОД</button>
+                    <button type="button" class="btn modal__enter-button secondary" id="defectEnterCount">ВВОД КОЛ.</button>
                 </div>
                 <div class="number-keyboard">
                     <div class="keyboard__keys">
@@ -86,85 +85,51 @@
         <div class="bg-blur"></div>
     </div>
 </div>
+<script src="/static/js/numberModal.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {  
-    var printWasteDefect = document.getElementById('printWasteDefect'),
-        defectPrint1 = document.getElementById('defectPrint1'),
-        defectPrint2 = document.getElementById('defectPrint2');
+    let wasteDefectTable = document.querySelector('#tableWasteDefect'); // Получение таблицы с продуктами
+    let wasteButton = document.querySelector('.wasteButton') // Кнопка добавления / печати отходов
+    let defectButton = document.querySelector('.defectButton') // Кнопка добавления / печати брака
 
-    printWasteDefect.onclick = function() {
-        if(!this.classList.contains("background-3")){
-            this.classList.add("background-3");
-            defectPrint1.classList.add("background-3");
-            defectPrint2.classList.add("background-3");
-            defectPrint1.classList.add("buttonPrint");
-            defectPrint2.classList.add("buttonPrint");
-            defectPrint1.classList.add("js-printPaper");
-            defectPrint2.classList.add("js-printPaper");
-            defectPrint1.innerHTML = 'Печать<br>отхода';
-            defectPrint2.innerHTML = 'Печать<br>брака';
-            }
-        else {
-            this.classList.remove("background-3");
-            defectPrint1.classList.remove("background-3");
-            defectPrint2.classList.remove("background-3");
-            defectPrint1.classList.remove("js-printPaper");
-            defectPrint2.classList.remove("js-printPaper");
-            defectPrint1.classList.remove("buttonPrint");
-            defectPrint2.classList.remove("buttonPrint");
-            defectPrint1.innerHTML = 'Ввод отхода<br>за смену';
-            defectPrint2.innerHTML = 'Ввод брака<br>за смену';
-            }
+    wasteButton.addEventListener('click', () => {
+        if (wasteButton.id == 'wasteEnterButton') {
+            document.location.href='/operator/tableWasteDefect/wastes'
+        } else {
+            alert('Печать отходов')
         }
-        defectPrint1.onclick = function() {
-        if(this.classList.contains("buttonPrint")){
-            var mywindow = window.open('', 'PRINT', 'height=400, width=600, left=300, top=300');
-
-            getAjax("index.php?r=post/create-print-fm&print=1&tpa="+tpa, function(data){
-                var json = JSON.parse(data);
-
-                if(json !== false)
-                {
-                    printSticker(json, mywindow);
-                }
-                else
-                {
-                    mywindow.close();
-                }
-            });
-        }
-        else {
-            var loadContainer = document.getElementById('load-container');
-            if(loadContainer)
-            {
-                loadContainer.style.display = 'inline';
-            }
-            location.href='/operator/tableWasteDefect/wastes';
-        }
-    }
-    defectPrint2.onclick = function() {
-        if(this.classList.contains("buttonPrint"))
-        {
-            var mywindow = window.open('', 'PRINT', 'height=400, width=600, left=300, top=300');
-            getAjax("index.php?r=post/create-print-fm&print=2&tpa="+tpa, function(data)
-            {
-                var json = JSON.parse(data);
-
-                if(json !== false)
-                {
-                    printSticker(json, mywindow);
-                }
-                else
-                {
-                    mywindow.close();
-                }
-            });
-        }
-        else {
-            numberModalControl(event)
-        }
-    }
     })
+
+    defectButton.addEventListener('click', () => {
+        if (defectButton.id == 'defectEnterButton') {
+            numberModalControl(event)
+        } else {
+            alert('Печать брака')
+        }
+    })
+
+    function printWasteDefect(event) {
+        if (wasteButton.id == 'wasteEnterButton' && defectButton.id == 'defectEnterButton') {
+            wasteButton.innerHTML = 'Печать отхода'
+            wasteButton.id = 'wastePrintButton'
+            wasteButton.classList.remove('primary')
+            wasteButton.classList.add('btn-light')
+
+            defectButton.innerHTML = 'Печать брака'
+            defectButton.id = 'defectPrintButton'
+            defectButton.classList.remove('primary')
+            defectButton.classList.add('btn-light')
+        } else {
+            wasteButton.innerHTML = 'Ввод отхода <br> за смену'
+            wasteButton.id = 'wasteEnterButton'
+            wasteButton.classList.remove('btn-light')
+            wasteButton.classList.add('primary')
+
+            defectButton.innerHTML = 'Ввод брака <br> за смену'
+            defectButton.id = 'defectEnterButton'
+            defectButton.classList.remove('btn-light')
+            defectButton.classList.add('primary')
+        }
+    }
 </script>
 {% endblock %}
 {% block navbar_footer %}
