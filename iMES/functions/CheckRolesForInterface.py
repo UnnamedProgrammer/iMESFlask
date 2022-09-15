@@ -6,7 +6,7 @@ from iMES import current_tpa
 
 
 # Метод предназначенный для проверки доступных интерфейсов в зависимости от роли пользователя
-def CheckRolesForInterface(RequiredInterface,DirectPageTemplate):
+def CheckRolesForInterface(RequiredInterface, DirectPageTemplate):
     ip_addr = request.remote_addr
     sql = f"""
     SELECT Interface.[Name]
@@ -26,7 +26,7 @@ def CheckRolesForInterface(RequiredInterface,DirectPageTemplate):
         if (RequiredInterface == "Оператор"):
             current_user.role = "Оператор"
         if (RequiredInterface == "Наладчик"):
-            current_user.role = "Наладчик"       
-        return render_template(f"{DirectPageTemplate}", device_tpa = TpaList[request.remote_addr] , current_tpa = current_tpa[ip_addr])
+            current_user.role = "Наладчик"
+        return render_template(f"{DirectPageTemplate}", device_tpa=TpaList[request.remote_addr], current_tpa=current_tpa[ip_addr])
     else:
-        return render_template('Show_error.html',error="Недостаточно прав для данного интерфейса",ret='/menu',current_tpa = current_tpa[ip_addr])
+        return render_template('Show_error.html', error="Недостаточно прав для данного интерфейса", ret='/menu', current_tpa=current_tpa[ip_addr])

@@ -40,22 +40,22 @@ class ShiftTaskModel(object):
     Ordinal = None
 
     def __init__(self,
-                _ID,
-                _Shift,
-                _Equipment,
-                _ProductCode,
-                _Specification,
-                _Traits,
-                _ExtraTraits,
-                _PackingScheme,
-                _PackingCount,
-                _SocketCount,
-                _ProductCount,
-                _Cycle,
-                _Weight,
-                _ProductURL,
-                _PackingURL,
-                _Ordinal):
+                 _ID,
+                 _Shift,
+                 _Equipment,
+                 _ProductCode,
+                 _Specification,
+                 _Traits,
+                 _ExtraTraits,
+                 _PackingScheme,
+                 _PackingCount,
+                 _SocketCount,
+                 _ProductCount,
+                 _Cycle,
+                 _Weight,
+                 _ProductURL,
+                 _PackingURL,
+                 _Ordinal):
         self.ID = _ID
         self.Shift = _Shift
         self.Equipment = _Equipment
@@ -72,6 +72,3 @@ class ShiftTaskModel(object):
         self.ProductURL = _ProductURL
         self.PackingURL = _PackingURL
         self.Ordinal = _Ordinal
-
-    
-        

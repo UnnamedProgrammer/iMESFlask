@@ -1,10 +1,9 @@
 import pyodbc
 
 
-
 class SQLManipulator():
     @classmethod
-    def SQLExecute(self,sqlcode):
+    def SQLExecute(self, sqlcode):
         self.connection_string = """
             DRIVER={ODBC Driver 18 for SQL Server};
             SERVER=OFC-APPSERV-13;
@@ -22,6 +21,6 @@ class SQLManipulator():
             self.connection.close()
         except pyodbc.ProgrammingError:
             cursor.commit()
-            self.connection.close() 
+            self.connection.close()
             return 'Результат пуст'
         return result

@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_socketio import SocketIO
 from flask import Flask
 from flask_login import LoginManager
@@ -5,7 +6,16 @@ from iMES.Controller.UserCountController import UserCountController
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES.Model.UserModel import UserModel
 import configparser
+import logging
+import os
 
+if (not os.path.exists('log/')):
+    os.mkdir('log/')
+file_log = logging.FileHandler(
+    "log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log")
+console_out = logging.StreamHandler()
+
+logging.basicConfig(handlers=(file_log, console_out), level=logging.NOTSET)
 
 config = configparser.ConfigParser()
 config.read("iMES/config.cfg")
@@ -41,14 +51,15 @@ for device in Devices:
     tpas = SQLManipulator.SQLExecute(sqltpa)
     tpasresult = []
     for tpa in tpas:
-        tpasresult.append({'Oid':tpa[0], 'Name':tpa[1]})
+        tpasresult.append({'Oid': tpa[0], 'Name': tpa[1]})
     TpaList[device[0]] = tpasresult
-    
-    current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],TpaList[device[0]][0]['Name']]
-   
-from iMES.View.index import index
-from iMES.View.menu import menu
-from iMES.View.operator import operator, tableWasteDefect, tableWeight,visualInstructions
-from iMES.View.adjuster import adjuster
+
+    current_tpa[device[0]] = [TpaList[device[0]]
+                              [0]['Oid'], TpaList[device[0]][0]['Name']]
+
+from iMES.View.operator import operator, tableWasteDefect, tableWeight, visualInstructions
 from iMES.View.navbar_footer import navbar_footer
+from iMES.View.adjuster import adjuster
+from iMES.View.menu import menu
+from iMES.View.index import index
 from iMES.View.bind_press_form import bind_press_form

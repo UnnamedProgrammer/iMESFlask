@@ -1,12 +1,12 @@
 """Модуль для работы со сменными заданиями."""
 
-import requests, json
+import requests
+import json
 from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
 from progress.bar import IncrementalBar
 from iMES.Model.SQLManipulator import SQLManipulator
 import datetime
-
-
+from iMES import app
 
 
 class ShiftTaskLoader():
@@ -33,7 +33,8 @@ class ShiftTaskLoader():
         >>> Load.InsertToDataBase()
         "Данные о сменном задании получены."
     """
-    def __init__(self,_nomenclature_group,_date : int, _shift : int):
+
+    def __init__(self, _nomenclature_group, _date: int, _shift: int):
         self.nomenclature_group = _nomenclature_group
         self.date = _date
         if _shift == 3:
@@ -49,21 +50,22 @@ class ShiftTaskLoader():
     # _nomenclature_group и добавляет их в список self.shift_task_list
     def Get_ShiftTask(self) -> list:
         data = self.ShiftTask_Update()
-        if isinstance(self.nomenclature_group,list):
+        if isinstance(self.nomenclature_group, list):
             for NomGroup in self.nomenclature_group:
-                self.Find_ShiftTask(NomGroup,data)
+                self.Find_ShiftTask(NomGroup, data)
         elif isinstance(self.nomenclature_group, str):
-            self.Find_ShiftTask(NomGroup,data)
+            self.Find_ShiftTask(NomGroup, data)
 
     # Делает запрос в веб-сервис 1С получая json файл, парсит его
     # и возвращает в виде dict
     def ShiftTask_Update(self):
-        json_data = requests.get(f"""http://mes:4439/IplMES/hs/MES/GetProductionAssignment2?Date={str(self.date)}000000&Smena={str(self.shift)}""")
-        with open('st.json','wb') as file_json:
+        json_data = requests.get(
+            f"""http://mes:4439/IplMES/hs/MES/GetProductionAssignment2?Date={str(self.date)}000000&Smena={str(self.shift)}""")
+        with open('st.json', 'wb') as file_json:
             file_json.write(json_data.content)
-        with open('st.json','r',encoding='utf-8-sig') as file_json:
+        with open('st.json', 'r', encoding='utf-8-sig') as file_json:
             load_file = json.load(file_json)[0]
-        return  load_file
+        return load_file
 
     # Определяет какое сейчас время суток, если в shift аргумент класса
     # было передано 3 то метод используется автоматически
@@ -74,25 +76,26 @@ class ShiftTaskLoader():
         if (hour >= 1 and hour < 7) or (hour >= 19 and hour <= 24):
             return 1
         elif hour >= 7 and hour < 19:
-            return 0 
+            return 0
 
     # Метод самопроверки значений класса перед вставкой в базу данных
     # Некоторые поля в таблице являются FK которые ссылаются на другие таблицы
     # В связи с этим нужно проверить есть ли зависимые значения в других таблицах
     # чтобы небыло конфликтов и ошибок
-    def CheckingRequiredValuesInTheDataBase(self,ShiftTask) -> bool:
+    def CheckingRequiredValuesInTheDataBase(self, ShiftTask) -> bool:
         # Проверка основных полей на None значение
         progressbar = IncrementalBar()
-        print(f"Валидация обязательных значений сменного задания № {ShiftTask.Ordinal}")
-        args_cantbe_null = {"Shift":ShiftTask.Shift,
-                            "Equipment":ShiftTask.Equipment,
-                            "ProductCode":ShiftTask.ProductCode,
-                            "Specification":ShiftTask.Specification,
-                            "PackingCount":ShiftTask.PackingCount,
-                            "SocketCount":ShiftTask.SocketCount,
-                            "ProductCount":ShiftTask.ProductCount,
-                            "Cycle":ShiftTask.Cycle,
-                            "Weight":ShiftTask.Weight}
+        app.logger.info(
+            f"Валидация обязательных значений сменного задания № {ShiftTask.Ordinal}")
+        args_cantbe_null = {"Shift": ShiftTask.Shift,
+                            "Equipment": ShiftTask.Equipment,
+                            "ProductCode": ShiftTask.ProductCode,
+                            "Specification": ShiftTask.Specification,
+                            "PackingCount": ShiftTask.PackingCount,
+                            "SocketCount": ShiftTask.SocketCount,
+                            "ProductCount": ShiftTask.ProductCount,
+                            "Cycle": ShiftTask.Cycle,
+                            "Weight": ShiftTask.Weight}
         keys_list = list(args_cantbe_null.keys())
         progressbar.max = len(keys_list)
         for key in keys_list:
@@ -102,16 +105,17 @@ class ShiftTaskLoader():
                 continue
             else:
                 error = f"Значение self.{key} в сменном задании №{ShiftTask.Ordinal} является None, что недопустимо."
-                print(f"Ошибка: {error}")
+                app.logger.critical(f"Ошибка: {error}")
                 raise Exception(error)
         progressbar.finish()
-        print("Валидация полей закончена.")
+        app.logger.info("Валидация полей закончена.")
 
         # Поиск записей в базе данных от которых зависит сменное задание
         # чтобы предотвратить ошибки вставки записи сменного задания в таблицу
-        print(f"Проверка наличия записей на которые ссылается сменное задание № {ShiftTask.Ordinal}:",end="\n")
-        print(f"    Проверка наличия требуемых записей:",end="\r\n")
-        print(f"        Проверка оборудования {ShiftTask.Equipment}")
+        app.logger.info(
+            f"Проверка наличия записей на которые ссылается сменное задание № {ShiftTask.Ordinal}:")
+        app.logger.info(f"    Проверка наличия требуемых записей:")
+        app.logger.info(f"        Проверка оборудования {ShiftTask.Equipment}")
         equipment_sql = f"""
             SELECT [Equipment].[Oid],
                 EquipmentType.[Name]
@@ -126,36 +130,46 @@ class ShiftTaskLoader():
         if len(equipment) > 0:
             pass
         else:
-            print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
-            return False 
-        if equipment[0][1] == "Термопластавтомат": 
-            print(f"        Термопластавтомат {ShiftTask.Equipment} найден", end="\n")              
-            print(f"        Проверка продукта {ShiftTask.ProductCode}",end="\r\n")
+            app.logger.warning(
+                f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
+            return False
+        if equipment[0][1] == "Термопластавтомат":
+            app.logger.info(
+                f"        Термопластавтомат {ShiftTask.Equipment} найден")
+            app.logger.info(
+                f"        Проверка продукта {ShiftTask.ProductCode}")
             productsql = f"""
                 SELECT [Oid]
                 FROM [MES_Iplast].[dbo].[Product] WHERE Code = '{ShiftTask.ProductCode}'
             """
             product = SQLManipulator.SQLExecute(productsql)
             if (len(product) > 0):
-                print(f"        Продукт {ShiftTask.ProductCode} найден",end="\n")
-                print(f"        Проверка спецификации {ShiftTask.Specification}",end="\r\n")
+                app.logger.info(
+                    f"        Продукт {ShiftTask.ProductCode} найден")
+                app.logger.info(
+                    f"        Проверка спецификации {ShiftTask.Specification}")
                 sql = f"""
                         SELECT [Oid]
                         FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{ShiftTask.Specification}'
                       """
                 specification = SQLManipulator.SQLExecute(sql)
                 if len(specification) > 0:
-                    print(f"        Спецификация {ShiftTask.Specification} найдена",end="\n")
-                    print(f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
+                    app.logger.info(
+                        f"        Спецификация {ShiftTask.Specification} найдена")
+                    app.logger.info(
+                        f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
                     return True
                 else:
-                    print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification} ")
+                    app.logger.warning(
+                        f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification} ")
                     return False
             else:
-                print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
+                app.logger.warning(
+                    f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
                 return False
         else:
-            print(f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
+            app.logger.warning(
+                f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
             return False
 
     # Главный метод который создаёт записи сменных заданий
@@ -169,10 +183,11 @@ class ShiftTaskLoader():
         # Проверяем длинну списка сменных заданий
         if len(self.shift_task_list) == 0:
             # Если заданий нет
-            print("В списке отсутсвуют сменные задания для выгрузки")
+            app.logger.warning(
+                "В списке отсутсвуют сменные задания для выгрузки")
             return
         else:
-            # Если есть то единожды в название смены 
+            # Если есть то единожды в название смены
             # указываем смену сменного задания
             shift_name = self.shift_task_list[0].Shift
         # Если день то ищем дневную дату смены
@@ -205,13 +220,13 @@ class ShiftTaskLoader():
         if len(getshift) == 0:
             if shift == 0:
                 start_date = datetime.datetime(datetime.datetime.now().year,
-                                            datetime.datetime.now().month,
-                                            datetime.datetime.now().day,
-                                            7,0,0).strftime("%Y-%m-%d %H:%M:%S")
+                                               datetime.datetime.now().month,
+                                               datetime.datetime.now().day,
+                                               7, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
                 end_date = datetime.datetime(datetime.datetime.now().year,
-                                            datetime.datetime.now().month,
-                                            datetime.datetime.now().day,
-                                            19,0,0).strftime("%Y-%m-%d %H:%M:%S")
+                                             datetime.datetime.now().month,
+                                             datetime.datetime.now().day,
+                                             19, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
                 insertshiftsql = f"""
                 set language english
                 INSERT INTO [Shift] (Oid,StartDate,EndDate,Note) 
@@ -223,13 +238,13 @@ class ShiftTaskLoader():
                 SQLManipulator.SQLExecute(insertshiftsql)
             elif shift == 1:
                 start_date = datetime.datetime(datetime.datetime.now().year,
-                                            datetime.datetime.now().month,
-                                            datetime.datetime.now().day,
-                                            19,0,0).strftime("%Y-%m-%d %H:%M:%S")
+                                               datetime.datetime.now().month,
+                                               datetime.datetime.now().day,
+                                               19, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
                 end_date = datetime.datetime(datetime.datetime.now().year,
-                                            datetime.datetime.now().month,
-                                            datetime.datetime.now().day+1,
-                                            7,0,0).strftime("%Y-%m-%d %H:%M:%S")
+                                             datetime.datetime.now().month,
+                                             datetime.datetime.now().day+1,
+                                             7, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
                 insertshiftsql = f"""
                 set language english
                 INSERT INTO [Shift] (Oid,StartDate,EndDate,Note) 
@@ -240,15 +255,15 @@ class ShiftTaskLoader():
                 """
                 SQLManipulator.SQLExecute(insertshiftsql)
             getshift = SQLManipulator.SQLExecute(shiftsql)
-            self.InsertShiftTask(getshift,self.shift_task_list)
+            self.InsertShiftTask(getshift, self.shift_task_list)
         return
 
-    # Метод ищет сменное задание по номенклатурной группе 
+    # Метод ищет сменное задание по номенклатурной группе
     # и json файлу со сменными заданиями далее сменное задание проходит
     # валидацию полей во избежания ошибок до создания самой записи
     # валидация так же пишет в консоль отчёт об ошибке, тобишь какие поля небыли
     # найдены в БД
-    def Find_ShiftTask(self,NomenclatureGroup,file_data):
+    def Find_ShiftTask(self, NomenclatureGroup, file_data):
         data = file_data
         self.shift_task_parsed = data
         task_id = 0
@@ -256,46 +271,46 @@ class ShiftTaskLoader():
             SpecificationCodeCorrection = task['SpecCode']
             if len(SpecificationCodeCorrection) < 11:
                 while len(SpecificationCodeCorrection) != 11:
-                    SpecificationCodeCorrection = '0'+ SpecificationCodeCorrection
-            if ((task['oid'] == NomenclatureGroup) or 
-                (self.nomenclature_group == "")):
+                    SpecificationCodeCorrection = '0' + SpecificationCodeCorrection
+            if ((task['oid'] == NomenclatureGroup) or
+                    (self.nomenclature_group == "")):
                 ShiftTask = ShiftTaskModel(task_id,
-                                        task['Shift'],
-                                        task['oid'],
-                                        task['ProductCode'],
-                                        SpecificationCodeCorrection,
-                                        "",
-                                        "",
-                                        task['Packing'],
-                                        task['PackingCount'],
-                                        task['Socket'],
-                                        task['PackingCount'],
-                                        task['ProductCycle'],
-                                        task['ProductWeight'],
-                                        task['nomencURL'],
-                                        task['normUpacURL'],
-                                        task['ShiftTask']
-                                        )
+                                           task['Shift'],
+                                           task['oid'],
+                                           task['ProductCode'],
+                                           SpecificationCodeCorrection,
+                                           "",
+                                           "",
+                                           task['Packing'],
+                                           task['PackingCount'],
+                                           task['Socket'],
+                                           task['PackingCount'],
+                                           task['ProductCycle'],
+                                           task['ProductWeight'],
+                                           task['nomencURL'],
+                                           task['normUpacURL'],
+                                           task['ShiftTask']
+                                           )
                 if (self.CheckingRequiredValuesInTheDataBase(ShiftTask)):
                     self.shift_task_list.append(ShiftTask)
                 else:
                     return
 
-    def InsertShiftTask(self,shift,tasklist):
-            # Проходим по всем сменным заданиям в списке прошедших валидацию
-            # Находим необходимые поля которые ссылаются на другие таблицы в БД
-            # и создаём записи сменных заданий
-            for task in tasklist:
-                null_count = 0
-                for i in task.Ordinal:
-                    if i == '0':
-                        null_count += 1
-                    else:
-                        break
-                task.Ordinal = task.Ordinal[null_count:]
-                shiftOid = shift[0][0]
+    def InsertShiftTask(self, shift, tasklist):
+        # Проходим по всем сменным заданиям в списке прошедших валидацию
+        # Находим необходимые поля которые ссылаются на другие таблицы в БД
+        # и создаём записи сменных заданий
+        for task in tasklist:
+            null_count = 0
+            for i in task.Ordinal:
+                if i == '0':
+                    null_count += 1
+                else:
+                    break
+            task.Ordinal = task.Ordinal[null_count:]
+            shiftOid = shift[0][0]
 
-                product = f"""
+            product = f"""
                     SELECT [Oid]
                         ,[Code]
                         ,[Name]
@@ -303,9 +318,9 @@ class ShiftTaskLoader():
                     FROM [MES_Iplast].[dbo].[Product] 
                     WHERE Code = '{task.ProductCode}'    
                 """
-                product = SQLManipulator.SQLExecute(product)[0][0]
+            product = SQLManipulator.SQLExecute(product)[0][0]
 
-                equipment = f"""
+            equipment = f"""
                     SELECT [Equipment].[Oid],
                         EquipmentType.[Name]
                     FROM [MES_Iplast].[dbo].[Equipment],EquipmentType WHERE 
@@ -316,16 +331,16 @@ class ShiftTaskLoader():
                     [Equipment].EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D' AND
                     EquipmentType.Oid = Equipment.EquipmentType
                 """
-                equipment_oid = SQLManipulator.SQLExecute(equipment)[0][0]
+            equipment_oid = SQLManipulator.SQLExecute(equipment)[0][0]
 
-                specification = f"""
+            specification = f"""
                     SELECT [Oid]
                     FROM [MES_Iplast].[dbo].[ProductSpecification] 
                     WHERE Code = '{task.Specification}'
                 """
-                specification = SQLManipulator.SQLExecute(specification)[0][0]
+            specification = SQLManipulator.SQLExecute(specification)[0][0]
 
-                ShiftTaskInsertSQL = f"""
+            ShiftTaskInsertSQL = f"""
                     INSERT INTO [ShiftTask] (
                             Oid,
                             [Shift],
@@ -360,6 +375,5 @@ class ShiftTaskLoader():
                         '{task.ProductURL}',
                         '{task.PackingURL}')
                     """
-                print("Вставка сменного задания №" + task.Ordinal)
-                SQLManipulator.SQLExecute(ShiftTaskInsertSQL)
-        
+            app.logger.info("Вставка сменного задания №" + task.Ordinal)
+            SQLManipulator.SQLExecute(ShiftTaskInsertSQL)
