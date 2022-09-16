@@ -26,6 +26,7 @@ def wastes():
 def otherWastes():
     return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/anotherWastes.html')
 
+
 # Отображение окна сменного задания
 
 
