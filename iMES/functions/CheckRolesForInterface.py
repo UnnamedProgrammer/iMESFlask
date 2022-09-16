@@ -6,7 +6,7 @@ from iMES import current_tpa
 
 
 # Метод предназначенный для проверки доступных интерфейсов в зависимости от роли пользователя
-def CheckRolesForInterface(RequiredInterface, DirectPageTemplate, somedata):
+def CheckRolesForInterface(RequiredInterface, DirectPageTemplate, somedata=""):
     ip_addr = request.remote_addr
     sql = f"""
     SELECT Interface.[Name]
