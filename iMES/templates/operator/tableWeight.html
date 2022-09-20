@@ -5,7 +5,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <div class="cancelWindow" id="js-shadow"></div>
 <div class="shadow" id="checkAlert"></div>
-<div class="view"> 
+<div class="view">
     <div class="view-header text-center primary">Вес изделия за смену</div>
     <div class="view-body jsScroll"> 
         <table class="table table-bordered text-center" id="productWeightTable" border="1" bordercolor="black">
@@ -104,7 +104,7 @@
         for ( let i = 0; i < productWeightRows.length; i++) {
             weightHTML += productWeightRows[i].cells[1].innerHTML+' кг. '+ productWeightRows[i].cells[2].innerHTML.substr(productWeightRows[i].cells[2].innerHTML.indexOf(" ") + 1) +'<br>';
         }
-        
+
         mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
 
         let tpa = document.getElementById('ttpa').innerHTML,
