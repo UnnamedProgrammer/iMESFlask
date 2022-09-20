@@ -41,9 +41,9 @@ function modalController(event){
 // Окно печати
 function printStickerWindow(elem, mywindow){  
     mywindow.document.write(elem);
-    var printerPaper = document.querySelector('#printerPaper');
+    let printerPaper = document.querySelector('#printerPaper');
     if(printerPaper){
-        var px =  mywindow.document.body.querySelector('div').offsetHeight;
+        let px =  mywindow.document.body.querySelector('div').offsetHeight;
         printerPaper.setAttribute('data', px);
     }
 

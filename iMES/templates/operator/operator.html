@@ -12,7 +12,7 @@
             </div>
             <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();" href="/operator/tableWeight">Вес изделия за смену</a>
             <a class="btn btn__menu btn__menu_wide primary" onclick="LinkClick();" href="/operator/tableWasteDefect">Фиксация отходов и брака</a>
-            <a class="btn btn__menu btn__menu_wide primary"onclick="LinkClick();" href="/operator/ShiftTask">Сменное задание</a>
+            <a class="btn btn__menu btn__menu_wide primary"onclick="LinkClick();" href="/operator/ShiftTask">Задание на производство</a>
         </div>
         <div class="col">
             <div class="btn-row">
@@ -72,7 +72,7 @@ function stickerPrintTotal() {
     +'Оператор: '+'<br>'
     +'Наладчик: '+'<br>'
     +'Простои: '+'<br>'
-    var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+    let div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>'; 
 
     printStickerWindow(div, mywindow);
 }

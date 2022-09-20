@@ -3,32 +3,30 @@ from flask_login import login_required
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 
 # Отображение окна оператора
-
-
 @app.route('/operator')
 @login_required
 def operator():
     return CheckRolesForInterface('Оператор', 'operator/operator.html')
 
+# Окно отходов и брака
 @login_required
 @app.route('/operator/tableWasteDefect')
 def tableWasteDefect():
     return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html')
 
+# Окно ввода отходов
 @login_required
 @app.route('/operator/tableWasteDefect/wastes')
 def wastes():
     return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/wastes.html')
 
-
+# Окно ввода других отходов
 @login_required
 @app.route('/operator/tableWasteDefect/wastes/anotherWastes')
 def otherWastes():
     return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/anotherWastes.html')
 
 # Отображение окна сменного задания
-
-
 @app.route('/operator/ShiftTask')
 @login_required
 def OperatorShiftTask():
