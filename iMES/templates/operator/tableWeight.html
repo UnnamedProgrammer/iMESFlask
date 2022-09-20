@@ -8,7 +8,7 @@
 <div class="view">
     <div class="view-header text-center primary">Вес изделия за смену</div>
     <div class="view-body jsScroll"> 
-        <table class="table table-bordered text-center" id="productWeightTable" border="1" bordercolor="black">
+        <table class="table table-sm table-bordered text-center" id="productWeightTable" border="1" bordercolor="black">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Продукт</th>
@@ -97,24 +97,20 @@
 
     // Печать веса продукта
     function weightPrint() {
-
-        console.log(productWeightRows[0].cells[0])
+        
         let weightHTML = ''
 
         for ( let i = 0; i < productWeightRows.length; i++) {
             weightHTML += productWeightRows[i].cells[1].innerHTML+' кг. '+ productWeightRows[i].cells[2].innerHTML.substr(productWeightRows[i].cells[2].innerHTML.indexOf(" ") + 1) +'<br>';
         }
 
-        mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+        let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
 
-        let tpa = document.getElementById('ttpa').innerHTML,
-            clock = document.getElementById('clock').innerHTML,
-
-        html ="";
+        let html ="";
 
         html += '<div>----------------------------------</div>'
         +clock+'<br>'
-        +tpa+'<br>'
+        +ttpa+'<br>'
         +weightHTML
         var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
 

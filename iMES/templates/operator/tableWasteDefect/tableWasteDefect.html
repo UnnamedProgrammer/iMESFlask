@@ -88,6 +88,7 @@
 <script src="/static/js/numberModal.js"></script>
 <script>
     let wasteDefectTable = document.querySelector('#tableWasteDefect'); // Получение таблицы с продуктами
+    let wasteDefectRows = document.querySelector('#tableWasteDefect tbody').rows; // Получение тела таблицы с веденными данными
     let wasteButton = document.querySelector('.wasteButton') // Кнопка добавления / печати отходов
     let defectButton = document.querySelector('.defectButton') // Кнопка добавления / печати брака
 
@@ -103,7 +104,32 @@
         if (defectButton.id == 'defectEnterButton') {
             numberModalControl(event)
         } else {
-            alert('Печать брака')
+            let wasteDefectCount = 0,
+                wasteDefectWeight = 0
+
+            for ( let i = 0; i < wasteDefectRows.length; i++) {
+                if (wasteDefectRows[i].id == 'defect') {
+                    wasteDefectCount += Number(wasteDefectRows[i].cells[2].innerHTML)
+                    wasteDefectWeight += Number(wasteDefectRows[i].cells[3].innerHTML)
+                }
+            }
+        
+            mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+        
+            html ="";
+        
+            html += '<div>----------------------------------</div>'
+            +'<div style="text-align: center; font-size: 16pt;"><b>Брак</b></div>'
+            +'<b>Артикул</b> '+tprod+'<br>'
+            +'<b>Оборудование</b> '+ttpa+'<br>'
+            +'<b>Дата</b> '+ clock +' <br>'
+            +'<b>Смена</b> '+ smena +'<br>'
+            +'<b>Вес тары</b>______кг.<br>'
+            +'<b>Количество</b> '+wasteDefectCount+' шт. <b>Вес</b> '+wasteDefectWeight+' кг.<br>'
+            +'<b>ФИО</b> '+ operator +'<br>';
+            var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+        
+            printStickerWindow(div, mywindow);
         }
     })
 

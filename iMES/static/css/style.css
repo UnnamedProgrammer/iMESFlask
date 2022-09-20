@@ -95,7 +95,7 @@ button {
       flex-direction: row;
       justify-content: flex-start;
       box-shadow: 2px 1px 4px 0px #223c50;
-      font-size: 28pt; }
+      font-size: 24pt; }
     .btn__navbar-footer_exit {
       display: flex;
       flex-direction: row;
