@@ -1,4 +1,3 @@
-from ast import Load
 from iMES.Model.ShiftTaskModels.ShiftTaskLoad import ShiftTaskLoader
 from iMES.Model.SQLManipulator import SQLManipulator
 from time import sleep
@@ -22,9 +21,7 @@ class ShiftTaskDaemon():
             sleep(10)
             self.insertedToDay = self.CheckShift()
             now = datetime.now()
-            if ((now.hour == 18 and now.minute >= 55) or
-               (now.hour == 6 and now.minute >= 55) or
-               (self.insertedToDay == False)):
+            if (self.insertedToDay == False):
                 get_tpa_list = """
             SELECT NomenclatureGroup.Code
             FROM Equipment, NomenclatureGroup, RFIDEquipmentBinding
@@ -44,7 +41,6 @@ class ShiftTaskDaemon():
                 if now.day < 10:
                     day = '0' + day
                 date = int(str(year + month + day))
-                print(date)
                 hour = now.hour
                 if (hour >= 1 and hour < 7) or (hour >= 19 and hour <= 24):
                     self.shift = 1

@@ -5,6 +5,7 @@ from flask import redirect, render_template, request
 from flask_login import login_required, login_user, logout_user, current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
+from iMES.Controller.IndexController import IndexController
 import json
 from iMES import TpaList, current_tpa, user
 import requests
@@ -15,6 +16,8 @@ import requests
 @app.route("/")
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
+    print(current_tpa[ip_addr])
+    current_tpa[ip_addr][2].data_from_shifttask()
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
@@ -54,8 +57,11 @@ def index():
 @app.route("/changeTpa", methods=["GET"])
 def ChangeTPA():
     ip_addr = request.remote_addr
-    current_tpa[ip_addr] = request.args.getlist(
-        'oid')[0], request.args.getlist('name')[0]
+    controller = IndexController(request.args.getlist(
+        'oid')[0])
+    controller.data_from_shifttask()
+    current_tpa[ip_addr] = list((request.args.getlist(
+        'oid')[0], request.args.getlist('name')[0], controller))
     return current_tpa
 
 # Метод возвращающий данные о текущей выпущенной продукции на графике

@@ -27,19 +27,19 @@
                 <div class="card height150 shadow">
                     <div class="card-header text-center primary">ПРЕСС-ФОРМА</div>
                     <div class="card-body nopadding">
-                        <div class="card-text text-center" id="tpf"><b>test</b></div>
+                        <div class="card-text text-center" id="tpf"><b>{{ current_tpa[2].pressform }}</b></div>
                     </div>
                 </div>
                 <div class="card height150 shadow">
                     <div class="card-header text-center primary">ПРОДУКТ</div>
-                    <p class="card-text text-center nopadding" id="tprod"><b>test</b></p>
+                    <p class="card-text text-center nopadding" id="tprod"><b>{{ current_tpa[2].product }}</b></p>
                     <div class="card-body nopadding">
                     </div>
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center primary">ПЛАН ПО ПРОД.</div>
                     <div class="card-body nopadding d-flex align-items-center justify-content-center">
-                        <p class="card-text text-center nplan" id="nplan">150</p>
+                        <p class="card-text text-center nplan" id="nplan">{{ current_tpa[2].production_plan }}</p>
                     </div>
                 </div>
                 <div class="card height120 shadow">
@@ -98,7 +98,7 @@
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ПЛАНОВЫЙ ЦИКЛ</div>
                     <div class="card-body nopadding">
-                        <p class="card-text text-center display-3" id="pointTC">20</p>
+                        <p class="card-text text-center display-3" id="pointTC">{{ current_tpa[2].cycle }}</p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
@@ -110,7 +110,7 @@
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ПЛАНОВЫЙ ВЕС</div>
                     <div class="card-body nopadding d-flex align-items-center justify-content-center">
-                        <p class="card-text text-center display-3">5</p>
+                        <p class="card-text text-center display-3">{{ current_tpa[2].plan_weight }}</p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
@@ -123,7 +123,7 @@
                 </div>
                 <div class="card height100 shadow">
                     <div class="card-body nopadding primary">
-                        <p class="card-text text-center" id="smena">Смена В (день)</p>
+                        <p class="card-text text-center" id="smena">{{ current_tpa[2].shift }}</p>
                     </div>
                 </div>
             </div>

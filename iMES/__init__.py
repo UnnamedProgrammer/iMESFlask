@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from iMES.Controller.UserCountController import UserCountController
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES.Model.UserModel import UserModel
+from iMES.Controller.IndexController import IndexController 
 import configparser
 import logging
 import os
@@ -53,10 +54,10 @@ for device in Devices:
     for tpa in tpas:
         tpasresult.append({'Oid': tpa[0], 'Name': tpa[1]})
     TpaList[device[0]] = tpasresult
-
-    current_tpa[device[0]] = [TpaList[device[0]]
-                              [0]['Oid'], TpaList[device[0]][0]['Name']]
-
+    controller = IndexController(TpaList[device[0]]
+                              [0]['Oid'])
+    current_tpa[device[0]] = list([TpaList[device[0]]
+                              [0]['Oid'], TpaList[device[0]][0]['Name'],controller])                         
 from iMES.View.operator import operator, tableWeight, visualInstructions
 from iMES.View.navbar_footer import navbar_footer
 from iMES.View.adjuster import adjuster

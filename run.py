@@ -2,7 +2,6 @@ import importlib
 import os
 
 
-installed = False
 
 
 def Dependency_check():
@@ -27,14 +26,14 @@ def Dependency_check():
             pass
 
 
-while installed == False:
+while True:
     try:
-        import importlib
         from iMES import app, socketio, host, port
         from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
-        installed = True
+        break
     except ModuleNotFoundError:
         Dependency_check()
-    if __name__ == "__main__":
-        ShiftTaskMonitoring = ShiftTaskDaemon().Start()
-        socketio.run(app, host=host, port=port, debug=True)
+if __name__ == "__main__":
+    ShiftTaskMonitoring = ShiftTaskDaemon()
+    ShiftTaskMonitoring.Start()
+    socketio.run(app, host=host, port=port, debug=True)
