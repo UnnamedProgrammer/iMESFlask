@@ -2,6 +2,13 @@ let tpaOid = document.getElementById('ttpa').dataset.oid // Oid текущего
 let pressForm = document.getElementById('tpf') // Текущая пресс-форма
 let current_user = document.getElementById('current_user').value.replace(/[^a-zа-яё\s]/gi, '').replace('User', ''); // Текущий пользователь
 
+let ttpa = document.getElementById('ttpa').innerHTML,
+    tprod = document.getElementById('tprod').innerHTML,
+    smena = document.getElementById('smena').innerHTML,
+    nvplan = document.getElementById('nvplan').innerHTML,
+    operator = document.getElementById('operator').innerHTML,
+    clock = document.getElementById('clock').innerHTML
+
 function changeTPA(event){
     let tpaOid = event.target.dataset.oid;
     let tpaName = event.target.dataset.name;
