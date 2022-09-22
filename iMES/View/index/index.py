@@ -16,7 +16,6 @@ import requests
 @app.route("/")
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
-    print(current_tpa[ip_addr])
     current_tpa[ip_addr][2].data_from_shifttask()
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
     if ip_addr in TpaList.keys():
@@ -382,7 +381,6 @@ def ReturnOperatorAndAdjuster():
                 operator = employee[0]
         OperatorAdjusterAtTerminals['Оператор'] = operator
         OperatorAdjusterAtTerminals['Наладчик'] = adjuster
-    print(OperatorAdjusterAtTerminals)
     return json.dumps(OperatorAdjusterAtTerminals, ensure_ascii=False, indent=4)
 
 # Метод сокета срабатывающий при соединении

@@ -4,7 +4,6 @@ from time import sleep
 from datetime import datetime
 from threading import Thread
 
-
 class ShiftTaskDaemon():
     def __init__(self):
         self.tpa_list = []

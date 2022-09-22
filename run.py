@@ -29,11 +29,14 @@ def Dependency_check():
 while True:
     try:
         from iMES import app, socketio, host, port
-        from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
         break
     except ModuleNotFoundError:
         Dependency_check()
 if __name__ == "__main__":
+    from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
+    from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
     ShiftTaskMonitoring = ShiftTaskDaemon()
-    ShiftTaskMonitoring.Start()
+    ShiftTaskMonitoring.Start()             
+    ProductDataMonitoring = ProductionDataDaemon()
+    ProductDataMonitoring.Start()
     socketio.run(app, host=host, port=port, debug=True)
