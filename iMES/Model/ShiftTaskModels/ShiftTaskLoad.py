@@ -1,5 +1,6 @@
 """Модуль для работы со сменными заданиями."""
 
+from logging import critical
 import requests
 import json
 from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
@@ -7,7 +8,7 @@ from progress.bar import IncrementalBar
 from iMES.Model.SQLManipulator import SQLManipulator
 import datetime
 from iMES import app
-
+import sys
 
 class ShiftTaskLoader():
     """
@@ -51,6 +52,9 @@ class ShiftTaskLoader():
     # _nomenclature_group и добавляет их в список self.shift_task_list
     def Get_ShiftTask(self) -> list:
         self.data = self.ShiftTask_Update()
+        if self.data == '':
+            app.logger.critical("Ошибка 1С при выгрузке сменного задания.")
+            sys.exit()
         if isinstance(self.nomenclature_group, list):
             for NomGroup in self.nomenclature_group:
                 self.Find_ShiftTask(NomGroup, self.data)
@@ -64,8 +68,15 @@ class ShiftTaskLoader():
             f"""http://mes:4439/IplMES/hs/MES/GetProductionAssignment2?Date={str(self.date)}000000&Smena={str(self.shift)}""")
         with open('st.json', 'wb') as file_json:
             file_json.write(json_data.content)
-        with open('st.json', 'r', encoding='utf-8-sig') as file_json:
-            load_file = json.load(file_json)[0]
+            file_json.close()
+        try:
+            with open('st.json', 'r', encoding='utf-8-sig') as file_json:
+                load_file = json.load(file_json)[0]
+        except:
+            with open('st.json', 'r', encoding='windows-1251',errors='ignore') as file_json:
+                load_file = file_json.read()
+                app.logger.critical(load_file)
+                return ''
         return load_file
 
     # Определяет какое сейчас время суток, если в shift аргумент класса
@@ -328,8 +339,6 @@ class ShiftTaskLoader():
                                            )
                 if (self.CheckingRequiredValuesInTheDataBase(ShiftTask)):
                     self.shift_task_list.append(ShiftTask)
-                else:
-                    return
 
     def InsertShiftTask(self, shift, tasklist):
         # Проходим по всем сменным заданиям в списке прошедших валидацию

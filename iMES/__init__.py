@@ -52,7 +52,7 @@ for device in Devices:
     tpas = SQLManipulator.SQLExecute(sqltpa)
     tpasresult = []
     for tpa in tpas:
-        tpasresult.append({'Oid': tpa[0], 'Name': tpa[1]})
+        tpasresult.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False})
     TpaList[device[0]] = tpasresult
     controller = IndexController(TpaList[device[0]]
                               [0]['Oid'])

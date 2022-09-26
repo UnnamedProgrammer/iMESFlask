@@ -1,5 +1,6 @@
 from iMES.Model.SQLManipulator import SQLManipulator
 from dataclasses import dataclass
+from datetime import datetime
 
 @dataclass
 class IndexController():
@@ -17,6 +18,7 @@ class IndexController():
     product_fact: str = 0
     label: str = None
     controller: str = None
+    tpa_is_works: bool = False
 
     def data_from_shifttask(self):
         sql = f"""
