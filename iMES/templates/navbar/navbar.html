@@ -6,13 +6,21 @@
                     {% for tpa in device_tpa %}
                         {% if tpa['Oid'] == current_tpa[0]%}
                             <li class="nav-item">
-                                <button class="nav-link nav_tpa nav_green active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                {% if tpa['WorkStatus'] == True %}
+                                    <button class="nav-link nav_tpa nav_green active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                {% else %}
+                                    <button class="nav-link nav_tpa nav_red active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                {% endif %}
                             </li>
                         {% else %}
                             <li class="nav-item">
-                                <button class="nav-link nav_tpa nav_green" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                {% if tpa['WorkStatus'] == True %}
+                                    <button class="nav-link nav_tpa nav_green" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                {% else %}
+                                    <button class="nav-link nav_tpa nav_red" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</button>
+                                {% endif %}
                             </li>
-                        {% endif %}
+                        {% endif %}    
                     {% endfor %}
                 </ul>
             </div>
