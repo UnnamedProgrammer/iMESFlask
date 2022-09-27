@@ -238,7 +238,11 @@ class ProductionDataDaemon():
                         UPDATE ProductionData
                         SET SpecificationFact = '{specification}'
                         WHERE Oid = '{production_data[0]}'
+                        UPDATE ProductionData
+                        SET Status = 2
+                        WHERE Oid = '{production_data[0]}'
                     """
+                    self.tpalist.pop(3)
                 else:
                     update_sql = f"""
                         UPDATE ProductionData
