@@ -27,31 +27,31 @@
                 <div class="card height150 shadow">
                     <div class="card-header text-center primary">ПРЕСС-ФОРМА</div>
                     <div class="card-body nopadding">
-                        <p class="card-text text-center fw-bold" id="tpf">{{ current_tpa[2].pressform }}</p>
+                        <p class="card-text text-center fw-bold" id="tpf"></p>
                     </div>
                 </div>
                 <div class="card height150 shadow">
                     <div class="card-header text-center primary">ПРОДУКТ</div>
-                    <p class="card-text text-center nopadding fw-bold" id="tprod">{{ current_tpa[2].product }}</p>
+                    <p class="card-text text-center nopadding fw-bold" id="tprod"></p>
                     <div class="card-body nopadding">
                     </div>
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center primary">ПЛАН ПО ПРОД.</div>
                     <div class="card-body nopadding d-flex align-items-center justify-content-center">
-                        <p class="card-text text-center nplan" id="nplan">{{ current_tpa[2].production_plan }}</p>
+                        <p class="card-text text-center nplan" id="nplan"></p>
                     </div>
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">ВЫПУЩЕНО ПРОД.</div>
                     <div class="card-body nopadding d-flex align-items-center justify-content-center">
-                        <p class="card-text text-center nvplan" id="nvplan">{{ current_tpa[2].product_fact }}</p>
+                        <p class="card-text text-center nvplan" id="nvplan"></p>
                     </div>
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">БРАК</div>
                     <div class="card-body nopadding d-flex align-items-center justify-content-center">
-                        <p class="card-text text-center nvDefect" id="nvDefect">1</p>
+                        <p class="card-text text-center nvDefect" id="nvDefect"></p>
                     </div>
                 </div>
             </div>
@@ -98,32 +98,32 @@
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ПЛАНОВЫЙ ЦИКЛ</div>
                     <div class="card-body nopadding">
-                        <p class="card-text text-center display-3" id="pointTC">{{ current_tpa[2].cycle }}</p>
+                        <p class="card-text text-center display-3" id="pointTC"></p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ЦИКЛ ЗА СМЕНУ</div>
                     <div class="card-body nopadding">
-                        <p class="card-text text-center display-3" id="pointVCS">{{ current_tpa[2].cycle_fact }}</p>
+                        <p class="card-text text-center display-3" id="pointVCS"></p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ПЛАНОВЫЙ ВЕС</div>
                     <div class="card-body nopadding d-flex align-items-center justify-content-center">
-                        <p class="card-text text-center display-3">{{ current_tpa[2].plan_weight }}</p>
+                        <p class="card-text text-center display-3" id="planweight"></p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
                     <div class="card-header text-center card-h-uppercase primary">СРЕДНИЙ ВЕС</div>
                     <div class="card-body nopadding d-flex align-items-center justify-content-center">
-                        <p class="card-text text-center display-3">
+                        <p class="card-text text-center display-3" id="average_weigth">
                             0
                         </p>
                     </div>
                 </div>
                 <div class="card height100 shadow">
                     <div class="card-body nopadding primary">
-                        <p class="card-text text-center" id="smena">{{ current_tpa[2].shift }}</p>
+                        <p class="card-text text-center" id="smena"></p>
                     </div>
                 </div>
             </div>
@@ -162,7 +162,7 @@
                     <div class="card height-bottom shadow">
                         <div class="card-header text-center nopadding primary">БУМАГИ В ПРИНТЕРЕ ДЛЯ ПЕЧАТИ:</div>
                         <div class="card-body nopadding ">
-                            <p class="card-text text-center display-4">675</p>
+                            <p class="card-text text-center display-4"></p>
                         </div>
                     </div>
                 </div>
@@ -275,6 +275,44 @@
                 devicetype = arr[address]
             }
         })
+
+        socket.on('GetMainWindowData', function(data){
+            arr = JSON.parse(data)
+            if (address == Object.keys(arr))
+            {
+                console.log(arr[address])
+                let pressform = document.getElementById('tpf')
+                let product = document.getElementById('tprod')
+                let product_plan = document.getElementById('nplan')
+                let product_fact = document.getElementById('nvplan')
+                let cycle = document.getElementById('pointTC')
+                let cycle_fact = document.getElementById('pointVCS')
+                let plan_weight = document.getElementById('planweight')
+                let average_weight = document.getElementById('average_weigth')
+                let shift = document.getElementById('smena')
+                let defective = document.getElementById('nvDefect')
+
+                pressform.textContent = arr[address]['PF']
+                product.textContent = arr[address]['Product']
+                product_plan.textContent = arr[address]['Plan']
+                product_fact.textContent = arr[address]['Fact']
+                cycle.textContent = arr[address]['PlanCycle']
+                cycle_fact.textContent = arr[address]['FactCycle']
+                plan_weight.textContent = arr[address]['PlanWeight']
+                average_weight.textContent = arr[address]['AverageWeight']
+                shift.textContent = arr[address]['Shift']
+                defective.textContent = arr[address]['Defective']
+            }
+        })
+
+        async function UpdateMainWindowData(){
+            while(true)
+            {
+                socket.emit('NeedUpdateMainWindowData', { data: '' })
+                await sleep(3000)
+            }           
+        }
+        UpdateMainWindowData()
 </script>
 <script>
     window.addEventListener('load', () => { 

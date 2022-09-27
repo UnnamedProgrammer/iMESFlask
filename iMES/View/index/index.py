@@ -483,3 +483,22 @@ def socket_connected(data):
         data = 'Терминал'
     socketio.emit("DeviceType", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
+
+@socketio.on(message="NeedUpdateMainWindowData")
+def UpdateMainWindowData(data):
+    ip_addr = request.remote_addr
+    current_tpa[ip_addr][2].data_from_shifttask()
+    MWData = {
+                ip_addr:{"PF":str(current_tpa[ip_addr][2].pressform),
+                        "Product":str(current_tpa[ip_addr][2].product),
+                        "Plan":str(current_tpa[ip_addr][2].production_plan),
+                        "Fact":str(current_tpa[ip_addr][2].product_fact),
+                        "PlanCycle":str(current_tpa[ip_addr][2].cycle),
+                        "FactCycle":str(current_tpa[ip_addr][2].cycle_fact),
+                        "PlanWeight":str(current_tpa[ip_addr][2].plan_weight),
+                        "AverageWeight":str(current_tpa[ip_addr][2].average_weight),
+                        "Shift":str(current_tpa[ip_addr][2].shift),
+                        "Defective": 0}
+             }
+    socketio.emit("GetMainWindowData", data = json.dumps(
+        MWData, ensure_ascii=False, indent=4))
