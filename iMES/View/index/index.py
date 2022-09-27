@@ -9,7 +9,7 @@ from iMES.Controller.IndexController import IndexController
 import json
 from iMES import TpaList, current_tpa, user
 import requests
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 # Метод возвращающий главную страницу
 
@@ -117,7 +117,7 @@ def GetTrend():
             closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
             y += 1
             trend.append({"y": str(y), "x": closure_time[:-3]})
-    return trend
+    return json.dumps(trend)
 
 
 # Метод возвращающий данные о плане выпускаемой продукции на графике
@@ -144,6 +144,7 @@ def GetPlan():
                                 Shift.Oid = ShiftTask.Shift
                         """
     ShiftTime = SQLManipulator.SQLExecute(sql_GetShiftTime)
+    time = datetime.now()
     for shift_task in ShiftTime:
         # Если Oid смены в сменном задании совпадает с Oid смены в current_tpa
         if shift_task[0] == current_tpa[ip_addr][2].shift_task_oid:
@@ -161,7 +162,7 @@ def GetPlan():
             plan.append({ "y": str(product), "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
         else:
             break
-    return plan
+    return json.dumps(plan)
 
 
 # Метод создания пользователя для сессии при прикладываении пропуска.
