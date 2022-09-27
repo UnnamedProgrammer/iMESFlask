@@ -9,6 +9,7 @@ from iMES.Controller.IndexController import IndexController
 import json
 from iMES import TpaList, current_tpa, user
 import requests
+from datetime import timedelta
 
 # Метод возвращающий главную страницу
 
@@ -63,6 +64,8 @@ def ChangeTPA():
         'oid')[0], request.args.getlist('name')[0], controller))
     return current_tpa
 
+
+# Алия М
 # Метод возвращающий данные о текущей выпущенной продукции на графике
 # по запросу с главной страницы с помощью JS
 # Запрос на этот роутинг выполняется их кода JS в index_template.html
@@ -70,8 +73,52 @@ def ChangeTPA():
 
 @app.route("/getTrend")
 def GetTrend():
-    trend = '[{ "y": "0", "x": "2022-07-01 07:01:08.637" },{ "y": "15", "x": "2022-07-01 14:00:08.570" }]'
+    ip_addr = request.remote_addr
+    # Массив и начальная точка, получаю начало и конец текущей смены
+    sql_GetShiftTime = f"""
+                            SELECT 
+                                ShiftTask.Oid,
+                                Shift.StartDate
+                            FROM
+                                Shift, ShiftTask
+                            WHERE
+                                Shift.Oid = ShiftTask.Shift
+                        """
+    ShiftTime = SQLManipulator.SQLExecute(sql_GetShiftTime)
+    for shift_task in ShiftTime:
+        # Если Oid смены в сменном задании совпадает с Oid смены в current_tpa
+        if shift_task[0] == current_tpa[ip_addr][2].shift_task_oid:
+            # Начальная точка назначается из БД (StartDate)
+            trend = [{ "y": "0", "x": (shift_task[1].strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3] }]
+            break
+    # Подсчет выпущенных изделий (СОМНИТЕЛЬНО)
+    y = 0 
+    # Запрос на время и статус смыкания
+    sql_GetСlosures = f"""
+                            SELECT [Date]
+                                ,[Status]
+                            FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
+                            WHERE 
+                            Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
+                                                FROM RFIDEquipmentBinding, ShiftTask
+                                                WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
+                                                ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}') AND
+                            ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}' AND
+                            Shift.Oid = ShiftTask.Shift AND
+                            Date between Shift.StartDate AND Shift.EndDate
+
+                            ORDER BY Date ASC
+                        """
+    Closures = SQLManipulator.SQLExecute(sql_GetСlosures)
+    # Заполнение точками массива trend
+    for i in Closures:
+        # Если смыкание завершилось (status == 0), добавляется точка в массив
+        if i[1] == False:
+            closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
+            y += 1
+            trend.append({"y": str(y), "x": closure_time[:-3]})
     return trend
+
 
 # Метод возвращающий данные о плане выпускаемой продукции на графике
 # по запросу с главной страницы с помощью JS
@@ -80,8 +127,42 @@ def GetTrend():
 
 @app.route("/getPlan")
 def GetPlan():
-    plan = '[{ "y": "0", "x": "2022-07-01 07:00:00" },{ "y": "25", "x": "2022-07-01 19:00:00" }]'
+    ip_addr = request.remote_addr
+    # План по продукции
+    production_plan = current_tpa[ip_addr][2].production_plan
+    # Плановый цикл
+    cycle = current_tpa[ip_addr][2].cycle
+    # Массив и начальная точка, получаю начало и конец текущей смены
+    sql_GetShiftTime = f"""
+                            SELECT 
+                                ShiftTask.Oid,
+                                Shift.StartDate,
+                                Shift.EndDate
+                            FROM
+                                Shift, ShiftTask
+                            WHERE
+                                Shift.Oid = ShiftTask.Shift
+                        """
+    ShiftTime = SQLManipulator.SQLExecute(sql_GetShiftTime)
+    for shift_task in ShiftTime:
+        # Если Oid смены в сменном задании совпадает с Oid смены в current_tpa
+        if shift_task[0] == current_tpa[ip_addr][2].shift_task_oid:
+            # Записываем начало и конец смены
+            time = shift_task[1]
+            end_shift = shift_task[2]
+            break
+    # Массив и начальное значение
+    plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
+    for product in range(production_plan):
+        # Прибавляем 1 цикл
+        time += timedelta(seconds=100) #CYCLE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Если время превышает время окончания смены, не прибавлять данный цикл
+        if time <= end_shift:
+            plan.append({ "y": str(product), "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+        else:
+            break
     return plan
+
 
 # Метод создания пользователя для сессии при прикладываении пропуска.
 # Отправляет устройству на котором прикладывается пропуск команду
