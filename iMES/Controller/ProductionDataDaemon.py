@@ -26,6 +26,7 @@ class ProductionDataDaemon():
                     self.CreateProductionDataRecord(self.tpalist[tpanum][3]['ShiftTask'])
                 if(self.tpalist[tpanum][3]['ShiftTask'] != ''):
                     self.UpdateCountClosures(self.tpalist[tpanum][3]['ShiftTask'][0],
+                                             self.tpalist[tpanum][3]['ShiftTask'][16],
                                              self.tpalist[tpanum][3]['ShiftTask'][5],
                                              self.tpalist[tpanum][3]['ShiftTask'][11],
                                              self.tpalist[tpanum][3]['ShiftTask'][10],
@@ -66,6 +67,7 @@ class ProductionDataDaemon():
                 ,[Weight]
                 ,[ProductURL]
                 ,[PackingURL]
+                ,[Shift]
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{tpaoid}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
@@ -159,7 +161,7 @@ class ProductionDataDaemon():
         else:
             return ''
 
-    def UpdateCountClosures(self, ShiftTaskOid, specification, plan, socketcount, tpaoid):
+    def UpdateCountClosures(self, ShiftTaskOid,ShiftOid, specification, plan, socketcount, tpaoid):
         if ShiftTaskOid == '':
             return
         offset = self.completed_clousers[tpaoid]
@@ -227,6 +229,13 @@ class ProductionDataDaemon():
                 SQLManipulator.SQLExecute(sql)
             if (production_data[3] == 1):
                 update_sql = ""
+                get_current_shift = """
+                    SELECT TOP (1) [Oid]
+                    FROM [MES_Iplast].[dbo].[Shift] 
+                    ORDER BY StartDate DESC
+                """
+                current_shift = SQLManipulator.SQLExecute(get_current_shift)
+                current_shift = current_shift[0][0]
                 if count >= plan:
                     update_sql = f"""
                         UPDATE ProductionData
@@ -242,11 +251,14 @@ class ProductionDataDaemon():
                         SET Status = 2
                         WHERE Oid = '{production_data[0]}'
                     """
-                    self.tpalist.pop(3)
+                    for i in range(0, len(self.tpalist)):
+                        if self.tpalist[i][0] == tpaoid:
+                            self.tpalist[i].pop(3)
                 else:
-                    update_sql = f"""
+                    if current_shift != ShiftOid:
+                        update_sql = f"""
                         UPDATE ProductionData
-                        SET CountFact = '{int(count)}'
+                        SET CountFact = '{count}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET CycleFact = '{average_cycle}'
@@ -255,9 +267,27 @@ class ProductionDataDaemon():
                         SET SpecificationFact = '{specification}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
-                        SET EndDate = '{enddate}'
+                        SET Status = 2
                         WHERE Oid = '{production_data[0]}'
-                    """
+                        """
+                        for i in range(0, len(self.tpalist)):
+                            if self.tpalist[i][0] == tpaoid:
+                                self.tpalist[i].pop(3)
+                    else:
+                        update_sql = f"""
+                            UPDATE ProductionData
+                            SET CountFact = '{int(count)}'
+                            WHERE Oid = '{production_data[0]}'
+                            UPDATE ProductionData
+                            SET CycleFact = '{average_cycle}'
+                            WHERE Oid = '{production_data[0]}'
+                            UPDATE ProductionData
+                            SET SpecificationFact = '{specification}'
+                            WHERE Oid = '{production_data[0]}'
+                            UPDATE ProductionData
+                            SET EndDate = '{enddate}'
+                            WHERE Oid = '{production_data[0]}'
+                        """
                 SQLManipulator.SQLExecute(update_sql)
             if ((production_data[3] == 0) and
                (production_data[4] == None) and

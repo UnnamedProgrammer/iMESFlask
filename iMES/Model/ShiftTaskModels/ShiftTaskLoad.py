@@ -85,7 +85,7 @@ class ShiftTaskLoader():
         # 0 - День, 1 - Ночь
         now = datetime.datetime.now()
         hour = now.hour
-        if (hour >= 1 and hour < 7) or (hour >= 19 and hour <= 24):
+        if ((hour >= 1 and hour < 7) or (hour >= 19 and hour <= 23) or (hour >= 0 and hour < 7)):
             return 1
         elif hour >= 7 and hour < 19:
             return 0

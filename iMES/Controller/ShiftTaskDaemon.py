@@ -18,14 +18,10 @@ class ShiftTaskDaemon():
 
     def DoWork(self):
         while True:
-            sleep(10)
-            app.logger.info("Проверка текущей смены для поиска сменного задания")
             self.insertedToDay = self.CheckShift()
-            if (self.insertedToDay == True):
-                app.logger.info("Сменное задание было вставлено, повторение цикла")
             now = datetime.now()
             if (self.insertedToDay == False):
-                app.logger.info(f"Нет сменного задания, получение нового сменного задания на {now.hour}:{now.minute} {now.day}.{now.month}.{now.year}")
+                app.logger.info(f"Нет сменного задания, получение нового сменного задания на {now}")
                 get_tpa_list = """
                     SELECT NomenclatureGroup.Code
                     FROM Equipment, NomenclatureGroup, RFIDEquipmentBinding
@@ -46,7 +42,7 @@ class ShiftTaskDaemon():
                     day = '0' + day
                 date = int(str(year + month + day))
                 hour = now.hour
-                if ((hour >= 1 and hour < 7) or (hour >= 19 and hour <= 24)):
+                if ((hour >= 1 and hour < 7) or (hour >= 19 and hour <= 23) or (hour >= 0 and hour < 7)):
                     self.shift = 1
                 elif hour >= 7 and hour < 19:
                     self.shift = 0
@@ -55,12 +51,14 @@ class ShiftTaskDaemon():
                     Loader.Get_ShiftTask()
                     Loader.InsertToDataBase()
                 app.logger.info("Новое сменное задание успешно получено")
+            sleep(10)
 
     def CheckShift(self):
         now = datetime.now()
         hour = now.hour
-        if ((hour >= 1 and hour < 7) or
-           (hour >= 19 and hour <= 24)):
+        if ((hour >= 1 and hour < 7) or 
+            (hour >= 19 and hour <= 23) or 
+            (hour >= 0 and hour < 7)):
             self.shift = 1
         elif hour >= 7 and hour < 19:
             self.shift = 0

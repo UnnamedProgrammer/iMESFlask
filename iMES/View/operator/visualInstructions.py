@@ -6,7 +6,6 @@ from flask_login import login_required
 from iMES import current_tpa, TpaList
 
 DirectumConnection = DirectumIntegration()
-InstructionsId = [182675, 1057032, 277104, 1083964]
 
 # Метод отображающий окно со списком визуальных инструкций
 
@@ -15,10 +14,13 @@ InstructionsId = [182675, 1057032, 277104, 1083964]
 @login_required
 def VisualInstructions():
     device_tpa = TpaList[request.remote_addr]
+    print(current_tpa[request.remote_addr][2].PackingURL[36:])
+    InstructionsId = [current_tpa[request.remote_addr][2].PackingURL[36:]]
     Authorization = DirectumConnection.Authorization()
     table = """"""
     if (Authorization == True):
         for i in range(0, len(InstructionsId)):
+            if InstructionsId[i] == '': continue
             Name = DirectumConnection.DirectumGetDocumentName(
                 InstructionsId[i])
             if Name != "":

@@ -90,33 +90,36 @@ def GetTrend():
         if shift_task[0] == current_tpa[ip_addr][2].shift_task_oid:
             # Начальная точка назначается из БД (StartDate)
             trend = [{ "y": "0", "x": (shift_task[1].strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3] }]
+        elif current_tpa[ip_addr][2].shift_task_oid == '':
+            trend = [{ "y": "0", "x": "0"},{ "y": "0", "x": "0"}]
             break
     # Подсчет выпущенных изделий (СОМНИТЕЛЬНО)
     y = 0 
     # Запрос на время и статус смыкания
-    sql_GetСlosures = f"""
-                            SELECT [Date]
-                                ,[Status]
-                            FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
-                            WHERE 
-                            Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
-                                                FROM RFIDEquipmentBinding, ShiftTask
-                                                WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
-                                                ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}') AND
-                            ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}' AND
-                            Shift.Oid = ShiftTask.Shift AND
-                            Date between Shift.StartDate AND Shift.EndDate
+    if (current_tpa[ip_addr][2].shift_task_oid != ''):
+        sql_GetСlosures = f"""
+                                SELECT [Date]
+                                    ,[Status]
+                                FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
+                                WHERE 
+                                Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
+                                                    FROM RFIDEquipmentBinding, ShiftTask
+                                                    WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
+                                                    ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}') AND
+                                ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}' AND
+                                Shift.Oid = ShiftTask.Shift AND
+                                Date between Shift.StartDate AND Shift.EndDate
 
-                            ORDER BY Date ASC
-                        """
-    Closures = SQLManipulator.SQLExecute(sql_GetСlosures)
-    # Заполнение точками массива trend
-    for i in Closures:
-        # Если смыкание завершилось (status == 0), добавляется точка в массив
-        if i[1] == False:
-            closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
-            y += 1
-            trend.append({"y": str(y), "x": closure_time[:-3]})
+                                ORDER BY Date ASC
+                            """
+        Closures = SQLManipulator.SQLExecute(sql_GetСlosures)
+        # Заполнение точками массива trend
+        for i in Closures:
+            # Если смыкание завершилось (status == 0), добавляется точка в массив
+            if i[1] == False:
+                closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
+                y += 1
+                trend.append({"y": str(y), "x": closure_time[:-3]})
     return json.dumps(trend)
 
 
