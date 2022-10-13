@@ -39,4 +39,4 @@ if __name__ == "__main__":
     ShiftTaskMonitoring.Start()             
     ProductDataMonitoring = ProductionDataDaemon()
     ProductDataMonitoring.Start()
-    socketio.run(app, host=host, port=port)
+    socketio.run(app, host=host, port=port, debug=True)
