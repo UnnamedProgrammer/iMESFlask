@@ -4,21 +4,22 @@ from datetime import datetime
 
 @dataclass
 class IndexController():
-    tpa: str
-    pressform: str = None
-    product: str = None
-    production_plan: int = None
-    cycle: int = None
+    tpa: str = ''
+    pressform: str = ''
+    product: str = ''
+    production_plan: int = 0
+    cycle: int = 0
     cycle_fact: float = 0
-    plan_weight: float = None
-    average_weight: float = None
-    shift: str = None
-    print_paper: int = None
-    shift_task_oid: str = None
+    plan_weight: float = 0
+    average_weight: float = 0
+    shift: str = ''
+    print_paper: int = 0
+    shift_task_oid: str = ''
     product_fact: str = 0
-    label: str = None
-    controller: str = None
+    label: str = ''
+    controller: str = ''
     tpa_is_works: bool = False
+    PackingURL: str = ''
 
     def data_from_shifttask(self):
         sql = f"""
@@ -53,6 +54,7 @@ class IndexController():
             self.cycle = data[12]
             self.plan_weight = data[13].normalize()
             self.shift = data[1]
+            self.PackingURL = data[15]
             sql = f"""
                 SELECT TOP (1) Equipment.Name, RFIDClosureData.Date
                 FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 

@@ -116,10 +116,6 @@ function graph(td, pn) {
     }
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 let trend = ''
 let plan = ''
 

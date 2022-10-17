@@ -60,3 +60,29 @@ function printStickerWindow(elem, mywindow){
     mywindow.close(); 
     // minusPaper();
 }
+
+// Функция скроллинга внутри блока
+let jsScroll = document.getElementsByClassName('jsScroll');
+
+if(jsScroll){
+    [].forEach.call(jsScroll, function(item) {
+        let startX, startY;
+        let listener = function(e) {
+            startX = this.scrollLeft + e.pageX;
+            startY = this.scrollTop + e.pageY;
+            item.addEventListener('mousemove', endListener);
+        };
+
+        let endListener = function(e) {
+            this.scrollLeft = startX - e.pageX;
+            this.scrollTop = startY - e.pageY;
+            return false;
+        };
+
+        item.addEventListener('mousedown', listener);
+
+        window.addEventListener("mouseup", function(){ 
+            item.removeEventListener('mousemove', endListener);
+        });
+    });
+}

@@ -5,6 +5,10 @@ let display = document.querySelector('.modal__input-number');
 let enter = document.querySelector('.modal__enter-button')
 let del = document.querySelector('.keyboard__key_del');
 
+let productList = document.querySelector('#currentProductList')
+
+let productData = 0
+
 let defectCount = 0
 let defectWeight = 0
 
@@ -45,12 +49,12 @@ function numberModalControl(event){
             {
                 defectWeight = display.textContent;
                 enter.id = 'defectEnterCount';
-                $(wasteDefectTable).find('tbody').append('<tr id="defect"> <td>'+ tprod +'</td> <td class="red">Брак</td> <td id="defectCount_Data">'+ defectCount +'</td> <td id="defectWeight_Data">'+ defectWeight +'</td> <td></td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
+                $(table).find('tbody').append('<tr id="defect"> <td>'+ tprod +'</td> <td class="red">Брак</td> <td id="defectCount_Data">'+ defectCount +'</td> <td id="defectWeight_Data">'+ defectWeight +'</td> <td></td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
 
             else if (enter.id == 'productWeight') {
-                let productWeight = display.textContent;
-                $(productWeightTable).find('tbody').append('<tr> <td>'+ tprod +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
+                productData = display.textContent;
+                productList.classList.toggle('hidden')
             }
 
             else if(event.target.tagName == 'INPUT')
@@ -74,4 +78,11 @@ function numberModalControl(event){
     del.onclick = function(){
         display.textContent = display.textContent = display.textContent.substring(0, display.textContent.length - 1);
     }
+}
+
+function selectCurrentProduct(event) {
+    console.log(current_user)
+    let currentProduct = event.target.dataset.selectproduct
+    $(table).find('tbody').append('<tr> <td>'+ currentProduct +'</td> <td class="green" id="productWeightData">'+ productData +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
+    productList.classList.toggle('hidden')
 }

@@ -48,7 +48,7 @@ for device in Devices:
                 WHERE 	Device.DeviceId = '{device[0]}' AND
                         Equipment.Oid = Relation_DeviceEquipment.Equipment AND
                         Device.Oid = Relation_DeviceEquipment.Device
-            """
+              """
     tpas = SQLManipulator.SQLExecute(sqltpa)
     tpasresult = []
     for tpa in tpas:
@@ -58,7 +58,7 @@ for device in Devices:
                               [0]['Oid'])
     current_tpa[device[0]] = list([TpaList[device[0]]
                               [0]['Oid'], TpaList[device[0]][0]['Name'],controller])   
-current_tpa['Hello world'] = ''        
+
 from iMES.View.operator import operator, tableWeight, visualInstructions
 from iMES.View.navbar_footer import navbar_footer
 from iMES.View.adjuster import adjuster

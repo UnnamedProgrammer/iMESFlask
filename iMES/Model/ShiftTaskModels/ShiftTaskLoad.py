@@ -85,7 +85,7 @@ class ShiftTaskLoader():
         # 0 - День, 1 - Ночь
         now = datetime.datetime.now()
         hour = now.hour
-        if (hour >= 1 and hour < 7) or (hour >= 19 and hour <= 24):
+        if (hour >= 0 and hour < 7) or (hour >= 19 and hour <= 23):
             return 1
         elif hour >= 7 and hour < 19:
             return 0
@@ -244,7 +244,7 @@ class ShiftTaskLoader():
                     ,[EndDate]
                     ,[Note]
                 FROM [MES_Iplast].[dbo].[Shift] WHERE 
-                    DATENAME(HOUR, [StartDate]) >= 7 AND 
+                    DATENAME(HOUR, [StartDate]) = 7 AND 
                     DATENAME(YEAR, [StartDate]) = DATENAME(YEAR, GETDATE()) AND
                     DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
@@ -257,7 +257,7 @@ class ShiftTaskLoader():
                     ,[EndDate]
                     ,[Note]
                 FROM [MES_Iplast].[dbo].[Shift] WHERE 
-                    DATENAME(HOUR, [StartDate]) >= 19 AND 
+                    DATENAME(HOUR, [StartDate]) = 19 AND 
                     DATENAME(YEAR, [StartDate]) = DATENAME(YEAR, GETDATE()) AND
                     DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())

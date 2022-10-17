@@ -9,7 +9,7 @@ from iMES.Controller.IndexController import IndexController
 import json
 from iMES import TpaList, current_tpa, user
 import requests
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 # Метод возвращающий главную страницу
 
@@ -65,7 +65,6 @@ def ChangeTPA():
     return current_tpa
 
 
-# Алия М
 # Метод возвращающий данные о текущей выпущенной продукции на графике
 # по запросу с главной страницы с помощью JS
 # Запрос на этот роутинг выполняется их кода JS в index_template.html
@@ -93,30 +92,31 @@ def GetTrend():
     # Подсчет выпущенных изделий (СОМНИТЕЛЬНО)
     y = 0
     # Запрос на время и статус смыкания
-    sql_GetСlosures = f"""
-                            SELECT [Date]
-                                ,[Status]
-                            FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
-                            WHERE 
-                            Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
-                                                FROM RFIDEquipmentBinding, ShiftTask
-                                                WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
-                                                ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}') AND
-                            ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}' AND
-                            Shift.Oid = ShiftTask.Shift AND
-                            Date between Shift.StartDate AND Shift.EndDate
+    if (current_tpa[ip_addr][2].shift_task_oid != ''):
+        sql_GetСlosures = f"""
+                                SELECT [Date]
+                                    ,[Status]
+                                FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
+                                WHERE 
+                                Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
+                                                    FROM RFIDEquipmentBinding, ShiftTask
+                                                    WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
+                                                    ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}') AND
+                                ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}' AND
+                                Shift.Oid = ShiftTask.Shift AND
+                                Date between Shift.StartDate AND Shift.EndDate
 
-                            ORDER BY Date ASC
-                        """
-    Closures = SQLManipulator.SQLExecute(sql_GetСlosures)
-    # Заполнение точками массива trend
-    for i in Closures:
-        # Если смыкание завершилось (status == 0), добавляется точка в массив
-        if i[1] == False:
-            closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
-            y += 1
-            trend.append({"y": str(y), "x": closure_time[:-3]})
-    return trend
+                                ORDER BY Date ASC
+                            """
+        Closures = SQLManipulator.SQLExecute(sql_GetСlosures)
+        # Заполнение точками массива trend
+        for i in Closures:
+            # Если смыкание завершилось (status == 0), добавляется точка в массив
+            if i[1] == False:
+                closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
+                y += 1
+                trend.append({"y": str(y), "x": closure_time[:-3]})
+    return json.dumps(trend)
 
 
 # # Метод возвращающий данные о плане выпускаемой продукции на графике
@@ -128,7 +128,6 @@ def GetTrend():
 def GetPlan():
     print(current_tpa)
     ip_addr = request.remote_addr
-    cycle = 50
     sql_GetShiftOid = f"""
                             SELECT TOP(1) ShiftTask.Shift
                             FROM Shift, ShiftTask
@@ -206,7 +205,7 @@ def GetPlan():
                     break
                 time += timedelta(seconds=downtime//(len(ShiftTime)-1))
                 plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }) 
-    return plan
+    return json.dumps(plan)
 
 
 # Метод создания пользователя для сессии при прикладываении пропуска.
@@ -527,3 +526,25 @@ def socket_connected(data):
         data = 'Терминал'
     socketio.emit("DeviceType", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
+
+@socketio.on(message="NeedUpdateMainWindowData")
+def UpdateMainWindowData(data):
+    ip_addr = request.remote_addr
+    try:
+        current_tpa[ip_addr][2].data_from_shifttask()
+        MWData = {
+                    ip_addr:{"PF":str(current_tpa[ip_addr][2].pressform),
+                            "Product":str(current_tpa[ip_addr][2].product),
+                            "Plan":str(current_tpa[ip_addr][2].production_plan),
+                            "Fact":str(current_tpa[ip_addr][2].product_fact),
+                            "PlanCycle":str(current_tpa[ip_addr][2].cycle),
+                            "FactCycle":str(current_tpa[ip_addr][2].cycle_fact),
+                            "PlanWeight":str(current_tpa[ip_addr][2].plan_weight),
+                            "AverageWeight":str(current_tpa[ip_addr][2].average_weight),
+                            "Shift":str(current_tpa[ip_addr][2].shift),
+                            "Defective": 0}
+                }
+        socketio.emit("GetMainWindowData", data = json.dumps(
+            MWData, ensure_ascii=False, indent=4))
+    except:
+        pass
