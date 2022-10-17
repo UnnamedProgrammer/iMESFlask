@@ -8,7 +8,7 @@
 <div class="view">
     <div class="view-header text-center primary">Вес изделия за смену</div>
     <div class="view-body jsScroll"> 
-        <table class="table table-sm table-bordered text-center" id="productWeightTable" border="1" bordercolor="black">
+        <table class="table table-sm table-bordered text-center" id="table" border="1" bordercolor="black">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Продукт</th>
@@ -86,14 +86,61 @@
             </div>
         </div>
         <div class="bg-blur"></div>
-    </div>       
+    </div>
+    
+    <!-- Модальное (всплывающее) окно выбора продукта(артикула) -->
+    <div class="modal hidden" id="currentProductList">
+        <div class="modal__list">
+            <div class="modal_header">
+                <h5 class="modal_title">Список отходов</h5>
+            </div>
+            <div class="modal_content">
+                <div class="modal_body">
+                    <table class="table table-bordered text-center" border="1" bordercolor="black">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Продукт</th>
+                                <th scope="col">Выбрать</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td value=''>Продукт 1</td>
+                                <td class="nopadding table__button col-3">
+                                    <button type="button" class="btn__table green" data-selectproduct="Продукт 1" onClick="selectCurrentProduct(event)">Выбрать</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td value=''>Продукт 2</td>
+                                <td class="nopadding table__button col-3">
+                                    <button type="button" class="btn__table green" data-selectproduct="Продукт 2" onClick="selectCurrentProduct(event)">Выбрать</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td value=''>Продукт 3</td>
+                                <td class="nopadding table__button col-3">
+                                    <button type="button" class="btn__table green" data-selectproduct="Продукт 3" onClick="selectCurrentProduct(event)">Выбрать</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal_footer">
+                    <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="currentProductList" onClick="modalController(event)"> Закрыть </button>
+                </div>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+    <!-- ----------------------------------------------------------- -->
+
 </div>
 <script src="/static/js/numberModal.js"></script>
 <script>
 
-    let productWeightTable = document.querySelector('#productWeightTable'); // Получение таблицы с весом продукта
-    let productWeightRows = document.querySelector('#productWeightTable tbody').rows; // Получение тела таблицы с весом продукта
-    let enteredWeight = document.querySelectorAll('#productWeightTable'); // Получение значений введного веса
+    let productWeightTable = document.querySelector('#table'); // Получение таблицы с весом продукта
+    let productWeightRows = document.querySelector('#table tbody').rows; // Получение тела таблицы с весом продукта
+    let enteredWeight = document.querySelectorAll('#table'); // Получение значений введного веса
 
     // Печать веса продукта
     function weightPrint() {

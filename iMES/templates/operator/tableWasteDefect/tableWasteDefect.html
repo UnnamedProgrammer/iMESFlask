@@ -3,7 +3,7 @@
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
-        <table class="table table-bordered text-center" id="tableWasteDefect" border="1">
+        <table class="table table-bordered text-center" id="table" border="1">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Продукт</th>
@@ -15,13 +15,14 @@
                     <th scope="col">Оператор</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+            </tbody>
         </table>
     </div>
     <div class="d-flex justify-content-between px-3">
         <div class="col-6 row">
             <div class="col nopadding me-1">
-                <button type="button" class="wasteButton btn btn__view primary fs-4" id="wasteEnterButton">
+                <button type="button" class="wasteButton btn btn__view primary fs-4" id="wasteEnterButton" onclick="location.href='tableWasteDefect/wastes'">
                     Ввод отхода<br>за смену
                 </button>
             </div>
@@ -87,8 +88,8 @@
 </div>
 <script src="/static/js/numberModal.js"></script>
 <script>
-    let wasteDefectTable = document.querySelector('#tableWasteDefect'); // Получение таблицы с продуктами
-    let wasteDefectRows = document.querySelector('#tableWasteDefect tbody').rows; // Получение тела таблицы с веденными данными
+    let wasteDefectTable = document.querySelector('#table'); // Получение таблицы с продуктами
+    let wasteDefectRows = document.querySelector('#table tbody').rows; // Получение тела таблицы с веденными данными
     let wasteButton = document.querySelector('.wasteButton') // Кнопка добавления / печати отходов
     let defectButton = document.querySelector('.defectButton') // Кнопка добавления / печати брака
 
