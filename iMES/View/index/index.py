@@ -154,6 +154,7 @@ def GetPlan():
         end_shift = ShiftTime[0][2]
         # Массив и начальное значение
         plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
+        plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
         for closure in range(ShiftTime[0][3]):
                 time += timedelta(seconds=int(ShiftTime[0][4]))
                 if time < end_shift:
@@ -185,6 +186,7 @@ def GetPlan():
             downtime = 43200 - shift_times
         # Массив и начальное значение
         plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
+        plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
         closure_summ = 0
         # Перебираем сменное задание
         for shift_task in ShiftTime:
