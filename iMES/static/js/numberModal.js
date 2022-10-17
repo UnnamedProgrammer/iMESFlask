@@ -42,7 +42,6 @@ function numberModalControl(event){
                 enter.innerHTML = 'ВВОД КГ.'
                 enter.id = 'defectEnterWeight';
                 numberModalControl(event);
-                console.log(defectCount)
             }
 
             else if(enter.id == 'defectEnterWeight')
@@ -81,7 +80,6 @@ function numberModalControl(event){
 }
 
 function selectCurrentProduct(event) {
-    console.log(current_user)
     let currentProduct = event.target.dataset.selectproduct
     $(table).find('tbody').append('<tr> <td>'+ currentProduct +'</td> <td class="green" id="productWeightData">'+ productData +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
     productList.classList.toggle('hidden')
