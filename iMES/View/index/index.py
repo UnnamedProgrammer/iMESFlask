@@ -73,6 +73,7 @@ def ChangeTPA():
 
 @app.route("/getTrend")
 def GetTrend():
+    print(current_tpa)
     ip_addr = request.remote_addr
     # Массив и начальная точка, получаю начало и конец текущей смены
     sql_GetShiftTime = f"""
@@ -82,17 +83,15 @@ def GetTrend():
                             FROM
                                 Shift, ShiftTask
                             WHERE
-                                Shift.Oid = ShiftTask.Shift
+                                Shift.Oid = ShiftTask.Shift and ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}'
                         """
     ShiftTime = SQLManipulator.SQLExecute(sql_GetShiftTime)
     for shift_task in ShiftTime:
-        # Если Oid смены в сменном задании совпадает с Oid смены в current_tpa
-        if shift_task[0] == current_tpa[ip_addr][2].shift_task_oid:
-            # Начальная точка назначается из БД (StartDate)
-            trend = [{ "y": "0", "x": (shift_task[1].strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3] }]
-            break
+        # Начальная точка назначается из БД (StartDate)
+        trend = [{ "y": "0", "x": (shift_task[1].strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3] }]
+        break
     # Подсчет выпущенных изделий (СОМНИТЕЛЬНО)
-    y = 0 
+    y = 0
     # Запрос на время и статус смыкания
     sql_GetСlosures = f"""
                             SELECT [Date]
@@ -120,47 +119,93 @@ def GetTrend():
     return trend
 
 
-# Метод возвращающий данные о плане выпускаемой продукции на графике
-# по запросу с главной страницы с помощью JS
-# Запрос на этот роутинг выполняется их кода JS в index_template.html
+# # Метод возвращающий данные о плане выпускаемой продукции на графике
+# # по запросу с главной страницы с помощью JS
+# # Запрос на этот роутинг выполняется их кода JS в index_template.html
 
 
 @app.route("/getPlan")
 def GetPlan():
+    print(current_tpa)
     ip_addr = request.remote_addr
-    # План по продукции
-    production_plan = current_tpa[ip_addr][2].production_plan
-    # Плановый цикл
-    cycle = current_tpa[ip_addr][2].cycle
+    cycle = 50
+    sql_GetShiftOid = f"""
+                            SELECT TOP(1) ShiftTask.Shift
+                            FROM Shift, ShiftTask
+                            WHERE ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}'
+                        """
+    ShiftOid = SQLManipulator.SQLExecute(sql_GetShiftOid)[0][0]
     # Массив и начальная точка, получаю начало и конец текущей смены
     sql_GetShiftTime = f"""
                             SELECT 
                                 ShiftTask.Oid,
                                 Shift.StartDate,
-                                Shift.EndDate
+                                Shift.EndDate,
+                                ShiftTask.ProductCount,
+                                ShiftTask.Cycle,
+                                ShiftTask.Shift
                             FROM
                                 Shift, ShiftTask
                             WHERE
-                                Shift.Oid = ShiftTask.Shift
+                                Shift.Oid = ShiftTask.Shift and ShiftTask.Equipment = '{current_tpa[ip_addr][2].tpa}' and ShiftTask.Shift = '{ShiftOid}'
                         """
     ShiftTime = SQLManipulator.SQLExecute(sql_GetShiftTime)
-    for shift_task in ShiftTime:
-        # Если Oid смены в сменном задании совпадает с Oid смены в current_tpa
-        if shift_task[0] == current_tpa[ip_addr][2].shift_task_oid:
-            # Записываем начало и конец смены
-            time = shift_task[1]
-            end_shift = shift_task[2]
+    # Если сменное задание одно
+    if len(ShiftTime) == 1:
+        # Записываем начало и конец смены
+        time = ShiftTime[0][1]
+        end_shift = ShiftTime[0][2]
+        # Массив и начальное значение
+        plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
+        for closure in range(ShiftTime[0][3]):
+                time += timedelta(seconds=int(ShiftTime[0][4]))
+                if time < end_shift:
+                    plan.append({ "y": str(closure), "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                # Если время равно времени окончания смены, прибавить цикл и выйти из for
+                elif time == end_shift:
+                    plan.append({ "y": str(closure), "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                    break
+                # Если время превышает время окончания смены, не прибавлять данный цикл
+                else:
+                    # Пустая точка на конце смены, чтобы график был отрисован до ее конца
+                    plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                    break
+                plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }) 
+    # Если сменных заданий несколько
+    elif len(ShiftTime) > 1:
+        # Записываем начало и конец смены
+        time = ShiftTime[0][1]
+        end_shift = ShiftTime[0][2]
+        # Переменная для подсчета суммы общего времени на производство
+        shift_times = 0
+        for shift_task in ShiftTime:
+            # shift_times += int(shift_task[3])*cycle
+            shift_times += int(shift_task[3])*int(shift_task[5])
             break
-    # Массив и начальное значение
-    plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
-    for product in range(production_plan):
-        # Прибавляем 1 цикл
-        time += timedelta(seconds=100) #CYCLE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Если время превышает время окончания смены, не прибавлять данный цикл
-        if time <= end_shift:
-            plan.append({ "y": str(product), "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+        # Расчитываем оставшееся время на простои
+        if shift_times <= 43200:
+            downtime = 0
         else:
-            break
+            downtime = 43200 - shift_times
+        # Массив и начальное значение
+        plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
+        closure_summ = 0
+        # Перебираем сменное задание
+        for shift_task in ShiftTime:
+            for closure in range(1, shift_task[3]+1):
+                closure_summ += 1
+                time += timedelta(seconds=shift_task[4])
+                if time < end_shift:
+                    plan.append({ "y": closure_summ, "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                elif time == end_shift:
+                    plan.append({ "y": closure_summ, "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                    break
+                else: # Если время превышает время окончания смены, не прибавлять данный цикл
+                    # Пустая точка на конце смены, чтобы график был отрисован до ее конца
+                    plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                    break
+                time += timedelta(seconds=downtime//(len(ShiftTime)-1))
+                plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }) 
     return plan
 
 

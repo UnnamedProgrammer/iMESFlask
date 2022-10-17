@@ -66,6 +66,7 @@ function graph(td, pn) {
                     },
                     options:
                     {
+                        spanGaps: true, // для пустой точки
                         animation: false,
                         hover: {
                             mode: null
