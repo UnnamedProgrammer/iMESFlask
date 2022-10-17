@@ -72,7 +72,6 @@ def ChangeTPA():
 
 @app.route("/getTrend")
 def GetTrend():
-    print(current_tpa)
     ip_addr = request.remote_addr
     # Массив и начальная точка, получаю начало и конец текущей смены
     sql_GetShiftTime = f"""
@@ -126,7 +125,6 @@ def GetTrend():
 
 @app.route("/getPlan")
 def GetPlan():
-    print(current_tpa)
     ip_addr = request.remote_addr
     sql_GetShiftOid = f"""
                             SELECT TOP(1) ShiftTask.Shift
@@ -169,7 +167,6 @@ def GetPlan():
                     # Пустая точка на конце смены, чтобы график был отрисован до ее конца
                     plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
                     break
-                plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }) 
     # Если сменных заданий несколько
     elif len(ShiftTime) > 1:
         # Записываем начало и конец смены
@@ -179,7 +176,7 @@ def GetPlan():
         shift_times = 0
         for shift_task in ShiftTime:
             # shift_times += int(shift_task[3])*cycle
-            shift_times += int(shift_task[3])*int(shift_task[5])
+            shift_times += int(shift_task[3])*int(shift_task[4])
             break
         # Расчитываем оставшееся время на простои
         if shift_times <= 43200:
@@ -193,7 +190,7 @@ def GetPlan():
         for shift_task in ShiftTime:
             for closure in range(1, shift_task[3]+1):
                 closure_summ += 1
-                time += timedelta(seconds=shift_task[4])
+                time += timedelta(seconds=int(shift_task[4]))
                 if time < end_shift:
                     plan.append({ "y": closure_summ, "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
                 elif time == end_shift:
@@ -204,7 +201,6 @@ def GetPlan():
                     plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
                     break
                 time += timedelta(seconds=downtime//(len(ShiftTime)-1))
-                plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }) 
     return json.dumps(plan)
 
 
