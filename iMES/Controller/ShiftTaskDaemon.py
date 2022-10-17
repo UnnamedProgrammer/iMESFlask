@@ -42,7 +42,7 @@ class ShiftTaskDaemon():
                     day = '0' + day
                 date = int(str(year + month + day))
                 hour = now.hour
-                if ((hour >= 1 and hour < 7) or (hour >= 19 and hour <= 23) or (hour >= 0 and hour < 7)):
+                if ((hour >= 0 and hour < 7) or (hour >= 19 and hour <= 23)):
                     self.shift = 1
                 elif hour >= 7 and hour < 19:
                     self.shift = 0
@@ -56,9 +56,8 @@ class ShiftTaskDaemon():
     def CheckShift(self):
         now = datetime.now()
         hour = now.hour
-        if ((hour >= 1 and hour < 7) or 
-            (hour >= 19 and hour <= 23) or 
-            (hour >= 0 and hour < 7)):
+        if ((hour >= 0 and hour < 7) or 
+            (hour >= 19 and hour <= 23)):
             self.shift = 1
         elif hour >= 7 and hour < 19:
             self.shift = 0
@@ -70,7 +69,7 @@ class ShiftTaskDaemon():
                     ,[EndDate]
                     ,[Note]
                 FROM [MES_Iplast].[dbo].[Shift] WHERE 
-                    DATENAME(HOUR, [StartDate]) >= 7 AND 
+                    DATENAME(HOUR, [StartDate]) = 7 AND 
                     DATENAME(YEAR, [StartDate]) = DATENAME(YEAR, GETDATE()) AND
                     DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
@@ -83,7 +82,7 @@ class ShiftTaskDaemon():
                     ,[EndDate]
                     ,[Note]
                 FROM [MES_Iplast].[dbo].[Shift] WHERE 
-                    DATENAME(HOUR, [StartDate]) >= 19 AND 
+                    DATENAME(HOUR, [StartDate]) = 19 AND 
                     DATENAME(YEAR, [StartDate]) = DATENAME(YEAR, GETDATE()) AND
                     DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())

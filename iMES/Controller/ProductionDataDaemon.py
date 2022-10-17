@@ -11,6 +11,7 @@ class ProductionDataDaemon():
         self.shift = 0
         self.tpalist = self.GetAllTpa()
         self.completed_clousers = {}
+        
     def Start(self):
         thread = Thread(target=self.TpaProductionDataMonitoring, args=())
         thread.start()
@@ -31,7 +32,7 @@ class ProductionDataDaemon():
                                              self.tpalist[tpanum][3]['ShiftTask'][11],
                                              self.tpalist[tpanum][3]['ShiftTask'][10],
                                              self.tpalist[tpanum][0])
-            sleep(10)
+            sleep(120)
 
     def GetAllTpa(self):
         TpaList = []
