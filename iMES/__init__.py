@@ -9,6 +9,9 @@ from iMES.Controller.IndexController import IndexController
 import configparser
 import logging
 import os
+from engineio.payload import Payload
+
+Payload.max_decode_packets = 16
 
 if (not os.path.exists('log/')):
     os.mkdir('log/')
