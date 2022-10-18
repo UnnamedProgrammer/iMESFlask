@@ -8,7 +8,6 @@ from iMES import app
 class ShiftTaskDaemon():
     def __init__(self):
         self.tpa_list = []
-        self.shift = 0
         self.insertedToDay = False
 
     def Start(self):
@@ -42,12 +41,8 @@ class ShiftTaskDaemon():
                     day = '0' + day
                 date = int(str(year + month + day))
                 hour = now.hour
-                if ((hour >= 0 and hour < 7) or (hour >= 19 and hour <= 23)):
-                    self.shift = 1
-                elif hour >= 7 and hour < 19:
-                    self.shift = 0
                 if len(tpa_list) > 0:
-                    Loader = ShiftTaskLoader(self.tpa_list, date, self.shift)
+                    Loader = ShiftTaskLoader(self.tpa_list, date, 3)
                     Loader.Get_ShiftTask()
                     Loader.InsertToDataBase()
                 app.logger.info("Новое сменное задание успешно получено")
@@ -56,13 +51,14 @@ class ShiftTaskDaemon():
     def CheckShift(self):
         now = datetime.now()
         hour = now.hour
+        shift = 0
         if ((hour >= 0 and hour < 7) or 
             (hour >= 19 and hour <= 23)):
-            self.shift = 1
+            shift = 1
         elif hour >= 7 and hour < 19:
-            self.shift = 0
+            shift = 0
 
-        if self.shift == 0:
+        if shift == 0:
             shiftsql = """
                 SELECT [Oid]
                     ,[StartDate]
@@ -75,7 +71,7 @@ class ShiftTaskDaemon():
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
                         """
         # Если ночь то ищем ночную дату смены
-        elif self.shift == 1:
+        elif shift == 1:
             shiftsql = """
                 SELECT [Oid]
                     ,[StartDate]

@@ -218,16 +218,6 @@ class ProductionDataDaemon():
             if len(production_data) > 0:
                 production_data = production_data[0]
             else: return
-            if (count >= plan):
-                sql = f"""
-                        UPDATE ProductionData
-                        SET Status = 2
-                        WHERE Oid = '{production_data[0]}'  
-                    """
-                for i in range(0, len(self.tpalist)):
-                    if self.tpalist[i][0] == tpaoid:
-                        self.tpalist[i].pop(3)
-                SQLManipulator.SQLExecute(sql)
             if (production_data[3] == 1):
                 update_sql = ""
                 get_current_shift = """
