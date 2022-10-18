@@ -11,7 +11,7 @@ class ProductionDataDaemon():
         self.shift = 0
         self.tpalist = self.GetAllTpa()
         self.completed_clousers = {}
-        
+
     def Start(self):
         thread = Thread(target=self.TpaProductionDataMonitoring, args=())
         thread.start()
@@ -259,7 +259,7 @@ class ProductionDataDaemon():
                     if current_shift != ShiftOid:
                         update_sql = f"""
                         UPDATE ProductionData
-                        SET CountFact = '{count}'
+                        SET CountFact = {count}
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET CycleFact = '{average_cycle}'
@@ -277,7 +277,7 @@ class ProductionDataDaemon():
                     else:
                         update_sql = f"""
                             UPDATE ProductionData
-                            SET CountFact = '{int(count)}'
+                            SET CountFact = {count}
                             WHERE Oid = '{production_data[0]}'
                             UPDATE ProductionData
                             SET CycleFact = '{average_cycle}'
