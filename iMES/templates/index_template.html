@@ -243,28 +243,6 @@
         );
     }
     
-    /* Атакишиев f-0005d для страницы /tableWeight НАЧАЛО */
-    /* Добавление строк в таблицу */
-    socket.on('table_weight', function(data) {
-        table_column = JSON.parse(data);
-        if (address == Object.values(table_column)[0]) {
-            $(".table_ProductWeight").append('<tr><td>' + table_column['data'][0] + '</td><td>' + table_column['data'][1] + '</td><td>' + table_column['data'][2] + '</td><td>' + table_column['data'][3] + '</td></tr>');
-        }
-    })
-
-    /* Формирование текста для печатной формы */
-    socket.on('print_weight', function(data) {
-        print_info = JSON.parse(data);
-        if (address == Object.values(print_info)[0]) {
-            $(".print_ProductWeight").append(print_info['head_data'][0] + '\n' + print_info['head_data'][1])
-            
-            for (let i = 0; i < Object.keys(print_info['body_data']).length; i++) {
-                $(".print_ProductWeight").append(print_info['body_data'][i][0] + ' ' + print_info['body_data'][i][1])
-            }
-        }
-    })
-
-    /* Атакишиев f-0005d для страницы /tableWeight КОНЕЦ */
     socket.on('AnswerAfterConnection', function (data) {
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0]) {
