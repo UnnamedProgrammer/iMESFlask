@@ -1,12 +1,9 @@
 $(document).ready(function(){
-    $('#weightEntering').click(function(){
-        entered_weight = document.getElementById('inputWeight').textContent;
-
+    $('[data-selectproduct]').click(function(){
+        entered_weight = document.getElementById('productWeightData').textContent;
+        production_data = $(this).attr('data-productiondata');
+        
         var socket = io();
-        socket.emit('product_weight_entering', entered_weight);
-    })
-    $('#printWeight').click(function(){
-        var socket = io();
-        socket.emit('product_weight_printing');
+        socket.emit('product_weight_entering', [entered_weight, production_data]);
     })
 })

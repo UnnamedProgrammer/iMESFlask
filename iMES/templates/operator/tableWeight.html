@@ -18,13 +18,20 @@
                 </tr>
             </thead>
             <tbody>
-                {% for tableWeight_row in table_info %}
+                {% for tableWeight_row in somedata[0] %}
                     <tr>
-                        {% for tableWeight_column in tableWeight_row.values() %}
-                            <td>
-                                {{ tableWeight_column }}
-                            </td>
-                        {% endfor %}
+                        <td>
+                            {{ tableWeight_row[0] }}
+                        </td>
+                        <td>
+                            {{ tableWeight_row[1] }}
+                        </td>
+                        <td>
+                            {{ tableWeight_row[2] }}
+                        </td>
+                        <td>
+                            {{ tableWeight_row[3] }}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -104,24 +111,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td value=''>Продукт 1</td>
-                                <td class="nopadding table__button col-3">
-                                    <button type="button" class="btn__table green" data-selectproduct="Продукт 1" onClick="selectCurrentProduct(event)">Выбрать</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td value=''>Продукт 2</td>
-                                <td class="nopadding table__button col-3">
-                                    <button type="button" class="btn__table green" data-selectproduct="Продукт 2" onClick="selectCurrentProduct(event)">Выбрать</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td value=''>Продукт 3</td>
-                                <td class="nopadding table__button col-3">
-                                    <button type="button" class="btn__table green" data-selectproduct="Продукт 3" onClick="selectCurrentProduct(event)">Выбрать</button>
-                                </td>
-                            </tr>
+                            {% for i in range(somedata[2]|length) %}
+                                <tr>
+                                    <td value=''>{{ somedata[2][i][0] }}</td>
+                                    <td class="nopadding table__button col-3">
+                                        <button type="button" class="btn__table green" data-productiondata="{{ somedata[2][i][1] }}" data-selectproduct="{{ somedata[2][i][0] }}" onClick="selectCurrentProduct(event)">Выбрать</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
