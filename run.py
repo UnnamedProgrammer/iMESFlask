@@ -9,7 +9,8 @@ def Dependency_check():
                    'flask_login',
                    'pyodbc',
                    'progress',
-                   'flask_socketio']
+                   'flask_socketio',
+                   'simple-websocket']
     not_install = []
     for dependency in dependences:
         try:
@@ -29,6 +30,7 @@ def Dependency_check():
 while True:
     try:
         from iMES import app, socketio, host, port
+        import simple_websocket
         break
     except ModuleNotFoundError:
         Dependency_check()
@@ -39,4 +41,4 @@ if __name__ == "__main__":
     ShiftTaskMonitoring.Start()             
     ProductDataMonitoring = ProductionDataDaemon()
     ProductDataMonitoring.Start()
-    socketio.run(app, host=host, port=port, debug=True)
+    socketio.run(app, host=host, port=port, debug=True, use_reloader=False)
