@@ -20,6 +20,8 @@ class IndexController():
     controller: str = ''
     tpa_is_works: bool = False
     PackingURL: str = ''
+    StartDate: datetime = None
+    EndDate: datetime = None
 
     def data_from_shifttask(self):
         sql = f"""
@@ -88,11 +90,15 @@ class IndexController():
                     [CountFact]
                     ,[CycleFact]
                     ,[WeightFact]
+                    ,[StartDate]
+                    ,[EndDate]
                 FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{self.shift_task_oid}'
             """
             production_data = SQLManipulator.SQLExecute(production_data_sql)
             if len(production_data) > 0:
                 production_data = production_data[0]
+                self.StartDate = production_data[3]
+                self.EndDate = production_data[4]
                 if production_data[0] == None:               
                     self.product_fact = 0
                 else:
