@@ -1,5 +1,7 @@
 {% extends 'index_template.html' %}
 {% block main_window %}
+{% set predefined_waste = somedata[0] %}
+{% set all_wastes = somedata[1] %}
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
@@ -13,10 +15,10 @@
                 </tr>
             </thead>
             <tbody>
-                {% for i in range(somedata[0]|length) %}
+                {% for i in range(predefined_waste|length) %}
                 <tr>
-                    <td>{{ somedata[0][i][1] }}</td>
-                    <td>{{ somedata[0][i][2] }}</td>
+                    <td>{{ predefined_waste[i][1] }}</td>
+                    <td>{{ predefined_waste[i][2] }}</td>
                     <td id="wasteCount_Data"  data-oid='{{ "Oid-" + (i + 1)|string }}' data-weight=""></td>
                     <td class="nopadding col-2 table__button">
                         <button type="button" class="btn__table" id="addWasteWeight" onClick="numberModalControl(event)">Ввод</button>
@@ -55,9 +57,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for i in range(somedata[1]|length) %}
+                            {% for i in range(all_wastes|length) %}
                                 <tr>
-                                    <td value='{{ i + 1 }}'> {{ i + 1 }} {{ somedata[1][i][1] }}</td>
+                                    <td value='{{ i + 1 }}'> {{ i + 1 }} {{ all_wastes[i][1] }}</td>
                                     <td class="nopadding table__button col-3">
                                         <button type="button" class="btn__table green">Выбрать</button>
                                     </td>
