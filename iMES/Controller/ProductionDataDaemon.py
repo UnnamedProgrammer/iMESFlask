@@ -73,6 +73,7 @@ class ProductionDataDaemon():
             [ShiftTask].Equipment = '{tpaoid}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
             ShiftTask.Product = Product.Oid
+            ORDER BY ProductCount ASC
         """
         sql_product = f"""
             SELECT TOP (1000) [Oid]

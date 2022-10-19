@@ -72,6 +72,8 @@ class ShiftTaskDaemon():
                         """
         # Если ночь то ищем ночную дату смены
         elif shift == 1:
+            if hour >= 0 and hour < 7:
+                return True
             shiftsql = """
                 SELECT [Oid]
                     ,[StartDate]
