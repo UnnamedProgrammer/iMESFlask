@@ -72,7 +72,8 @@ class ProductionDataDaemon():
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{tpaoid}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
-            ShiftTask.Product = Product.Oid
+            ShiftTask.Product = Product.Oid AND
+			ShiftTask.Shift = Shift.Oid
             ORDER BY ProductCount ASC
         """
         sql_product = f"""
@@ -183,7 +184,8 @@ class ProductionDataDaemon():
                                 ShiftTask.Oid = '{ShiftTaskOid}') AND
             ShiftTask.Oid = '{ShiftTaskOid}' AND
             Shift.Oid = ShiftTask.Shift AND
-            Date between Shift.StartDate AND Shift.EndDate
+            Date between Shift.StartDate AND Shift.EndDate AND
+            Status = 1
             ORDER BY Date ASC OFFSET {offset} ROWS   
         """
         result = SQLManipulator.SQLExecute(sql)
@@ -192,9 +194,15 @@ class ProductionDataDaemon():
                 if tpa['Oid'] == tpaoid:
                     tpa['WorkStatus'] = self.Get_Tpa_Status(ShiftTaskOid)
         if len(result) > 0:
-            count = (len(result)/2) * socketcount
+            count = (len(result)) * socketcount
             startdate = result[0][3].strftime('%Y-%m-%dT%H:%M:%S')
-            enddate = result[len(result)-1][3].strftime('%Y-%m-%dT%H:%M:%S')
+            try:
+                enddate = result[(offset+plan)-1][3].strftime('%Y-%m-%dT%H:%M:%S')
+            except:
+                try:
+                    enddate = result[plan-1][3].strftime('%Y-%m-%dT%H:%M:%S')
+                except:
+                    enddate =result[len(result)-1][3].strftime('%Y-%m-%dT%H:%M:%S')
             average_cycle = 0
             for num in range(0,len(result)):
                 try:
@@ -234,7 +242,7 @@ class ProductionDataDaemon():
                         SET CountFact = '{plan}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
-                        SET CycleFact = '{average_cycle}'
+                        SET CycleFact = '{average_cycle/2}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET SpecificationFact = '{specification}'
@@ -253,7 +261,7 @@ class ProductionDataDaemon():
                         SET CountFact = {count}
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
-                        SET CycleFact = '{average_cycle}'
+                        SET CycleFact = '{average_cycle/2}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET SpecificationFact = '{specification}'
@@ -271,7 +279,7 @@ class ProductionDataDaemon():
                             SET CountFact = {count}
                             WHERE Oid = '{production_data[0]}'
                             UPDATE ProductionData
-                            SET CycleFact = '{average_cycle}'
+                            SET CycleFact = '{average_cycle/2}'
                             WHERE Oid = '{production_data[0]}'
                             UPDATE ProductionData
                             SET SpecificationFact = '{specification}'
