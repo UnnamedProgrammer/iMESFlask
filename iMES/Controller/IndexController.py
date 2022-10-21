@@ -20,10 +20,12 @@ class IndexController():
     controller: str = ''
     tpa_is_works: bool = False
     PackingURL: str = ''
+    StartDate: datetime = None
+    EndDate: datetime = None
 
     def data_from_shifttask(self):
         sql = f"""
-            SELECT TOP (100) [ShiftTask].[Oid]
+            SELECT [ShiftTask].[Oid]
                 ,[Shift].Note
                 ,[Equipment]
                 ,[Ordinal]
@@ -42,7 +44,8 @@ class IndexController():
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{self.tpa}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
-            ShiftTask.Product = Product.Oid
+            ShiftTask.Product = Product.Oid AND EXISTS
+            (SELECT * FROM ProductionData WHERE ProductionData.ShiftTask = ShiftTask.Oid AND Status = 1)
         """
         data = SQLManipulator.SQLExecute(sql)
         pf = ''
@@ -52,7 +55,7 @@ class IndexController():
             self.product = data[4]
             self.production_plan = data[11]
             self.cycle = data[12]
-            self.plan_weight = data[13].normalize()
+            self.plan_weight = round(data[13])
             self.shift = data[1]
             self.PackingURL = data[15]
             sql = f"""
@@ -69,7 +72,7 @@ class IndexController():
             pf = SQLManipulator.SQLExecute(sql)
         else:
             self.shift_task_oid = ''
-            self.product = ''
+            self.product = 'Нет сменного задания'
             self.production_plan = 0
             self.cycle = 0
             self.plan_weight = 0
@@ -80,18 +83,22 @@ class IndexController():
         if len(pf) > 0:
             self.pressform = pf[0][0]
         else:
-            self.pressform = ''
+            self.pressform = 'Не определена'
         if self.shift_task_oid != None and self.shift_task_oid != '':
             production_data_sql = f"""
                 SELECT
                     [CountFact]
                     ,[CycleFact]
                     ,[WeightFact]
+                    ,[StartDate]
+                    ,[EndDate]
                 FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{self.shift_task_oid}'
             """
             production_data = SQLManipulator.SQLExecute(production_data_sql)
             if len(production_data) > 0:
                 production_data = production_data[0]
+                self.StartDate = production_data[3]
+                self.EndDate = production_data[4]
                 if production_data[0] == None:               
                     self.product_fact = 0
                 else:

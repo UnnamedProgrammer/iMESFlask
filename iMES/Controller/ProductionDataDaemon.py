@@ -11,7 +11,7 @@ class ProductionDataDaemon():
         self.shift = 0
         self.tpalist = self.GetAllTpa()
         self.completed_clousers = {}
-        
+
     def Start(self):
         thread = Thread(target=self.TpaProductionDataMonitoring, args=())
         thread.start()
@@ -72,7 +72,9 @@ class ProductionDataDaemon():
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{tpaoid}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
-            ShiftTask.Product = Product.Oid
+            ShiftTask.Product = Product.Oid AND
+			ShiftTask.Shift = Shift.Oid
+            ORDER BY ProductCount ASC
         """
         sql_product = f"""
             SELECT TOP (1000) [Oid]
@@ -182,7 +184,8 @@ class ProductionDataDaemon():
                                 ShiftTask.Oid = '{ShiftTaskOid}') AND
             ShiftTask.Oid = '{ShiftTaskOid}' AND
             Shift.Oid = ShiftTask.Shift AND
-            Date between Shift.StartDate AND Shift.EndDate
+            Date between Shift.StartDate AND Shift.EndDate AND
+            Status = 1
             ORDER BY Date ASC OFFSET {offset} ROWS   
         """
         result = SQLManipulator.SQLExecute(sql)
@@ -191,9 +194,15 @@ class ProductionDataDaemon():
                 if tpa['Oid'] == tpaoid:
                     tpa['WorkStatus'] = self.Get_Tpa_Status(ShiftTaskOid)
         if len(result) > 0:
-            count = (len(result)/2) * socketcount
+            count = (len(result)) * socketcount
             startdate = result[0][3].strftime('%Y-%m-%dT%H:%M:%S')
-            enddate = result[len(result)-1][3].strftime('%Y-%m-%dT%H:%M:%S')
+            try:
+                enddate = result[(offset+plan)-1][3].strftime('%Y-%m-%dT%H:%M:%S')
+            except:
+                try:
+                    enddate = result[plan-1][3].strftime('%Y-%m-%dT%H:%M:%S')
+                except:
+                    enddate =result[len(result)-1][3].strftime('%Y-%m-%dT%H:%M:%S')
             average_cycle = 0
             for num in range(0,len(result)):
                 try:
@@ -218,16 +227,6 @@ class ProductionDataDaemon():
             if len(production_data) > 0:
                 production_data = production_data[0]
             else: return
-            if (count >= plan):
-                sql = f"""
-                        UPDATE ProductionData
-                        SET Status = 2
-                        WHERE Oid = '{production_data[0]}'  
-                    """
-                for i in range(0, len(self.tpalist)):
-                    if self.tpalist[i][0] == tpaoid:
-                        self.tpalist[i].pop(3)
-                SQLManipulator.SQLExecute(sql)
             if (production_data[3] == 1):
                 update_sql = ""
                 get_current_shift = """
@@ -243,7 +242,7 @@ class ProductionDataDaemon():
                         SET CountFact = '{plan}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
-                        SET CycleFact = '{average_cycle}'
+                        SET CycleFact = '{average_cycle/2}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET SpecificationFact = '{specification}'
@@ -259,10 +258,10 @@ class ProductionDataDaemon():
                     if current_shift != ShiftOid:
                         update_sql = f"""
                         UPDATE ProductionData
-                        SET CountFact = '{count}'
+                        SET CountFact = {count}
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
-                        SET CycleFact = '{average_cycle}'
+                        SET CycleFact = '{average_cycle/2}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET SpecificationFact = '{specification}'
@@ -277,10 +276,10 @@ class ProductionDataDaemon():
                     else:
                         update_sql = f"""
                             UPDATE ProductionData
-                            SET CountFact = '{int(count)}'
+                            SET CountFact = {count}
                             WHERE Oid = '{production_data[0]}'
                             UPDATE ProductionData
-                            SET CycleFact = '{average_cycle}'
+                            SET CycleFact = '{average_cycle/2}'
                             WHERE Oid = '{production_data[0]}'
                             UPDATE ProductionData
                             SET SpecificationFact = '{specification}'
