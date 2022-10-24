@@ -35,7 +35,7 @@ def tableWeight():
     if product_weight:
         table_info = list()
         for product_weight_quantity in range(len(product_weight)):
-            table_info.append([product_weight[product_weight_quantity][0], str(product_weight[product_weight_quantity][1]), str(product_weight[product_weight_quantity][2].strftime('%d.%m.%Y %H:%M:%S')), current_user.name])
+            table_info.append([product_weight[product_weight_quantity][0], f'{product_weight[product_weight_quantity][1]:.3f}', str(product_weight[product_weight_quantity][2].strftime('%d.%m.%Y %H:%M:%S')), current_user.name])
     # Если за смену вес никто не вводил, то формируем пустой массив
     else:
         table_info = list()
