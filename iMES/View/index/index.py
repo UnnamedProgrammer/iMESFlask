@@ -544,3 +544,22 @@ def UpdateMainWindowData(data):
             MWData, ensure_ascii=False, indent=4))
     except:
         pass
+
+@socketio.on(message="GetExecutePlan")
+def GetExecutePlan(data):
+    ip_addr = request.remote_addr
+    get_last_closure_sql = f"""
+        SELECT TOP (1)
+             [StartDate]
+            ,[CountFact]
+            ,[CycleFact]
+            ,[EndDate]
+        FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{current_tpa[ip_addr][2].shift_task_oid}'
+    """
+    get_last_closure = SQLManipulator.SQLExecute(get_last_closure_sql)
+    remaining_quantity = current_tpa[ip_addr][2].production_plan - get_last_closure[0][1]    
+    production_time = (get_last_closure[0][2] / 60)
+    minutes_to_plan_end = remaining_quantity * production_time
+    old_diff_time = datetime.now() - get_last_closure[0][3]
+    end_date =(datetime.now() + timedelta(minutes=float(minutes_to_plan_end))) - old_diff_time
+    socketio.emit("GetExecutePlan",data = json.dumps({ip_addr:str(end_date)}),ensure_ascii=False, indent=4)

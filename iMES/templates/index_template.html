@@ -156,7 +156,7 @@
                     <div class="card height-bottom shadow width-bottom">
                         <div class="card-header text-center nopadding primary">ВЫПОЛНЕНИЕ ПЛАНА ЧЕРЕЗ:</div>
                         <div class="card-body nopadding">
-                            <p class="card-text text-center display-5">03:42:56</p>
+                            <p class="card-text text-center display-5" id="time_to_end"></p>
                         </div>
                     </div>
                 </div>
@@ -193,6 +193,7 @@
 <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 <script src="{{url_for('static', filename='/js/main.js')}}"></script>
 <script>
+    let end_date = NaN
     address = "{{request.remote_addr}}"
     devicetype = "Терминал"
     var socket = io();
@@ -201,6 +202,7 @@
     });
     socket.emit('getTpaList', { ipaddress: address });
     socket.emit('GetDeviceType', '');
+    socket.emit('GetExecutePlan','')
     socket.on('Auth',function(data) {
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0]) {
@@ -218,6 +220,7 @@
         let yy = date.getFullYear();
         return dd + '.' + mm + '.' + yy;
     }
+    
     function getCurrentTimeString() {
         "{% if current_user.is_authenticated == True %}"
         if (timecounter <= 120 && devicetype != 'Веб'){
@@ -235,14 +238,18 @@
         return formatDate(new Date()) + " " + new Date().toTimeString().replace(/ .*/, '');
     }
 
-    window.onload = function () {
+    async function UpdateTimer() {
         let timeNode = document.getElementById('clock');
         setInterval(
-            () => timeNode.innerHTML = getCurrentTimeString(),
+            () => {
+                UpdateTimeToEnd(end_date)
+                timeNode.innerHTML = getCurrentTimeString()
+            },
             1000
         );
     }
-    
+    UpdateTimer()
+
     socket.on('AnswerAfterConnection', function (data) {
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0]) {
@@ -296,6 +303,41 @@
             defective.textContent = arr[address]['Defective']
         }
     })
+
+    socket.on('GetExecutePlan',function(data)
+    {
+        arr = JSON.parse(data)
+        console.log(arr)
+        if (address == Object.keys(arr))
+        {
+            //let time_to_end = document.getElementById('time_to_end')
+            end_date = new Date(arr[address])  
+            console.log(end_date)            
+        }
+    })
+    function getTimeRemaining(endtime){
+        const t = endtime - new Date()
+        let obj = {
+            // days: t / (1000 * 60 * 60 * 24) | 0
+            hours: t / (1000 * 60 * 60) % 24 | 0,
+            minutes: t / 1000 / 60 % 60 | 0,
+            seconds: t / 1000 % 60 | 0
+        }
+
+        for (let key in obj)
+            obj[key] = ('0' + obj[key]).slice(-2)
+        
+        return obj
+    }
+    function UpdateTimeToEnd(dayEnd){
+        if (dayEnd == NaN)
+        {
+            return
+        }
+        let result = getTimeRemaining(dayEnd)
+        let formated = Object.values(result).join(':')
+        time_to_end.textContent = formated
+    }
 
     async function UpdateMainWindowData(){
         while(true)
