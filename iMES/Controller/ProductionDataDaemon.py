@@ -101,7 +101,8 @@ class ProductionDataDaemon():
                         new_shift_task = shifttask
                         continue
                     else:
-                        pass_clousers += complete_product[6]
+                        if complete_product[6] != None:
+                            pass_clousers += complete_product[6]
                         ended_shifttasks.append(shifttask[0])
                         new_shift_task = ''
                         continue
@@ -203,10 +204,30 @@ class ProductionDataDaemon():
                     enddate = result[plan-1][3].strftime('%Y-%m-%dT%H:%M:%S')
                 except:
                     enddate =result[len(result)-1][3].strftime('%Y-%m-%dT%H:%M:%S')
+            sql_get_average_cycle = f"""
+                            SELECT RCD.[Oid]
+                                ,[Controller]
+                                ,[Label]
+                                ,[Date]
+                                ,RCD.[Cycle]
+                                ,[Status]
+                                ,Shift.Note
+                            FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
+                            WHERE 
+                            Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
+                                                FROM RFIDEquipmentBinding, ShiftTask
+                                                WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
+                                                ShiftTask.Oid = '{ShiftTaskOid}') AND
+                            ShiftTask.Oid = '{ShiftTaskOid}' AND
+                            Shift.Oid = ShiftTask.Shift AND
+                            Date between Shift.StartDate AND Shift.EndDate
+                            ORDER BY Date ASC OFFSET {offset} ROWS   
+            """
+            cycle_request = SQLManipulator.SQLExecute(sql_get_average_cycle)
             average_cycle = 0
-            for num in range(0,len(result)):
+            for num in range(0,len(cycle_request)):
                 try:
-                    average_cycle += result[num][4] + result[num+1][4]
+                    average_cycle += cycle_request[num][4] + cycle_request[num+1][4]
                 except:
                     average_cycle = average_cycle / num
 
@@ -242,7 +263,7 @@ class ProductionDataDaemon():
                         SET CountFact = '{plan}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
-                        SET CycleFact = '{average_cycle/2}'
+                        SET CycleFact = '{average_cycle}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET SpecificationFact = '{specification}'
@@ -261,7 +282,7 @@ class ProductionDataDaemon():
                         SET CountFact = {count}
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
-                        SET CycleFact = '{average_cycle/2}'
+                        SET CycleFact = '{average_cycle}'
                         WHERE Oid = '{production_data[0]}'
                         UPDATE ProductionData
                         SET SpecificationFact = '{specification}'
@@ -279,7 +300,7 @@ class ProductionDataDaemon():
                             SET CountFact = {count}
                             WHERE Oid = '{production_data[0]}'
                             UPDATE ProductionData
-                            SET CycleFact = '{average_cycle/2}'
+                            SET CycleFact = '{average_cycle}'
                             WHERE Oid = '{production_data[0]}'
                             UPDATE ProductionData
                             SET SpecificationFact = '{specification}'

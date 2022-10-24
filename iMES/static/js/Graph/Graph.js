@@ -92,8 +92,9 @@ function graph(td, pn) {
                                 ticks: {
                                     beginAtZero: true,
                                     min: 0,
-                                    max: maxscale,
-                                    stepSize: Math.round(stepsize)
+                                    max: plan.length + 1,
+                                    stepSize: ((plan.length + 1) / 12),
+                                    callback: function(value){return Math.floor(value)}
                                 }
                             }
                         },

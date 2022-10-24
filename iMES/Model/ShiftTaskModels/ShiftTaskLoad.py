@@ -154,65 +154,72 @@ class ShiftTaskLoader():
                 SELECT [Oid]
                 FROM [MES_Iplast].[dbo].[Product] WHERE Code = '{ShiftTask.ProductCode}'
             """
-            product = SQLManipulator.SQLExecute(productsql)
-            if (len(product) > 0):
-                app.logger.info(
-                    f"        Продукт {ShiftTask.ProductCode} найден")
-                app.logger.info(
-                    f"        Проверка спецификации {ShiftTask.Specification}")
-                get_spec_sql = f"""
-                        SELECT [Oid]
-                        FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{ShiftTask.Specification}'
-                      """
-                specification = SQLManipulator.SQLExecute(get_spec_sql)
-                if len(specification) > 0:
+            while True:
+                product = SQLManipulator.SQLExecute(productsql)
+                if (len(product) > 0):
                     app.logger.info(
-                        f"        Спецификация {ShiftTask.Specification} найдена")
+                        f"        Продукт {ShiftTask.ProductCode} найден")
                     app.logger.info(
-                        f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
-                    return True
-                else:
-                    ['SpecCode']
-                    app.logger.warning(
-                        f"Внимание: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
-                    app.logger.info(f"  Поиск спецификации {ShiftTask.Specification} в массиве 1С")
-                    for specification_1C in self.data['Spec']:
-                        spec1C_code = specification_1C['SpecCode']
-                        if len(spec1C_code) < 11:
-                            while len(spec1C_code) != 11:
-                                spec1C_code = '0' + spec1C_code
-                        if spec1C_code == ShiftTask.Specification:
-                            app.logger.info(f"  Спецификация {ShiftTask.Specification} найдена")
-                            isActive = 0
-                            if specification_1C['IsActive'] == "Да":
-                                isActive = 1
-                            insert_specsql = f"""                            
-                                INSERT INTO ProductSpecification 
-                                    (Oid, Code, [Name], Product, UseFactor,IsActive) 
-                                VALUES (NEWID(),'{spec1C_code}','{specification_1C['Spec']}',
-                                    '{product[0][0]}',{float(specification_1C['UseFactor'])},
-                                    {isActive})              
-                                """
-                            app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
-                            SQLManipulator.SQLExecute(insert_specsql)
-                            break
-                    app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
+                        f"        Проверка спецификации {ShiftTask.Specification}")
+                    get_spec_sql = f"""
+                            SELECT [Oid]
+                            FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{ShiftTask.Specification}'
+                        """
                     specification = SQLManipulator.SQLExecute(get_spec_sql)
                     if len(specification) > 0:
                         app.logger.info(
                             f"        Спецификация {ShiftTask.Specification} найдена")
                         app.logger.info(
                             f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
-                        app.logger.info(f"\r\n")
                         return True
                     else:
                         app.logger.warning(
-                            f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
-                        return False
-            else:
-                app.logger.warning(
-                    f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
-                return False
+                            f"Внимание: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
+                        app.logger.info(f"  Поиск спецификации {ShiftTask.Specification} в массиве 1С")
+                        for specification_1C in self.data['Spec']:
+                            spec1C_code = specification_1C['SpecCode']
+                            if len(spec1C_code) < 11:
+                                while len(spec1C_code) != 11:
+                                    spec1C_code = '0' + spec1C_code
+                            if spec1C_code == ShiftTask.Specification:
+                                app.logger.info(f"  Спецификация {ShiftTask.Specification} найдена")
+                                isActive = 0
+                                if specification_1C['IsActive'] == "Да":
+                                    isActive = 1
+                                insert_specsql = f"""                            
+                                    INSERT INTO ProductSpecification 
+                                        (Oid, Code, [Name], Product, UseFactor,IsActive) 
+                                    VALUES (NEWID(),'{spec1C_code}','{specification_1C['Spec']}',
+                                        '{product[0][0]}',{float(specification_1C['UseFactor'])},
+                                        {isActive})              
+                                    """
+                                app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
+                                SQLManipulator.SQLExecute(insert_specsql)
+                                break
+                        app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
+                        specification = SQLManipulator.SQLExecute(get_spec_sql)
+                        if len(specification) > 0:
+                            app.logger.info(
+                                f"        Спецификация {ShiftTask.Specification} найдена")
+                            app.logger.info(
+                                f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
+                            app.logger.info(f"\r\n")
+                            return True
+                        else:
+                            app.logger.warning(
+                                f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
+                            return False
+                else:
+                    app.logger.warning(
+                        f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
+                    app.logger.info(
+                        f"Сменное задание № {ShiftTask.Ordinal} - вставка нового продукта {ShiftTask.ProductCode} в базу данных")
+                    SQLManipulator.SQLExecute(f"""
+                        INSERT INTO Product (Oid, Code, Name, Article) VALUES (NEWID(),'{ShiftTask.ProductCode}','{ShiftTask.Product}','{ShiftTask.Article}')                   
+                    """)
+                    app.logger.info(
+                        f"Сменное задание № {ShiftTask.Ordinal} - Новый продукт {ShiftTask.ProductCode} добавлен в базу данных")
+                    continue
         else:
             app.logger.warning(
                 f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
@@ -335,7 +342,9 @@ class ShiftTaskLoader():
                                            task['ProductWeight'],
                                            task['nomencURL'],
                                            task['normUpacURL'],
-                                           task['ShiftTask']
+                                           task['ShiftTask'],
+                                           task['Product'],
+                                           task['Articul']
                                            )
                 if (self.CheckingRequiredValuesInTheDataBase(ShiftTask)):
                     self.shift_task_list.append(ShiftTask)
