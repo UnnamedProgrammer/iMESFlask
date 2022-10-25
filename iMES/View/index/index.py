@@ -86,7 +86,8 @@ def GetTrend():
     ShiftTime = SQLManipulator.SQLExecute(sql_GetShiftTime)
     for shift_task in ShiftTime:
         # Начальная точка назначается из БД (StartDate)
-        trend = [{ "y": "0", "x": (shift_task[1].strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3] }]
+        trend = [
+            {"y": "0", "x": (shift_task[1].strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3]}]
         break
     # Подсчет выпущенных изделий (СОМНИТЕЛЬНО)
     y = 0
@@ -153,20 +154,23 @@ def GetPlan():
         time = ShiftTime[0][1]
         end_shift = ShiftTime[0][2]
         # Массив и начальное значение
-        plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
+        plan = [{"y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}]
         for closure in range(ShiftTime[0][3]):
-                time += timedelta(seconds=int(ShiftTime[0][4]))
-                if time < end_shift:
-                    plan.append({ "y": str(closure), "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
-                # Если время равно времени окончания смены, прибавить цикл и выйти из for
-                elif time == end_shift:
-                    plan.append({ "y": str(closure), "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
-                    break
-                # Если время превышает время окончания смены, не прибавлять данный цикл
-                else:
-                    # Пустая точка на конце смены, чтобы график был отрисован до ее конца
-                    plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
-                    break
+            time += timedelta(seconds=int(ShiftTime[0][4]))
+            if time < end_shift:
+                plan.append({"y": str(closure), "x": time.strftime(
+                    "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+            # Если время равно времени окончания смены, прибавить цикл и выйти из for
+            elif time == end_shift:
+                plan.append({"y": str(closure), "x": time.strftime(
+                    "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+                break
+            # Если время превышает время окончания смены, не прибавлять данный цикл
+            else:
+                # Пустая точка на конце смены, чтобы график был отрисован до ее конца
+                plan.append({"y": None, "x": end_shift.strftime(
+                    "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+                break
     # Если сменных заданий несколько
     elif len(ShiftTime) > 1:
         # Записываем начало и конец смены
@@ -184,7 +188,7 @@ def GetPlan():
         else:
             downtime = 43200 - shift_times
         # Массив и начальное значение
-        plan = [{ "y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] }]
+        plan = [{"y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}]
         closure_summ = 0
         # Перебираем сменное задание
         for shift_task in ShiftTime:
@@ -192,13 +196,16 @@ def GetPlan():
                 closure_summ += 1
                 time += timedelta(seconds=int(shift_task[4]))
                 if time < end_shift:
-                    plan.append({ "y": closure_summ, "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                    plan.append({"y": closure_summ, "x": time.strftime(
+                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                 elif time == end_shift:
-                    plan.append({ "y": closure_summ, "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                    plan.append({"y": closure_summ, "x": time.strftime(
+                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                     break
-                else: # Если время превышает время окончания смены, не прибавлять данный цикл
+                else:  # Если время превышает время окончания смены, не прибавлять данный цикл
                     # Пустая точка на конце смены, чтобы график был отрисован до ее конца
-                    plan.append({ "y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] })
+                    plan.append({"y": None, "x": end_shift.strftime(
+                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                     break
                 time += timedelta(seconds=downtime//(len(ShiftTime)-1))
     return json.dumps(plan)
@@ -523,24 +530,51 @@ def socket_connected(data):
     socketio.emit("DeviceType", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
 
+
 @socketio.on(message="NeedUpdateMainWindowData")
 def UpdateMainWindowData(data):
     ip_addr = request.remote_addr
     try:
         current_tpa[ip_addr][2].data_from_shifttask()
         MWData = {
-                    ip_addr:{"PF":str(current_tpa[ip_addr][2].pressform),
-                            "Product":str(current_tpa[ip_addr][2].product),
-                            "Plan":str(current_tpa[ip_addr][2].production_plan),
-                            "Fact":str(current_tpa[ip_addr][2].product_fact),
-                            "PlanCycle":str(current_tpa[ip_addr][2].cycle),
-                            "FactCycle":str(current_tpa[ip_addr][2].cycle_fact),
-                            "PlanWeight":str(current_tpa[ip_addr][2].plan_weight),
-                            "AverageWeight":str(current_tpa[ip_addr][2].average_weight),
-                            "Shift":str(current_tpa[ip_addr][2].shift),
-                            "Defective": 0}
-                }
-        socketio.emit("GetMainWindowData", data = json.dumps(
+            ip_addr: {"PF": str(current_tpa[ip_addr][2].pressform),
+                      "Product": str(current_tpa[ip_addr][2].product),
+                      "Plan": str(current_tpa[ip_addr][2].production_plan),
+                      "Fact": str(current_tpa[ip_addr][2].product_fact),
+                      "PlanCycle": str(current_tpa[ip_addr][2].cycle),
+                      "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
+                      "PlanWeight": str(current_tpa[ip_addr][2].plan_weight),
+                      "AverageWeight": str(current_tpa[ip_addr][2].average_weight),
+                      "Shift": str(current_tpa[ip_addr][2].shift),
+                      "Defective": 0}
+        }
+        socketio.emit("GetMainWindowData", data=json.dumps(
             MWData, ensure_ascii=False, indent=4))
+    except:
+        pass
+
+
+@socketio.on(message="GetExecutePlan")
+def GetExecutePlan(data):
+    try:
+        ip_addr = request.remote_addr
+        get_last_closure_sql = f"""
+            SELECT TOP (1)
+                [StartDate]
+                ,[CountFact]
+                ,[CycleFact]
+                ,[EndDate]
+            FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{current_tpa[ip_addr][2].shift_task_oid}'
+        """
+        get_last_closure = SQLManipulator.SQLExecute(get_last_closure_sql)
+        remaining_quantity = current_tpa[ip_addr][2].production_plan - \
+            get_last_closure[0][1]
+        production_time = (get_last_closure[0][2] / 60)
+        minutes_to_plan_end = remaining_quantity * production_time
+        old_diff_time = datetime.now() - get_last_closure[0][3]
+        end_date = (
+            datetime.now() + timedelta(minutes=float(minutes_to_plan_end))) - old_diff_time
+        socketio.emit("GetExecutePlan", data=json.dumps(
+            {ip_addr: str(end_date)}), ensure_ascii=False, indent=4)
     except:
         pass

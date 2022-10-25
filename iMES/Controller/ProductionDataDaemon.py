@@ -352,8 +352,8 @@ class ProductionDataDaemon():
             last_closure_date = last_closure_date[0][0]
             current_date = datetime.now()
             last_closure_date = last_closure_date
-            minutes = (current_date - last_closure_date).total_seconds()
-            if minutes >= 600:
+            seconds = (current_date - last_closure_date).total_seconds()
+            if seconds >= 600:
                 return False
             else:
                 return True

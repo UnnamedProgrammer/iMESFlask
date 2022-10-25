@@ -94,7 +94,7 @@ function graph(td, pn) {
                                     min: 0,
                                     max: plan.length + 1,
                                     stepSize: ((plan.length + 1) / 12),
-                                    callback: function(value){return Math.floor(value)}
+                                    callback: function (value) { return Math.floor(value) }
                                 }
                             }
                         },
@@ -145,12 +145,10 @@ function RequestTrendPlan() {
 
 async function UpDateGraph() {
     let chr = 'undefinded'
-    while(true)
-    {
+    while (true) {
         RequestTrendPlan()
         await sleep(1000)
-        if (trend != '' && plan != '')
-        {
+        if (trend != '' && plan != '') {
             chr = graph(trend, plan)
             break;
         }
@@ -162,8 +160,7 @@ async function UpDateGraph() {
         RequestTrendPlan()
         await sleep(1000)
         if (trend != '' && plan != '') {
-            if(typeof chr !== 'undefined')
-            {
+            if (typeof chr !== 'undefined') {
                 chr.destroy()
             }
             chr = graph(trend, plan)
