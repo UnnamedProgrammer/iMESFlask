@@ -220,7 +220,7 @@
         let yy = date.getFullYear();
         return dd + '.' + mm + '.' + yy;
     }
-    
+
     function getCurrentTimeString() {
         "{% if current_user.is_authenticated == True %}"
         if (timecounter <= 120 && devicetype != 'Веб'){
@@ -315,6 +315,7 @@
             console.log(end_date)            
         }
     })
+
     function getTimeRemaining(endtime){
         const t = endtime - new Date()
         let obj = {
@@ -329,6 +330,7 @@
         
         return obj
     }
+    
     function UpdateTimeToEnd(dayEnd){
         if (dayEnd == NaN)
         {

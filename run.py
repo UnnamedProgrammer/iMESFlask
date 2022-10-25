@@ -10,7 +10,9 @@ def Dependency_check():
                    'pyodbc',
                    'progress',
                    'flask_socketio',
-                   'simple-websocket']
+                   'simple-websocket',
+                   'requests',
+                   'bs4']
     not_install = []
     for dependency in dependences:
         try:
