@@ -240,10 +240,18 @@
 
     async function UpdateTimer() {
         let timeNode = document.getElementById('clock');
+        let timer = 0
         setInterval(
             () => {
                 UpdateTimeToEnd(end_date)
                 timeNode.innerHTML = getCurrentTimeString()
+                timer += 1
+                console.log(timer)
+                if (timer == 120)
+                {
+                    socket.emit('GetExecutePlan','')
+                    timer = 0
+                }
             },
             1000
         );
@@ -324,7 +332,12 @@
             minutes: t / 1000 / 60 % 60 | 0,
             seconds: t / 1000 % 60 | 0
         }
-
+        if (obj['hours'] < 0 || obj['minutes'] < 0 || obj['seconds'] < 0)
+        {
+            for (let key in obj)
+                obj[key] = '00'
+            return obj
+        }
         for (let key in obj)
             obj[key] = ('0' + obj[key]).slice(-2)
         
