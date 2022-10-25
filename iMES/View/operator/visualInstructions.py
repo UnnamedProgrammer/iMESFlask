@@ -19,7 +19,8 @@ def VisualInstructions():
     table = """"""
     if (Authorization == True):
         for i in range(0, len(InstructionsId)):
-            if InstructionsId[i] == '': continue
+            if InstructionsId[i] == '':
+                continue
             Name = DirectumConnection.DirectumGetDocumentName(
                 InstructionsId[i])
             if Name != "":
