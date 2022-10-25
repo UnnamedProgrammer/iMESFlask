@@ -1,5 +1,6 @@
 {% extends 'index_template.html' %}
 {% block main_window %}
+{% set current_product = somedata %}
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
@@ -102,24 +103,14 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for products in current_product %}
                             <tr>
                                 <td class="nopadding table__button col-3">
                                     <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
                                 </td>
-                                <td data-oid="11111"> Продукт 1 </td>
+                                <td data-oid="{{ products[0] }}"> {{ products[1] }} </td>
                             </tr>
-                            <tr>
-                                <td class="nopadding table__button col-3">
-                                    <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
-                                </td>
-                                <td data-oid="22222"> Продукт 2 </td>
-                            </tr>
-                            <tr>
-                                <td class="nopadding table__button col-3">
-                                    <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
-                                </td>
-                                <td data-oid="33333"> Продукт 3 </td>
-                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>

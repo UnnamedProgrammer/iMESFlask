@@ -25,13 +25,16 @@ def tableWeight():
     ip_addr = request.remote_addr
 
     # Получаем данные о введенных за смену весов изделия
-    sql_GetProductWeight = f"""SELECT Product.Name, ProductWeight.Weight, ProductWeight.CreateDate 
+    sql_GetProductWeight = f"""SELECT Product.Name, ProductWeight.Weight, ProductWeight.CreateDate, Employee.LastName, Employee.FirstName, Employee.MiddleName
                                 FROM ShiftTask INNER JOIN 
                                 Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
                                 Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN 
                                 Product ON ShiftTask.Product = Product.Oid INNER JOIN
                                 ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask INNER JOIN
-                                ProductWeight ON ProductWeight.ProductionData = ProductionData.Oid"""
+                                ProductWeight ON ProductWeight.ProductionData = ProductionData.Oid INNER JOIN
+								[User] ON ProductWeight.Creator = [User].Oid INNER JOIN
+								Employee ON [User].Employee = Employee.Oid
+                                ORDER BY CreateDate"""
     product_weight = SQLManipulator.SQLExecute(sql_GetProductWeight)
 
     # Проверяем был ли введен вес изделий в текущую смену
@@ -40,7 +43,8 @@ def tableWeight():
         table_info = list()
         for product_weight_quantity in range(len(product_weight)):
             table_info.append([product_weight[product_weight_quantity][0], f'{product_weight[product_weight_quantity][1]:.3f}', str(
-                product_weight[product_weight_quantity][2].strftime('%d.%m.%Y %H:%M:%S')), current_user.name])
+                                product_weight[product_weight_quantity][2].strftime('%d.%m.%Y %H:%M:%S')), 
+                                f'{product_weight[product_weight_quantity][3]} {product_weight[product_weight_quantity][4]} {product_weight[product_weight_quantity][5]}'])
     # Если за смену вес никто не вводил, то формируем пустой массив
     else:
         table_info = list()
@@ -78,7 +82,16 @@ def handle_entered_product_weight(data):
 @login_required
 @app.route('/operator/tableWasteDefect')
 def tableWasteDefect():
-    # ip_addr = request.remote_addr
+    ip_addr = request.remote_addr
+
+    # Получаем данные о текущем продукте
+    # Но это не точно
+    sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name
+                                FROM ShiftTask INNER JOIN
+                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
+                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid WHERE Equipment.Oid = '{current_tpa[ip_addr][0]}'"""
+    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
 
     # # Получаем данные о текущем продукте и производственных данных
     # # sql_GetCurrentProductionData = f"""SELECT Product.Name, ProductionData.Oid
@@ -117,7 +130,7 @@ def tableWasteDefect():
     # # return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', [current_production_data[0][0],
     # #                                 current_product_waste[0][0], current_product_waste[0][1], current_product_waste[0][2],
     # #                                 current_product_waste[0][3], current_product_waste[0][4], current_product_waste[0][5]])
-    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html')
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', current_product)
 
 # Окно ввода отходов
 
@@ -169,16 +182,16 @@ def wastes():
     ORDER BY Name"""
     all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
 
-    # # Получаем данные о текущем продукте
-    # # Но это не точно
-    # sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name
-    #                             FROM ShiftTask INNER JOIN
-    #                             Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-    #                             Product ON ShiftTask.Product = Product.Oid INNER JOIN
-    #                             Equipment ON ShiftTask.Equipment = Equipment.Oid WHERE Equipment.Oid = '{current_tpa[ip_addr][0]}'"""
-    # current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+    # Получаем данные о текущем продукте
+    # Но это не точно
+    sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name
+                                FROM ShiftTask INNER JOIN
+                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
+                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid WHERE Equipment.Oid = '{current_tpa[ip_addr][0]}'"""
+    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
 
-    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/wastes.html', [predefined_waste, all_wastes])
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/wastes.html', [predefined_waste, all_wastes, current_product])
 
 # # Окно ввода других отходов
 # @login_required
