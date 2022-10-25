@@ -85,6 +85,53 @@
         </div>
         <div class="bg-blur"></div>
     </div>
+
+    <!-- Модальное (всплывающее) окно выбора продукта -->
+    <div class="modal hidden" id="currentProductList">
+        <div class="modal__list">
+            <div class="modal_header">
+                <h5 class="modal_title">Список отходов</h5>
+            </div>
+            <div class="modal_content">
+                <div class="modal_body jsScroll">
+                    <table class="table table-bordered text-center" id="selectStickerProduct" border="1" bordercolor="black">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Добавить</th>
+                                <th scope="col">Продукт</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="nopadding table__button col-3">
+                                    <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
+                                </td>
+                                <td data-oid="11111"> Продукт 1 </td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding table__button col-3">
+                                    <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
+                                </td>
+                                <td data-oid="22222"> Продукт 2 </td>
+                            </tr>
+                            <tr>
+                                <td class="nopadding table__button col-3">
+                                    <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
+                                </td>
+                                <td data-oid="33333"> Продукт 3 </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal_footer">
+                    <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="currentProductList" onClick="modalController(event)"> Закрыть </button>
+                </div>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+    <!-- ----------------------------------------------------------- -->
+
 </div>
 <script src="/static/js/numberModal.js"></script>
 <script>
@@ -105,31 +152,26 @@
         if (defectButton.id == 'defectEnterButton') {
             numberModalControl(event)
         } else {
-            let wasteDefectCount = 0,
-                wasteDefectWeight = 0
+            let weightHTML = ''
 
             for ( let i = 0; i < wasteDefectRows.length; i++) {
-                if (wasteDefectRows[i].id == 'defect') {
-                    wasteDefectCount += Number(wasteDefectRows[i].cells[2].innerHTML)
-                    wasteDefectWeight += Number(wasteDefectRows[i].cells[3].innerHTML)
-                }
+                weightHTML += wasteDefectRows[i].cells[1].innerHTML+' кг. '+ wasteDefectRows[i].cells[2].innerHTML.substr(wasteDefectRows[i].cells[2].innerHTML.indexOf(" ") + 1) +'<br>';
             }
-        
-            mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
-        
-            html ="";
-        
+    
+            let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+    
+            let html ="";
+    
             html += '<div>----------------------------------</div>'
-            +'<div style="text-align: center; font-size: 16pt;"><b>Брак</b></div>'
-            +'<b>Артикул</b> '+tprod+'<br>'
-            +'<b>Оборудование</b> '+ttpa+'<br>'
-            +'<b>Дата</b> '+ clock +' <br>'
-            +'<b>Смена</b> '+ smena +'<br>'
-            +'<b>Вес тары</b>______кг.<br>'
-            +'<b>Количество</b> '+wasteDefectCount+' шт. <b>Вес</b> '+wasteDefectWeight+' кг.<br>'
-            +'<b>ФИО</b> '+ operator +'<br>';
+            +'<b>Артикул</b> <br>'
+            +'<b>Оборудование</b>'+ ttpa +'<br>'
+            +'<b>Дата</b>'+clock+'<br>'
+            +'<b>Смена</b> <br>'
+            +'<b>Вес тары</b> <br>'
+            +'<b>Количество</b><b>Вес</b> <br>'
+            +'<b>ФИО</b> <br>'
             var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-        
+    
             printStickerWindow(div, mywindow);
         }
     })

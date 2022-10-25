@@ -126,7 +126,7 @@ def wastes():
     #                             SpecificationMaterial ON ShiftTask.Specification = SpecificationMaterial.Specification INNER JOIN
     #                             Material ON SpecificationMaterial.Material = Material.Oid AND Material.Type = 1"""
 
-    sql_GetPredefinedWaste = f"""SELECT DISTINCT Material.Oid, Product.Name, Material.Name
+    sql_GetPredefinedWaste = f"""SELECT DISTINCT Product.Oid, Product.Name, Material.Oid, Material.Name
                                     FROM Material INNER JOIN 
                                     SpecificationMaterial ON SpecificationMaterial.Material = Material.Oid AND Material.Type = 1 INNER JOIN
                                     ProductSpecification ON SpecificationMaterial.Specification = ProductSpecification.Oid INNER JOIN
