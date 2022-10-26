@@ -23,18 +23,19 @@ function changeTPA(event){
     xhr.send()
 }
 
-// Управдление панелями
-function offcanvasControl(event) {
-    offcanvasPanel = document.querySelectorAll('.offcanvas')
+// Управдление панелями}
+$("#tpaPanelButton").click(function() {
+    $('.offcanvas').addClass('show');
+    $('.offcanvas-blur').removeClass('hidden');
+  });
 
-    for ( let i = 0; i <= offcanvasPanel.length; i++) {
-        if(offcanvasPanel[i].id == event.target.id) {
-            offcanvasPanel[i] = !offcanvasPanel[i].classList.contains('show') ? offcanvasPanel[i].classList.add('show') : offcanvasPanel[i].classList.remove('show')
-        }
-        if ( i <= offcanvasPanel.length) break
+$(document).mouseup(function (e) {
+    var container = $(".offcanvas");
+    if (container.has(e.target).length === 0){
+        container.removeClass('show');
+        $('.offcanvas-blur').addClass('hidden');
     }
-    
-}
+});
 
 // Управление модальным окном
 function modalController(event){ 
