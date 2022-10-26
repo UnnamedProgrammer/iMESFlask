@@ -100,7 +100,7 @@ function addWasteData(data) {
     document.addEventListener("click", function(e) {
         if (e.target.id == ('addWasteButton')) {
             let selectedProductData = [e.target.parentNode.parentNode.cells[1].dataset.oid, e.target.parentNode.parentNode.cells[1].innerHTML] // Массив с даннымы продукта [Oid, Name]
-            $(table).find('tbody').append('<tr id="wasteData"> <td data-productoid="'+selectedProductData[0]+'">'+ selectedProductData[1] +'</td> <td data-wasteoid="'+data[0]+'">'+ data[1] +'</td> <td id="wasteCount_Data"></td>   <td class="nopadding col-2 table__button"><button type="button" class="btn__table" id="addWasteWeight" onClick="numberModalControl(event)">Ввод</button>/td></tr>'); // Добавление новой строки в таблицу
+            $(table).find('tbody').append('<tr id="wasteData"> <td data-productoid="'+selectedProductData[0]+'">'+ selectedProductData[1] +'</td> <td data-wasteoid="'+data[0]+'" style="overflow:hidden">'+ data[1] +'</td> <td id="wasteCount_Data"></td>   <td class="nopadding col-2 table__button"><button type="button" class="btn__table" id="addWasteWeight" onClick="numberModalControl(event)">Ввод</button>/td></tr>'); // Добавление новой строки в таблицу
             productList.classList.toggle('hidden')
         }
     });

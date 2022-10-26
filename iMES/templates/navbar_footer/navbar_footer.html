@@ -1,6 +1,6 @@
 {% block navbar_footer %}
 <div class="navbar-footer">
-    <button class="btn btn__navbar-footer_tpa col-5 green" id="tpaPanel" type="button" onClick="offcanvasControl(event)">
+    <button class="btn btn__navbar-footer_tpa col-5 green" id="tpaPanelButton" type="button">
         <span class="icon-menu me-3"></span> {{ current_tpa[1] }}
     </button>
     <a class="btn btn__navbar-footer primary" href="/menu">
@@ -21,15 +21,18 @@
     </a>
     {% endif %}
 </div>
-<div class="offcanvas offcanvas-start shadow" tabindex="-1" id="tpaPanel">
-    <div class="offcanvas-body">
-        {% for tpa in device_tpa %}
-            {% if tpa['Oid'] == current_tpa[0]%}
-                <a class="btn btn__left-menu btn__left-menu_active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</a>
-            {% else %}
-                <a class="btn btn__left-menu" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</a>
-            {% endif %}
-        {% endfor %}
+<div class="offcanvas-panel">
+    <div class="offcanvas offcanvas-start shadow" tabindex="-1">
+        <div class="offcanvas-body">
+            {% for tpa in device_tpa %}
+                {% if tpa['Oid'] == current_tpa[0]%}
+                    <a class="btn btn__left-menu btn__left-menu_active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</a>
+                {% else %}
+                    <a class="btn btn__left-menu" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="changeTPA(event)">{{ tpa['Name'] }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
     </div>
+    <div class="offcanvas-blur hidden"></div>
 </div>
 {% endblock %}

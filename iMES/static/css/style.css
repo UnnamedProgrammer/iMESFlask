@@ -28,8 +28,17 @@ button {
   display: none; }
 
 .offcanvas-body {
-  padding: 0;
-  box-shadow: 100vw 0px 0px 100vw rgba(0, 0, 0, 0.5); }
+  padding: 0; }
+
+.offcanvas-blur {
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 3; }
 
 .display-3 {
   font-size: 4.5rem;
@@ -412,7 +421,8 @@ button {
       width: 180px;
       padding: 4px; }
   .view-body {
-    height: 530px; }
+    height: 530px;
+    overflow: hidden; }
 
 .idle-form {
   display: flex;
