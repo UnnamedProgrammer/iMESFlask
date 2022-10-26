@@ -14,7 +14,10 @@
 
 <body ondragstart="return false;" ondrop="return false;">
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
+    <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
     <script>
+        let socket = io()
+        let address = "{{request.remote_addr}}"
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
@@ -190,13 +193,10 @@
         
     {% endblock %}
 </body>
-<script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 <script src="{{url_for('static', filename='/js/main.js')}}"></script>
 <script>
     let end_date = NaN
-    address = "{{request.remote_addr}}"
     devicetype = "Терминал"
-    var socket = io();
     socket.on('connect', function () {
         socket.emit('connecting', { data: 'I\'m connected!' });
     });

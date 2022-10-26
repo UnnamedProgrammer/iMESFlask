@@ -64,15 +64,15 @@ def ChangeTPA():
         'oid')[0], request.args.getlist('name')[0], controller))
     return current_tpa
 
-
-# Метод возвращающий данные о текущей выпущенной продукции на графике
-# по запросу с главной страницы с помощью JS
-# Запрос на этот роутинг выполняется их кода JS в index_template.html
+# Метод возвращающий данные о плане и факте выпускаемой продукции на графике
+# по запросу с сокета в файле Graph.js
 
 
-@app.route("/getTrend")
-def GetTrend():
+@socketio.on(message = "getTrendPlanData")
+def GetPlan(data):
     ip_addr = request.remote_addr
+
+    #-------------TREND
     # Массив и начальная точка, получаю начало и конец текущей смены
     sql_GetShiftTime = f"""
                             SELECT 
@@ -116,17 +116,8 @@ def GetTrend():
                 closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
                 y += 1
                 trend.append({"y": str(y), "x": closure_time[:-3]})
-    return json.dumps(trend)
 
-
-# # Метод возвращающий данные о плане выпускаемой продукции на графике
-# # по запросу с главной страницы с помощью JS
-# # Запрос на этот роутинг выполняется их кода JS в index_template.html
-
-
-@app.route("/getPlan")
-def GetPlan():
-    ip_addr = request.remote_addr
+    #-------------PLAN
     sql_GetShiftOid = f"""
                             SELECT TOP(1) ShiftTask.Shift
                             FROM Shift, ShiftTask
@@ -208,7 +199,7 @@ def GetPlan():
                         "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                     break
                 time += timedelta(seconds=downtime//(len(ShiftTime)-1))
-    return json.dumps(plan)
+    socketio.emit('receiveTrendPlanData',data=json.dumps({ip_addr:{'plan':plan,'trend':trend}},ensure_ascii=False, indent=4))
 
 
 # Метод создания пользователя для сессии при прикладываении пропуска.
