@@ -42,6 +42,7 @@ def tableWeight():
     if product_weight:
         table_info = list()
         for product_weight_quantity in range(len(product_weight)):
+            print(1)
             table_info.append([product_weight[product_weight_quantity][0], f'{product_weight[product_weight_quantity][1]:.3f}', str(
                                 product_weight[product_weight_quantity][2].strftime('%d.%m.%Y %H:%M:%S')), 
                                 f'{product_weight[product_weight_quantity][3]} {product_weight[product_weight_quantity][4]} {product_weight[product_weight_quantity][5]}'])
@@ -55,7 +56,7 @@ def tableWeight():
                                         Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
                                         Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
                                         Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                        ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask"""
+                                        ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
     current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
 
     return CheckRolesForInterface('Оператор', 'operator/tableWeight.html', [table_info, current_tpa[ip_addr], current_product])
@@ -90,7 +91,8 @@ def tableWasteDefect():
                                 FROM ShiftTask INNER JOIN
                                 Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
                                 Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                Equipment ON ShiftTask.Equipment = Equipment.Oid WHERE Equipment.Oid = '{current_tpa[ip_addr][0]}'"""
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
+                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
     current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
 
     # # Получаем данные о текущем продукте и производственных данных
@@ -188,8 +190,10 @@ def wastes():
                                 FROM ShiftTask INNER JOIN
                                 Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
                                 Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                Equipment ON ShiftTask.Equipment = Equipment.Oid WHERE Equipment.Oid = '{current_tpa[ip_addr][0]}'"""
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
+                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
     current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+    print(current_product)
 
     return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/wastes.html', [predefined_waste, all_wastes, current_product])
 
