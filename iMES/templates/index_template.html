@@ -340,6 +340,10 @@
                     else
                     {
                         tab.className = "nav-link nav_tpa nav_red"
+                        if(tab.dataset.oid == tabs_status['CurrentTpa'])
+                        {
+                            tab.className = "nav-link nav_tpa nav_red active"
+                        }
                     }
                 }
             });
