@@ -12,7 +12,7 @@
     <title>TERMINAL IPLAST</title>
 </head>
 
-<body ondragstart="return false;" ondrop="return false;">
+<body ondragstart="event.preventDefault()" ondrop="event.preventDefault()">
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
     <script>
