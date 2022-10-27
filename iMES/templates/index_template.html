@@ -321,6 +321,31 @@
         }
     })
 
+    socket.on('TubsStatus', function(data){
+        arr = JSON.parse(data)
+        if (address == Object.keys(arr))
+        {
+            tabs_status = arr[address]
+            nav_tabs = document.querySelectorAll(".nav_tpa")
+            nav_tabs.forEach(tab => {
+                for (const status of tabs_status['Active']) {
+                    if (tab.dataset.oid == status['Oid'])
+                    {
+                        tab.className = "nav-link nav_tpa nav_green"
+                        if(tab.dataset.oid == tabs_status['CurrentTpa'])
+                        {
+                            tab.className = "nav-link nav_tpa nav_green active"
+                        }
+                    }
+                    else
+                    {
+                        tab.className = "nav-link nav_tpa nav_red"
+                    }
+                }
+            });
+        }
+    })
+
     function getTimeRemaining(endtime){
         const t = endtime - new Date()
         let obj = {
@@ -355,10 +380,13 @@
         while(true)
         {
             socket.emit('NeedUpdateMainWindowData', { data: '' })
+            socket.emit('GetUpTubsStatus',{data:''})
             await sleep(30000)
         }           
     }
+
     UpdateMainWindowData()
+
     window.addEventListener('load', () => { 
         const preloader = document.querySelector('.preloader')
         preloader.classList.add('preloader_hidden')

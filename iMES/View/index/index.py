@@ -1,3 +1,4 @@
+from ipaddress import ip_address
 from iMES import socketio
 from iMES import app
 from iMES import UserController
@@ -569,3 +570,13 @@ def GetExecutePlan(data):
             {ip_addr: str(end_date)}), ensure_ascii=False, indent=4)
     except:
         pass
+
+@socketio.on(message="GetUpTubsStatus")
+def UpTubsStatus(data):
+    ip_addr = request.remote_addr
+    active_tpa = []
+    tub_dict = {"Active":active_tpa,"CurrentTpa":current_tpa[ip_addr][0]}
+    for tpa in TpaList[ip_addr]:
+        if tpa['WorkStatus'] == True:
+            active_tpa.append(tpa)
+    socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)

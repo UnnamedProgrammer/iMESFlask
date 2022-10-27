@@ -136,7 +136,6 @@ socket.on('receiveTrendPlanData',function (data)
     if (address == Object.keys(arr))
     {
         TrendPlan = arr[address]
-        console.log(TrendPlan)
         if (chr == '')
         {
             chr = graph(TrendPlan['trend'], TrendPlan['plan'])
