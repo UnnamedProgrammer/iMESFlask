@@ -127,7 +127,7 @@ def GetPlan(data):
             # Заполнение точками массива trend
             for i in Closures:
                 # Если смыкание завершилось (status == 0), добавляется точка в массив
-                if i[1] == False:
+                if i[1] == True:
                     closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
                     y += 1
                     trend.append({"y": str(y), "x": closure_time[:-3]})
