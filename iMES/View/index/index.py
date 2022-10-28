@@ -171,11 +171,10 @@ def GetPlan(data):
         # Переменная для подсчета суммы общего времени на производство
         shift_times = 0
         for shift_task in ShiftTime:
-            # shift_times += int(shift_task[3])*cycle
             shift_times += int(shift_task[3])*int(shift_task[4])
             break
         # Расчитываем оставшееся время на простои
-        if shift_times <= 43200:
+        if shift_times >= 43200:
             downtime = 0
         else:
             downtime = 43200 - shift_times
@@ -194,12 +193,13 @@ def GetPlan(data):
                     plan.append({"y": closure_summ, "x": time.strftime(
                         "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                     break
-                else:  # Если время превышает время окончания смены, не прибавлять данный цикл
-                    # Пустая точка на конце смены, чтобы график был отрисован до ее конца
-                    plan.append({"y": None, "x": end_shift.strftime(
-                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+                else:  
+                    # Если время превышает время окончания смены, не прибавлять данный цикл
                     break
-                time += timedelta(seconds=downtime//(len(ShiftTime)-1))
+            closure_summ -= 1
+            time += timedelta(seconds=downtime//(len(ShiftTime)-1))
+        # Пустая точка на конце смены, чтобы график был отрисован до конца
+        plan.append({"y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]})
     socketio.emit('receiveTrendPlanData',data=json.dumps({ip_addr:{'plan':plan,'trend':trend}},ensure_ascii=False, indent=4))
 
 
