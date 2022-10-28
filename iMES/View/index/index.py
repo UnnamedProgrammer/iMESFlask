@@ -65,6 +65,7 @@ def ChangeTPA():
         'oid')[0], request.args.getlist('name')[0], controller))
     return current_tpa
 
+
 # Метод возвращающий данные о плане и факте выпускаемой продукции на графике
 # по запросу с сокета в файле Graph.js
 
@@ -72,7 +73,7 @@ def ChangeTPA():
 @socketio.on(message = "getTrendPlanData")
 def GetPlan(data):
     ip_addr = request.remote_addr
-    print(current_tpa[ip_addr])
+    # Проверяем есть ли сменное задание на ТПА
     if current_tpa[ip_addr][2].shift_task_oid == '':
         pass
     else:
