@@ -23,7 +23,7 @@
                         <td>
                             {{ tableWeight_row[0] }}
                         </td>
-                        <td>
+                        <td class="green">
                             {{ tableWeight_row[1] }}
                         </td>
                         <td>
@@ -99,7 +99,7 @@
     <div class="modal hidden" id="currentProductList">
         <div class="modal__list">
             <div class="modal_header">
-                <h5 class="modal_title">Список отходов</h5>
+                <h5 class="modal_title">Список продуктов</h5>
             </div>
             <div class="modal_content">
                 <div class="modal_body">
@@ -115,7 +115,7 @@
                                 <tr>
                                     <td value=''>{{ somedata[2][i][0] }}</td>
                                     <td class="nopadding table__button col-3">
-                                        <button type="button" class="btn__table green" data-productiondata="{{ somedata[2][i][1] }}" data-selectproduct="{{ somedata[2][i][0] }}" onClick="selectCurrentProduct(event)">Выбрать</button>
+                                        <button type="button" class="btn__table green" data-productiondata="{{ somedata[2][i][1] }}" data-selectproduct="{{ somedata[2][i][0] }}" onClick="selectCurrentProductWeight(event)">Выбрать</button>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -143,6 +143,7 @@
     function weightPrint() {
         
         let weightHTML = ''
+        let clock = document.getElementById('clock').innerHTML
 
         for ( let i = 0; i < productWeightRows.length; i++) {
             weightHTML += productWeightRows[i].cells[1].innerHTML+' кг. '+ productWeightRows[i].cells[2].innerHTML.substr(productWeightRows[i].cells[2].innerHTML.indexOf(" ") + 1) +'<br>';

@@ -2,15 +2,15 @@ import importlib
 import os
 
 
-
-
 def Dependency_check():
     dependences = ['flask',
                    'flask_login',
                    'pyodbc',
                    'progress',
                    'flask_socketio',
-                   'simple-websocket']
+                   'simple-websocket',
+                   'requests',
+                   'bs4']
     not_install = []
     for dependency in dependences:
         try:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
     from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
     ShiftTaskMonitoring = ShiftTaskDaemon()
-    ShiftTaskMonitoring.Start()             
+    ShiftTaskMonitoring.Start()
     ProductDataMonitoring = ProductionDataDaemon()
     ProductDataMonitoring.Start()
     socketio.run(app, host=host, port=port, debug=True, use_reloader=False)

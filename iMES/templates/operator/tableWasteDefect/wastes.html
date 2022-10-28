@@ -2,6 +2,8 @@
 {% block main_window %}
 {% set predefined_waste = somedata[0] %}
 {% set all_wastes = somedata[1] %}
+{% set current_product = somedata[2] %}
+
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
@@ -17,9 +19,9 @@
             <tbody>
                 {% for i in range(predefined_waste|length) %}
                 <tr>
-                    <td>{{ predefined_waste[i][1] }}</td>
-                    <td>{{ predefined_waste[i][2] }}</td>
-                    <td id="wasteCount_Data"  data-oid='{{ "Oid-" + (i + 1)|string }}' data-weight=""></td>
+                    <td data-productoid ="{{ predefined_waste[i][0] }}">{{ predefined_waste[i][1] }}</td>
+                    <td data-wasteoid="{{ predefined_waste[i][2] }}">{{ predefined_waste[i][3] }}</td>
+                    <td id="wasteCount_Data"></td>
                     <td class="nopadding col-2 table__button">
                         <button type="button" class="btn__table" id="addWasteWeight" onClick="numberModalControl(event)">Ввод</button>
                     </td>
@@ -41,7 +43,7 @@
         </div>
     </div>
 
-    <!-- Модальное (всплывающее) окно выбора продукта(артикула) -->
+    <!-- Модальное (всплывающее) окно выбора отхода -->
     <div class="modal hidden" id="addOtherWaste">
         <div class="modal__list">
             <div class="modal_header">
@@ -53,16 +55,16 @@
                         <thead class="table-dark">
                             <tr>
                                 <th scope="col">Добавить</th>
-                                <th scope="col">Продукт</th>
+                                <th scope="col">Отход</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for i in range(all_wastes|length) %}
                                 <tr>
-                                    <td value='{{ i + 1 }}'> {{ i + 1 }} {{ all_wastes[i][1] }}</td>
                                     <td class="nopadding table__button col-3">
-                                        <button type="button" class="btn__table green">Выбрать</button>
+                                        <button type="button" class="btn__table green" id="addOtherWaste" onClick="selectCurrentProductWaste(event)">Выбрать</button>
                                     </td>
+                                    <td data-oid="{{ all_wastes[i][0] }}">{{ all_wastes[i][1] }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -77,6 +79,41 @@
     </div>
     <!-- ----------------------------------------------------------- -->
 
+    <!-- Модальное (всплывающее) окно выбора продукта -->
+    <div class="modal hidden" id="currentProductList">
+        <div class="modal__list">
+            <div class="modal_header">
+                <h5 class="modal_title">Список продуктов</h5>
+            </div>
+            <div class="modal_content">
+                <div class="modal_body jsScroll">
+                    <table class="table table-bordered text-center" id="selectStickerProduct" border="1" bordercolor="black">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Добавить</th>
+                                <th scope="col">Продукт</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for products in current_product %}
+                                <tr>
+                                    <td class="nopadding table__button col-3">
+                                        <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
+                                    </td>
+                                    <td data-oid="{{ products[0] }}"> {{ products[1] }} </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal_footer">
+                    <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="currentProductList" onClick="modalController(event)"> Закрыть </button>
+                </div>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+    <!-- ----------------------------------------------------------- -->
 
     <!--Всплывающее окно ввода числовых значений-->
     <div class="modal hidden" id="numberModal">
@@ -130,24 +167,5 @@
     const table = document.querySelector('#currentWastes'); // Получение главной таблицы с отходами
     const tableTbody = document.querySelector('#currentWastes tbody'); // Получение тела главной таблицы с отходами
     const otherTbody = document.querySelector('#addOtherWaste tbody') // Получение таблицы с другими отходами из вспылвающего окна
-
-    //--------------Отслеживание нажатия на кнопку-------------------------------
-    tableTbody.addEventListener('click', function (e) {
-        const cell = e.target.closest('td:first-child');
-        if (!cell) {return;}
-        const row = cell.parentElement;
-        let wasteData = row.cells[2]; // Получение значения первой ячейки
-        numberModalControl(event)
-    });
-    //--------------------------------------------------------------------------------------------------
-
-    otherTbody.addEventListener('click', function (e) {
-        const cell = e.target.closest('td:last-child'); // Отслеживание нажатия на первую ячейку (кнопку "Выбрать")
-        if (!cell) {return;}
-        const row = cell.parentElement;
-        let selectedWaste = row.cells[0].innerText // Получения значения второй ячейки (названия)
-
-        $(table).find('tbody').append('<tr> <td>Поддон полимерного контейнера  Д202 900/1080</td> <td data-oid="12312321">'+ selectedWaste + '</td> <td id="wasteCount_Data"></td> <td class="nopadding col-2 table__button"> <button type="button" class="btn__table" id="addWasteWeight" onClick="numberModalControl(event)">Ввод</button></td> </tr>'); // Добавление новой строки в таблицу
-    });
 </script>
 {% endblock %}

@@ -12,9 +12,12 @@
     <title>TERMINAL IPLAST</title>
 </head>
 
-<body ondragstart="return false;" ondrop="return false;">
+<body ondragstart="event.preventDefault()" ondrop="event.preventDefault()">
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
+    <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
     <script>
+        let socket = io()
+        let address = "{{request.remote_addr}}"
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
@@ -156,7 +159,7 @@
                     <div class="card height-bottom shadow width-bottom">
                         <div class="card-header text-center nopadding primary">ВЫПОЛНЕНИЕ ПЛАНА ЧЕРЕЗ:</div>
                         <div class="card-body nopadding">
-                            <p class="card-text text-center display-5">03:42:56</p>
+                            <p class="card-text text-center display-5" id="time_to_end"></p>
                         </div>
                     </div>
                 </div>
@@ -190,17 +193,16 @@
         
     {% endblock %}
 </body>
-<script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 <script src="{{url_for('static', filename='/js/main.js')}}"></script>
 <script>
-    address = "{{request.remote_addr}}"
+    let end_date = NaN
     devicetype = "Терминал"
-    var socket = io();
     socket.on('connect', function () {
         socket.emit('connecting', { data: 'I\'m connected!' });
     });
     socket.emit('getTpaList', { ipaddress: address });
     socket.emit('GetDeviceType', '');
+    socket.emit('GetExecutePlan','')
     socket.on('Auth',function(data) {
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0]) {
@@ -218,6 +220,7 @@
         let yy = date.getFullYear();
         return dd + '.' + mm + '.' + yy;
     }
+
     function getCurrentTimeString() {
         "{% if current_user.is_authenticated == True %}"
         if (timecounter <= 120 && devicetype != 'Веб'){
@@ -235,14 +238,25 @@
         return formatDate(new Date()) + " " + new Date().toTimeString().replace(/ .*/, '');
     }
 
-    window.onload = function () {
+    async function UpdateTimer() {
         let timeNode = document.getElementById('clock');
+        let timer = 0
         setInterval(
-            () => timeNode.innerHTML = getCurrentTimeString(),
+            () => {
+                UpdateTimeToEnd(end_date)
+                timeNode.innerHTML = getCurrentTimeString()
+                timer += 1
+                if (timer == 120)
+                {
+                    socket.emit('GetExecutePlan','')
+                    timer = 0
+                }
+            },
             1000
         );
     }
-    
+    UpdateTimer()
+
     socket.on('AnswerAfterConnection', function (data) {
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0]) {
@@ -297,16 +311,86 @@
         }
     })
 
+    socket.on('GetExecutePlan',function(data)
+    {
+        arr = JSON.parse(data)
+        if (address == Object.keys(arr))
+        {
+            //let time_to_end = document.getElementById('time_to_end')
+            end_date = new Date(arr[address])  
+        }
+    })
+
+    socket.on('TubsStatus', function(data){
+        arr = JSON.parse(data)
+        if (address == Object.keys(arr))
+        {
+            tabs_status = arr[address]
+            nav_tabs = document.querySelectorAll(".nav_tpa")
+            nav_tabs.forEach(tab => {
+                for (const status of tabs_status['Active']) {
+                    if (tab.dataset.oid == status['Oid'])
+                    {
+                        tab.className = "nav-link nav_tpa nav_green"
+                        if(tab.dataset.oid == tabs_status['CurrentTpa'])
+                        {
+                            tab.className = "nav-link nav_tpa nav_green active"
+                        }
+                    }
+                    else
+                    {
+                        tab.className = "nav-link nav_tpa nav_red"
+                        if(tab.dataset.oid == tabs_status['CurrentTpa'])
+                        {
+                            tab.className = "nav-link nav_tpa nav_red active"
+                        }
+                    }
+                }
+            });
+        }
+    })
+
+    function getTimeRemaining(endtime){
+        const t = endtime - new Date()
+        let obj = {
+            // days: t / (1000 * 60 * 60 * 24) | 0
+            hours: t / (1000 * 60 * 60) % 24 | 0,
+            minutes: t / 1000 / 60 % 60 | 0,
+            seconds: t / 1000 % 60 | 0
+        }
+        if (obj['hours'] < 0 || obj['minutes'] < 0 || obj['seconds'] < 0)
+        {
+            for (let key in obj)
+                obj[key] = '00'
+            return obj
+        }
+        for (let key in obj)
+            obj[key] = ('0' + obj[key]).slice(-2)
+        
+        return obj
+    }
+    
+    function UpdateTimeToEnd(dayEnd){
+        if (dayEnd == NaN)
+        {
+            return
+        }
+        let result = getTimeRemaining(dayEnd)
+        let formated = Object.values(result).join(':')
+        time_to_end.textContent = formated
+    }
+
     async function UpdateMainWindowData(){
         while(true)
         {
             socket.emit('NeedUpdateMainWindowData', { data: '' })
+            socket.emit('GetUpTubsStatus',{data:''})
             await sleep(30000)
         }           
     }
+
     UpdateMainWindowData()
-</script>
-<script>
+
     window.addEventListener('load', () => { 
         const preloader = document.querySelector('.preloader')
         preloader.classList.add('preloader_hidden')
@@ -315,8 +399,6 @@
         const preloader = document.querySelector('.preloader')
         preloader.classList.remove('preloader_hidden')
     }
-</script>
-<script>
 function RequestOperatorAndAdjuster() {
     let url = "http://"+window.location.host + "/getOperatorAndAdjuster"
     let request = new XMLHttpRequest()
@@ -333,6 +415,33 @@ function RequestOperatorAndAdjuster() {
     });
     request.send()
 }
+
+function scroll(){
+    var jsScroll = document.getElementsByClassName('jsScroll');
+    if(jsScroll){
+        [].forEach.call(jsScroll, function(item) {
+            var startX, startY;
+            var listener = function(e) {
+                startX = this.scrollLeft + e.pageX;
+                startY = this.scrollTop + e.pageY;
+                item.addEventListener('mousemove', endListener);
+            };
+        
+            var endListener = function(e) {
+                this.scrollLeft = startX - e.pageX;
+                this.scrollTop = startY - e.pageY;
+                return false;
+            };
+        
+            item.addEventListener('mousedown', listener);
+        
+            window.addEventListener("mouseup", function(){ 
+                item.removeEventListener('mousemove', endListener);
+            });
+        });
+    }
+}  
+
 RequestOperatorAndAdjuster()
 </script>
 {% block script %}                

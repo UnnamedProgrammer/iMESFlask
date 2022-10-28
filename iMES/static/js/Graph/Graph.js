@@ -27,8 +27,8 @@ function graph(td, pn) {
 
     }
     else {
-        trend = JSON.parse(td)
-        plan = JSON.parse(pn)
+        trend = td
+        plan = pn
         let chart = document.getElementById("myChart");
         if (typeof (chart) != 'undefined' && chart != null) {
             var ctx = chart.getContext('2d'),
@@ -92,8 +92,9 @@ function graph(td, pn) {
                                 ticks: {
                                     beginAtZero: true,
                                     min: 0,
-                                    max: maxscale,
-                                    stepSize: Math.round(stepsize)
+                                    max: plan.length + 1,
+                                    stepSize: ((plan.length + 1) / 12),
+                                    callback: function (value) { return Math.floor(value) }
                                 }
                             }
                         },
@@ -116,58 +117,35 @@ function graph(td, pn) {
     }
 }
 
-let trend = ''
-let plan = ''
-
-function RequestTrendPlan() {
-    let urlTrend = "getTrend"
-    let urlPlan = "getPlan"
-    let requestplan = new XMLHttpRequest()
-    let requesttrend = new XMLHttpRequest()
-    requestplan.open("GET", window.location.href + urlPlan, true)
-    requestplan.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    requesttrend.open("GET", window.location.href + urlTrend, true)
-    requesttrend.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    requesttrend.addEventListener("readystatechange", () => {
-        if (requesttrend.readyState === 4 && requesttrend.status === 200) {
-            trend = requesttrend.responseText;
-        }
-    });
-    requestplan.addEventListener("readystatechange", () => {
-        if (requestplan.readyState === 4 && requestplan.status === 200) {
-            plan = requestplan.responseText;
-        }
-    });
-    requesttrend.send()
-    requestplan.send()
+function UpdateGraph()
+{
+    setInterval(
+        () => {
+            socket.emit('getTrendPlanData','')
+        },
+        60000
+    );
 }
 
-async function UpDateGraph() {
-    let chr = 'undefinded'
-    while(true)
+chr = ''
+
+socket.emit('getTrendPlanData','')
+socket.on('receiveTrendPlanData',function (data)
+{
+    arr = JSON.parse(data)
+    if (address == Object.keys(arr))
     {
-        RequestTrendPlan()
-        await sleep(1000)
-        if (trend != '' && plan != '')
+        TrendPlan = arr[address]
+        if (chr == '')
         {
-            chr = graph(trend, plan)
-            break;
+            chr = graph(TrendPlan['trend'], TrendPlan['plan'])
+        }
+        else
+        {
+            chr.destroy()
+            chr = graph(TrendPlan['trend'], TrendPlan['plan'])
         }
     }
-    while (true) {
-        trend = ''
-        plan = ''
-        await sleep(120000);
-        RequestTrendPlan()
-        await sleep(1000)
-        if (trend != '' && plan != '') {
-            if(typeof chr !== 'undefined')
-            {
-                chr.destroy()
-            }
-            chr = graph(trend, plan)
-        }
-    }
-}
+})
 
-UpDateGraph()
+UpdateGraph()
