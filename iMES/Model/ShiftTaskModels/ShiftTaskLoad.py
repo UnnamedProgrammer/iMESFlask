@@ -308,6 +308,7 @@ class ShiftTaskLoader():
                 """
                 SQLManipulator.SQLExecute(insertshiftsql)
             getshift = SQLManipulator.SQLExecute(shiftsql)
+            self.LoadEquipmentPerfomance(self.shift_task_list,self.data)
             self.InsertShiftTask(getshift, self.shift_task_list)
         return
 
@@ -430,3 +431,108 @@ class ShiftTaskLoader():
                     """
             app.logger.info("Вставка сменного задания №" + task.Ordinal)
             SQLManipulator.SQLExecute(ShiftTaskInsertSQL)
+
+    def LoadEquipmentPerfomance(self,tasklist,jsondata):
+        for task in tasklist:
+            for EP in jsondata["EquipmentPerformance"]:
+                if (EP["ProductCode"] == task.ProductCode):
+                    for ep in EP["EquipmentPerformance"]:
+                        get_nomenclaturegroup_sql = f"""
+                            SELECT [Oid]
+                            FROM [MES_Iplast].[dbo].[NomenclatureGroup]
+                            WHERE Code = '{EP['NomenclatureGroupCode']}'
+                        """
+                        get_tpa_from_db_sql = f"""
+                            SELECT Equipment.Oid
+                            FROM [MES_Iplast].[dbo].[Equipment], NomenclatureGroup 
+                            WHERE NomenclatureGroup.Code = '{EP['NomenclatureGroupCode']}' AND
+                                Equipment.NomenclatureGroup = NomenclatureGroup.Oid
+                        """
+                        get_rigequipment_sql = f"""
+                            SELECT [Oid]
+                            FROM [MES_Iplast].[dbo].[Equipment]
+                            WHERE Code = '{ep["EquipmentPerformance"]}'
+                        """
+                        main_equipment_oid = SQLManipulator.SQLExecute(get_tpa_from_db_sql)[0][0]
+                        nomenclaturegroup_oid = SQLManipulator.SQLExecute(get_nomenclaturegroup_sql)[0][0]
+                        rig_equipment_oid = SQLManipulator.SQLExecute(get_rigequipment_sql)[0][0]
+                        total_socket_count = ep["TotalSocketCount"]
+
+                        check_isexists_ep_sql = f"""
+                            SELECT [Oid]
+                            FROM [MES_Iplast].[dbo].[EquipmentPerformance]
+                            WHERE 
+                            NomenclatureGroup = '{nomenclaturegroup_oid}' AND
+                            MainEquipment = '{main_equipment_oid}' AND
+                            RigEquipment = '{rig_equipment_oid}' AND 
+                            TotalSocketCount = {int(total_socket_count)}
+                        """
+                        finded_ep = SQLManipulator.SQLExecute(check_isexists_ep_sql)
+                        if len(finded_ep) > 0:
+                            get_product = f"""
+                                SELECT [Oid]
+                                FROM [MES_Iplast].[dbo].[Product]
+                                WHERE Code = '{EP["ProductCode"]}'
+                            """
+                            product_oid = SQLManipulator.SQLExecute(get_product)[0][0]
+                            check_relation_product_ep_sql = f"""
+                                SELECT [EquipmentPerformance]
+                                FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
+                                WHERE EquipmentPerformance = '{finded_ep[0][0]}' AND
+                                Product = '{product_oid}' AND 
+                                SocketCount = {int(ep['SocketCount'])} AND
+                                Cycle = {int(ep['Cycle'])} 
+                            """
+                            relation_product_ep = SQLManipulator.SQLExecute(check_relation_product_ep_sql)
+                            if (len(relation_product_ep) > 0):
+                                continue
+                            else:
+                                insert_rel_ep_sql = f"""
+                                    INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
+                                    VALUES ('{finded_ep[0][0]}','{product_oid}',{int(ep['SocketCount'])},{int(ep['Cycle'])})
+                                """
+                                SQLManipulator.SQLExecute(insert_rel_ep_sql)
+                        else:
+                            get_product = f"""
+                                SELECT [Oid]
+                                FROM [MES_Iplast].[dbo].[Product]
+                                WHERE Code = '{EP["ProductCode"]}'
+                            """
+                            product_oid = ""
+                            insert_ep_sql = f"""
+                                INSERT INTO EquipmentPerformance (Oid,NomenclatureGroup,MainEquipment,RigEquipment,TotalSocketCount)
+                                VALUES (NEWID(),'{nomenclaturegroup_oid}','{main_equipment_oid}','{rig_equipment_oid}',{int(total_socket_count)})
+                            """
+                            SQLManipulator.SQLExecute(insert_ep_sql)
+                            find_inserted_ep = f"""
+                                SELECT [Oid]
+                                FROM [MES_Iplast].[dbo].[EquipmentPerformance]
+                                WHERE 
+                                NomenclatureGroup = '{nomenclaturegroup_oid}' AND
+                                MainEquipment = '{main_equipment_oid}' AND
+                                RigEquipment = '{rig_equipment_oid}' AND 
+                                TotalSocketCount = {int(total_socket_count)}
+                            """
+                            ep_oid = SQLManipulator.SQLExecute(find_inserted_ep)
+                            if len(ep_oid) > 0:
+                                ep_oid = ep_oid[0][0]
+                            else: continue
+                            product_oid = SQLManipulator.SQLExecute(get_product)[0][0]
+                            check_relation_product_ep_sql = f"""
+                                SELECT [EquipmentPerformance]
+                                FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
+                                WHERE EquipmentPerformance = '{ep_oid}' AND
+                                Product = '{product_oid}' AND 
+                                SocketCount = {int(ep['SocketCount'])} AND
+                                Cycle = {int(ep['Cycle'])} 
+                            """
+                            relation_product_ep = SQLManipulator.SQLExecute(check_relation_product_ep_sql)
+                            if (len(relation_product_ep) > 0):
+                                continue
+                            else:
+                                insert_rel_ep_sql = f"""
+                                    INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
+                                    VALUES ('{ep_oid}','{product_oid}',{int(ep['SocketCount'])},{int(ep['Cycle'])})
+                                """
+                                SQLManipulator.SQLExecute(insert_rel_ep_sql)
+        

@@ -32,7 +32,7 @@ class ProductionDataDaemon():
                                              self.tpalist[tpanum][3]['ShiftTask'][11],
                                              self.tpalist[tpanum][3]['ShiftTask'][10],
                                              self.tpalist[tpanum][0])
-            sleep(120)
+            sleep(30)
 
     def GetAllTpa(self):
         TpaList = []
