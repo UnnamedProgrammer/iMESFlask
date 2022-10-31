@@ -94,7 +94,8 @@ def GetPlan(data):
                                     Shift.EndDate,
                                     ShiftTask.ProductCount,
                                     ShiftTask.Cycle,
-                                    ShiftTask.Shift
+                                    ShiftTask.Shift,
+                                    ShiftTask.Product
                                 FROM
                                     Shift, ShiftTask
                                 WHERE
@@ -164,9 +165,13 @@ def GetPlan(data):
             end_shift = ShiftInfo[0][2]
             # Переменная для подсчета суммы общего времени на производство
             shift_times = 0
-            for shift_task in ShiftInfo:
-                shift_times += int(shift_task[3])*int(shift_task[4])
-                break
+            # Переменная для подсчета кол-ва сменных заданий с разными продуктами
+            product_count = 0
+            # Подсчет времени на все сменные задания и кол-ва сменных заданий с разными продуктами
+            for shift_task in range(0, len(ShiftInfo)-1):
+                shift_times += int(ShiftInfo[shift_task][3])*int(ShiftInfo[shift_task][4])
+                if ShiftInfo[shift_task][6] == ShiftInfo[shift_task][6]:
+                    product_count += 1
             # Расчитываем оставшееся время на простои
             if shift_times >= 43200:
                 downtime = 0
@@ -176,10 +181,10 @@ def GetPlan(data):
             plan = [{"y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}]
             closure_summ = 0
             # Перебираем сменное задание
-            for shift_task in ShiftInfo:
-                for closure in range(1, shift_task[3]+1):
+            for shift_task in range(0, len(ShiftInfo)):
+                for closure in range(1, ShiftInfo[shift_task][3]+1):
                     closure_summ += 1
-                    time += timedelta(seconds=int(shift_task[4]))
+                    time += timedelta(seconds=int(ShiftInfo[shift_task][4]))
                     if time < end_shift:
                         plan.append({"y": closure_summ, "x": time.strftime(
                             "%Y-%m-%d %H:%M:%S.%f")[:-3]})
@@ -190,9 +195,9 @@ def GetPlan(data):
                     else:  
                         # Если время превышает время окончания смены, не прибавлять данный цикл
                         break
-                closure_summ -= 1
-                time += timedelta(seconds=downtime//(len(ShiftInfo)-1))
-            # Пустая точка на конце смены, чтобы график был отрисован до конца
+                if ShiftInfo[shift_task][6] != ShiftInfo[shift_task][6]:
+                    closure_summ -= 1
+                    time += timedelta(seconds=(product_count-1))
             plan.append({"y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]})
         socketio.emit('receiveTrendPlanData',data=json.dumps({ip_addr:{'plan':plan,'trend':trend}},ensure_ascii=False, indent=4))
 
