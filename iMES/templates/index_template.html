@@ -327,17 +327,21 @@
         {
             tabs_status = arr[address]
             nav_tabs = document.querySelectorAll(".nav_tpa")
-            nav_tabs.forEach(tab => {
-                for (const status of tabs_status['Active']) {
+            for(let tab of nav_tabs)
+            {
+                for(let status of tabs_status['Active'])
+                {
                     if (tab.dataset.oid == status['Oid'])
                     {
+                        console.log(status['Oid'])
                         tab.className = "nav-link nav_tpa nav_green"
                         if(tab.dataset.oid == tabs_status['CurrentTpa'])
                         {
                             tab.className = "nav-link nav_tpa nav_green active"
                         }
+                        break
                     }
-                    else
+                    if(tab.dataset.oid != status['Oid'])
                     {
                         tab.className = "nav-link nav_tpa nav_red"
                         if(tab.dataset.oid == tabs_status['CurrentTpa'])
@@ -346,7 +350,29 @@
                         }
                     }
                 }
-            });
+                // console.log(status)
+            }
+            // nav_tabs.forEach(tab => {
+            //     for (let status of tabs_status['Active']) {
+            //         console.log(status['Oid'])
+            //         if (tab.dataset.oid == status['Oid'])
+            //         {
+            //             tab.className = "nav-link nav_tpa nav_green"
+            //             if(tab.dataset.oid == tabs_status['CurrentTpa'])
+            //             {
+            //                 tab.className = "nav-link nav_tpa nav_green active"
+            //             }
+            //         }
+            //         else
+            //         {
+            //             tab.className = "nav-link nav_tpa nav_red"
+            //             if(tab.dataset.oid == tabs_status['CurrentTpa'])
+            //             {
+            //                 tab.className = "nav-link nav_tpa nav_red active"
+            //             }
+            //         }
+            //     }
+            // });
         }
     })
 

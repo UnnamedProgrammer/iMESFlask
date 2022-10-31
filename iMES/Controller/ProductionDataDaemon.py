@@ -137,6 +137,7 @@ class ProductionDataDaemon():
             return False
 
     def CreateProductionDataRecord(self, shifttaskdata):
+        sql = ''
         if shifttaskdata != '':
             if not self.ProductionDataRecordIsCreated(shifttaskdata[0]):
                 pressform = self.GetTpaPressFrom(shifttaskdata[2])
@@ -144,6 +145,12 @@ class ProductionDataDaemon():
                     sql = f"""
                     INSERT INTO ProductionData (Oid, ShiftTask, RigEquipment,Status, StartDate, EndDate, CountFact, CycleFact,WeightFact,SpecificationFact)
                     VALUES (NEWID(),'{shifttaskdata[0]}','{pressform}', 0, NULL,NULL,NULL,NULL,NULL,'{shifttaskdata[5]}')
+                    """
+                    SQLManipulator.SQLExecute(sql)
+                elif pressform == '':
+                    sql = f"""
+                    INSERT INTO ProductionData (Oid, ShiftTask, RigEquipment,Status, StartDate, EndDate, CountFact, CycleFact,WeightFact,SpecificationFact)
+                    VALUES (NEWID(),'{shifttaskdata[0]}',NULL, 0, NULL,NULL,NULL,NULL,NULL,'{shifttaskdata[5]}')
                     """
                     SQLManipulator.SQLExecute(sql)
 
