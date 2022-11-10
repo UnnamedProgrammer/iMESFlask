@@ -40,7 +40,7 @@
     <div class="d-flex justify-content-between px-3">
         <div class="col-6 row">
             <div class="col nopadding me-1">
-                <button type="button" class="btn btn__view primary fs-4" onClick="numberModalControl(event)">
+                <button type="button" class="btn btn__view primary fs-4" onClick="productList.classList.toggle('hidden')">
                     Ввод веса<br>изделия
                 </button>
             </div>
@@ -115,7 +115,7 @@
                                 <tr>
                                     <td value=''>{{ somedata[2][i][0] }}</td>
                                     <td class="nopadding table__button col-3">
-                                        <button type="button" class="btn__table green" data-productiondata="{{ somedata[2][i][1] }}" data-selectproduct="{{ somedata[2][i][0] }}" onClick="selectCurrentProductWeight(event)">Выбрать</button>
+                                        <button type="button" class="btn__table" data-target="addProductWeight" data-prodoid="{{ somedata[2][i][1] }}" data-prodname="{{ somedata[2][i][0] }}" onClick="selectProduct(event)">Выбрать</button>
                                     </td>
                                 </tr>
                             {% endfor %}

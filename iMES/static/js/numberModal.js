@@ -53,8 +53,8 @@ function numberModalControl(event){
             }
 
             else if (enter.id == 'productWeight') {
-                productData = display.textContent;
-                productList.classList.toggle('hidden')
+                productWeight = display.textContent;
+                $(table).find('tbody').append('<tr> <td id="weightProductData" data-prodoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
             }
 
             else if(event.target.tagName == 'INPUT')
@@ -86,6 +86,11 @@ function selectProduct(event) {
     if (event.target.dataset.target == 'wasteSelect'){
         document.getElementById('addWaste').classList.toggle('hidden')
     }
+
+    else if (event.target.dataset.target == 'addProductWeight') {
+        numberModalControl(event)
+    }
+
     else {
         enter.id = 'defectEnterCount'
         enter.innerHTML = 'ВВОД КОЛ.'
@@ -101,11 +106,4 @@ function selectWaste(event) {
     enter.id = 'addWasteWeight'
 
     numberModalControl(event)
-}
-
-// Ввод веса с выбором продукта
-function selectCurrentProductWeight(event) {
-    let currentProduct = event.target.dataset.selectproduct
-    $(table).find('tbody').append('<tr> <td>'+ currentProduct +'</td> <td class="green" id="productWeightData">'+ productData +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
-    productList.classList.toggle('hidden')
 }
