@@ -9,6 +9,15 @@ let ttpa = document.getElementById('ttpa').innerHTML,
     operator = document.getElementById('operator').innerHTML,
     clock = document.getElementById('clock').innerHTML
 
+setTimeout(function(){
+    ttpa = document.getElementById('ttpa').innerHTML,
+    tprod = document.getElementById('tprod').innerHTML,
+    smena = document.getElementById('smena').innerHTML,
+    nvplan = document.getElementById('nvplan').innerHTML,
+    operator = document.getElementById('operator').innerHTML,
+    clock = document.getElementById('clock').innerHTML;
+},500);
+
 function changeTPA(event){
     let tpaOid = event.target.dataset.oid;
     let tpaName = event.target.dataset.name;
@@ -44,6 +53,45 @@ function modalController(event){
     modal = document.getElementById(target) // Получение нужного модальног окна по ID
     // Открытие/закрытие модального окна
     modal.classList.toggle('hidden');
+}
+
+// Печать этикетки
+function stickerPrint() {
+
+    mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+
+    let clock = document.getElementById('clock').innerHTML,
+        html ="";
+
+    html += '<div>----------------------------------</div>'
+    +'<b>Артикул</b> '+tprod+'<br>'
+    +'<b>Дата</b> '+ clock +' <br>'
+    +'<b>Смена</b> '+ smena +'<br>'
+    +'<b>Количество</b> '+ nvplan +'<br>'
+    +'<b>Упаковщик</b> '+ operator +'<br>';
+    var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+
+    printStickerWindow(div, mywindow);
+}
+
+// Печать итогов за смену
+function stickerPrintTotal() {
+
+    mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+
+    let clock = document.getElementById('clock').innerHTML,
+        html ="";
+    
+    html += '<div>----------------------------------</div>'
+    +smena+'<br>'
+    +ttpa+ '<br>'
+    +'План на смену: <br>'
+    +'Оператор: '+'<br>'
+    +'Наладчик: '+'<br>'
+    +'Простои: '+'<br>'
+    let div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>'; 
+
+    printStickerWindow(div, mywindow);
 }
 
 // Окно печати
