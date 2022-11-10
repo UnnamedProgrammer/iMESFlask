@@ -1,6 +1,8 @@
 {% extends 'index_template.html' %}
 {% block main_window %}
-{% set current_product = somedata %}
+{% set current_product = somedata[0] %}
+{% set all_wastes = somedata[1] %}
+
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
     <div class="view-body jsScroll">
@@ -23,7 +25,7 @@
     <div class="d-flex justify-content-between px-3">
         <div class="col-6 row">
             <div class="col nopadding me-1">
-                <button type="button" class="wasteButton btn btn__view primary fs-4" id="wasteEnterButton" onclick="location.href='tableWasteDefect/wastes'">
+                <button type="button" class="wasteButton btn btn__view primary fs-4" id="wasteEnterButton">
                     Ввод отхода<br>за смену
                 </button>
             </div>
@@ -95,7 +97,7 @@
             </div>
             <div class="modal_content">
                 <div class="modal_body jsScroll">
-                    <table class="table table-bordered text-center" id="selectStickerProduct" border="1" bordercolor="black">
+                    <table class="table table-bordered text-center" border="1" bordercolor="black">
                         <thead class="table-dark">
                             <tr>
                                 <th scope="col">Добавить</th>
@@ -106,9 +108,9 @@
                             {% for products in current_product %}
                             <tr>
                                 <td class="nopadding table__button col-3">
-                                    <button type="button" class="btn__table green" id="addWasteButton">Выбрать</button>
+                                    <button type="button" class="btn__table" id="selectProductButton" data-target="" data-prodoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
                                 </td>
-                                <td data-oid="{{ products[0] }}"> {{ products[1] }} </td>
+                                <td> {{ products[1] }} </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -116,6 +118,42 @@
                 </div>
                 <div class="modal_footer">
                     <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="currentProductList" onClick="modalController(event)"> Закрыть </button>
+                </div>
+            </div>
+        </div>
+        <div class="bg-blur"></div>
+    </div>
+    <!-- ----------------------------------------------------------- -->
+
+    <!-- Модальное (всплывающее) окно выбора отхода -->
+    <div class="modal hidden" id="addWaste">
+        <div class="modal__list">
+            <div class="modal_header">
+                <h5 class="modal_title">Список отходов</h5>
+            </div>
+            <div class="modal_content">
+                <div class="modal_body jsScroll">
+                    <table class="table table-bordered text-center" border="1" bordercolor="black">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Добавить</th>
+                                <th scope="col">Отход</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in range(all_wastes|length) %}
+                                <tr>
+                                    <td class="nopadding table__button col-3">
+                                        <button type="button" class="btn__table" id="addWaste" data-wasteoid="{{ all_wastes[i][0] }}" data-wastename="{{ all_wastes[i][1] }}" onClick="selectWaste(event)">Выбрать</button>
+                                    </td>
+                                    <td>{{ all_wastes[i][1] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal_footer">
+                    <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="addWaste" onClick="modalController(event)"> Закрыть </button>
                 </div>
             </div>
         </div>
@@ -133,7 +171,8 @@
 
     wasteButton.addEventListener('click', () => {
         if (wasteButton.id == 'wasteEnterButton') {
-            document.location.href='/operator/tableWasteDefect/wastes'
+            document.getElementById('selectProductButton').dataset.target = 'wasteSelect'
+            productList.classList.toggle('hidden')
         } else {
             alert('Печать отходов')
         }
@@ -141,7 +180,8 @@
 
     defectButton.addEventListener('click', () => {
         if (defectButton.id == 'defectEnterButton') {
-            numberModalControl(event)
+            document.getElementById('selectProductButton').dataset.target = 'defectSelect'
+            productList.classList.toggle('hidden')
         } else {
             let weightHTML = ''
 

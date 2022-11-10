@@ -94,6 +94,23 @@ def tableWasteDefect():
                                 Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
                                 ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
     current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+    
+    # Получаем данные о всех существующих отходах
+    sql_GetAllWastes = f"""SELECT Oid, Name  
+    FROM Material WHERE Type = 1
+    ORDER BY Name"""
+    all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
+
+    # Получаем данные о текущем продукте
+    # Но это не точно
+    sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name
+                                FROM ShiftTask INNER JOIN
+                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
+                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
+                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
+    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+    print(current_product)
 
     # # Получаем данные о текущем продукте и производственных данных
     # # sql_GetCurrentProductionData = f"""SELECT Product.Name, ProductionData.Oid
@@ -132,7 +149,7 @@ def tableWasteDefect():
     # # return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', [current_production_data[0][0],
     # #                                 current_product_waste[0][0], current_product_waste[0][1], current_product_waste[0][2],
     # #                                 current_product_waste[0][3], current_product_waste[0][4], current_product_waste[0][5]])
-    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', current_product)
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', [current_product, all_wastes])
 
 # Окно ввода отходов
 
