@@ -34,7 +34,7 @@ function numberModalControl(event){
         if(display.textContent != "")
         {
             if(enter.id == 'addWasteWeight'){
-                $(table).find('tbody').append('<tr> <td id="wasteProductData" data-prodoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="table-warning" id="wasteData" data-wasteoid="'+ wasteData[0] +'">'+ wasteData[1] +'</td> <td></td> <td id="wasteWeight">'+ display.textContent +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
+                $(table).find('tbody').append('<tr> <td id="wasteProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="table-warning" id="wasteData" data-wasteoid="'+ wasteData[0] +'">'+ wasteData[1] +'</td> <td></td> <td id="wasteWeight">'+ display.textContent +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
             
             else if(enter.id == 'defectEnterCount')
@@ -49,12 +49,12 @@ function numberModalControl(event){
             {
                 defectWeight = display.textContent;
                 enter.id = 'defectEnterCount';
-                $(table).find('tbody').append('<tr> <td id="defectProductData" data-prodoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="red"> Брак </td> <td id="defectCount">'+ defectCount +'</td> <td id="defectWeight">'+ defectWeight +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
+                $(table).find('tbody').append('<tr> <td id="defectProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="red"> Брак </td> <td id="defectCount">'+ defectCount +'</td> <td id="defectWeight">'+ defectWeight +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
 
             else if (enter.id == 'productWeight') {
                 productWeight = display.textContent;
-                $(table).find('tbody').append('<tr> <td id="weightProductData" data-prodoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
+                $(table).find('tbody').append('<tr> <td id="weightProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
             }
 
             else if(event.target.tagName == 'INPUT')
