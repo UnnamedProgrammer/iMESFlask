@@ -1,7 +1,8 @@
 {% extends 'index_template.html' %}
 {% block main_window %}
-{% set current_product = somedata[0] %}
-{% set all_wastes = somedata[1] %}
+{% set current_product_waste = somedata[0] %}
+{% set current_product = somedata[1] %}
+{% set all_wastes = somedata[2] %}
 
 <div class="view">
     <div class="view-header text-center primary">Возвратные отходы и брак за смену</div>
@@ -19,6 +20,17 @@
                 </tr>
             </thead>
             <tbody>
+                {% for wastes in current_product_waste %}
+                <tr>
+                    <td> {{ wastes[0] }} </td>
+                    <td> {{ wastes[2] if wastes[1] == 0 else 'Брак'}} </td>
+                    <td> {{ wastes[3] }} </td>
+                    <td> {{ wastes[4] }} </td>
+                    <td> {{ wastes[5] }} </td>
+                    <td> {{ wastes[6] }} </td>
+                    <td> {{ wastes[7] }} </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
