@@ -54,6 +54,9 @@ function numberModalControl(event){
 
             else if (enter.id == 'productWeight') {
                 productWeight = display.textContent;
+                let entered_weight = document.getElementById('inputWeight').textContent;
+                var socket = io();
+                socket.emit('product_weight_entering', [entered_weight, productData[0]]);
                 $(table).find('tbody').append('<tr> <td id="weightProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
             }
 
@@ -81,7 +84,7 @@ function numberModalControl(event){
 }
 
 function selectProduct(event) {
-    productData = [event.target.dataset.prodoid, event.target.dataset.prodname]
+    productData = [event.target.dataset.proddataoid, event.target.dataset.prodname]
     productList.classList.toggle('hidden')
     if (event.target.dataset.target == 'wasteSelect'){
         document.getElementById('addWaste').classList.toggle('hidden')

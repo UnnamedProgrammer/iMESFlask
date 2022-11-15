@@ -1,7 +1,7 @@
 {% extends 'index_template.html' %}
 {% block main_window %}
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
-<script src="/static/js/EnterTableWeight/entered_TW.js"></script>
+{% set table_weight = somedata[0] %}
+{% set product_data = somedata[2] %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <div class="cancelWindow" id="js-shadow"></div>
 <div class="shadow" id="checkAlert"></div>
@@ -18,7 +18,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for tableWeight_row in somedata[0] %}
+                {% for tableWeight_row in table_weight %}
                     <tr>
                         <td>
                             {{ tableWeight_row[0] }}
@@ -111,11 +111,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for i in range(somedata[2]|length) %}
+                            {% for i in range(product_data|length) %}
                                 <tr>
-                                    <td value=''>{{ somedata[2][i][0] }}</td>
+                                    <td value=''>{{ product_data[i][0] }}</td>
                                     <td class="nopadding table__button col-3">
-                                        <button type="button" class="btn__table" data-target="addProductWeight" data-proddataoid="{{ somedata[2][i][1] }}" data-prodname="{{ somedata[2][i][0] }}" onClick="selectProduct(event)">Выбрать</button>
+                                        <button type="button" class="btn__table" data-target="addProductWeight" data-proddataoid="{{ product_data[i][1] }}" data-prodname="{{ product_data[i][0] }}" onClick="selectProduct(event)">Выбрать</button>
                                     </td>
                                 </tr>
                             {% endfor %}
