@@ -53,41 +53,89 @@
                 </div>
                 <div class="card height150 shadow">
                     <div class="card-header text-center primary">ПРОДУКТ</div>
-                    <div class="swiper-container mySwiper1">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center nopadding fw-bold" id="tprod"></p>
-                            <p class="swiper-slide card-text text-center nopadding fw-bold" id="tprod">Продукт 2</p>
-                            <p class="swiper-slide card-text text-center nopadding fw-bold" id="tprod">Продукт 3</p>
+                    <div class="card-content">
+                        <div class="swiper-container mySwiper1">
+                            <div class="swiper-wrapper">
+                                <p class="swiper-slide card-text text-center nopadding fw-bold" id="tprod"></p>
+                                <p class="swiper-slide card-text text-center nopadding fw-bold" id="tprod">Продукт 2</p>
+                                <p class="swiper-slide card-text text-center nopadding fw-bold" id="tprod">Продукт 3</p>
+                            </div>
+                        </div>
+                        <div class="show-more" onClick="showMore(event)"></div>
+                        <div class="custom-option custom-option_product opacity-0">
+                            <div class="custom-option__item shadow border">
+                                <p class="card-text text-center nopadding fw-bold" id="tprod">Продукт 2</p>
+                            </div>
+                            <div class="custom-option__item border shadow">
+                                <p class="card-text text-center nopadding fw-bold" id="tprod">Продукт 3</p>
+                                <div class="close-more" onClick="closeMore(event)"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center primary">ПЛАН ПО ПРОД.</div>
-                    <div class="swiper-container mySwiper2">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center nplan" id="nplan"></p>
-                            <p class="swiper-slide card-text text-center nplan" id="nplan">122</p>
-                            <p class="swiper-slide card-text text-center nplan" id="nplan">224</p>
+                    <div class="card-content">
+                        <div class="swiper-container mySwiper2">
+                            <div class="swiper-wrapper">
+                                <p class="swiper-slide card-text text-center nplan" id="nplan"></p>
+                                <p class="swiper-slide card-text text-center nplan" id="nplan">122</p>
+                                <p class="swiper-slide card-text text-center nplan" id="nplan">224</p>
+                            </div>
+                        </div>
+                        <div class="show-more" onClick="showMore(event)"></div>
+                        <div class="custom-option custom-option_prodPlan opacity-0">
+                            <div class="custom-option__item shadow border">
+                                <p class="card-text text-center nplan" id="nplan">122</p>
+                            </div>
+                            <div class="custom-option__item border shadow">
+                                <p class="card-text text-center nplan" id="nplan">68</p>
+                                <div class="close-more" onClick="closeMore(event)"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">ВЫПУЩЕНО ПРОД.</div>
-                    <div class="swiper-container mySwiper3">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center nvplan" id="nvplan"></p>
-                            <p class="swiper-slide card-text text-center nvplan" id="nvplan">0</p>
-                            <p class="swiper-slide card-text text-center nvplan" id="nvplan">12</p>
+                    <div class="card-content mt-1">
+                        <div class="swiper-container mySwiper3">
+                            <div class="swiper-wrapper">
+                                <p class="swiper-slide card-text text-center nvplan" id="nvplan"></p>
+                                <p class="swiper-slide card-text text-center nvplan" id="nvplan">0</p>
+                                <p class="swiper-slide card-text text-center nvplan" id="nvplan">12</p>
+                            </div>
+                        </div>
+                        <div class="show-more" onClick="showMore(event)"></div>
+                        <div class="custom-option custom-option_prodFact opacity-0">
+                            <div class="custom-option__item shadow border">
+                                <p class="card-text text-center nvplan" id="nvplan">15</p>
+                            </div>
+                            <div class="custom-option__item border shadow">
+                                <p class="card-text text-center nvplan" id="nvplan">35</p>
+                                <div class="close-more" onClick="closeMore(event)"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">БРАК</div>
-                    <div class="swiper-container mySwiper4">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center nvDefect" id="nvDefect"></p>
-                            <p class="swiper-slide card-text text-center nvDefect" id="nvDefect">2</p>
-                            <p class="swiper-slide card-text text-center nvDefect" id="nvDefect">7</p>
+                    <div class="card-content">
+                        <div class="swiper-container mySwiper4">
+                            <div class="swiper-wrapper">
+                                <p class="swiper-slide card-text text-center nvDefect" id="nvDefect"></p>
+                                <p class="swiper-slide card-text text-center nvDefect" id="nvDefect">2</p>
+                                <p class="swiper-slide card-text text-center nvDefect" id="nvDefect">7</p>
+                            </div>
+                        </div>
+                        <div class="show-more" onClick="showMore(event)"></div>
+                        <div class="custom-option custom-option_prodFact opacity-0">
+                            <div class="custom-option__item shadow border">
+                                <p class="card-text text-center nvDefect" id="nvDefect">2</p>
+                            </div>
+                            <div class="custom-option__item border shadow">
+                                <p class="card-text text-center nvDefect" id="nvDefect">7</p>
+                                <div class="close-more" onClick="closeMore(event)"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -134,42 +182,26 @@
             <div class="col-2">
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ПЛАНОВЫЙ ЦИКЛ</div>
-                    <div class="swiper-container mySwiper5">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center display-3" id="pointTC"></p>
-                            <p class="swiper-slide card-text text-center display-3" id="pointTC">192</p>
-                            <p class="swiper-slide card-text text-center display-3" id="pointTC">178</p>
-                        </div>
+                    <div class="text-center">
+                        <p class="card-text text-center display-3" id="pointTC"></p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ЦИКЛ ЗА СМЕНУ</div>
-                    <div class="swiper-container mySwiper6">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center display-3" id="pointVCS"></p>
-                            <p class="swiper-slide card-text text-center display-3" id="pointVCS">191.5</p>
-                            <p class="swiper-slide card-text text-center display-3" id="pointVCS">179</p>
-                        </div>
-                    </div>
+                    <div class="text-center">
+                        <p class="card-text text-center display-3" id="pointVCS"></p>
+                    </div>  
                 </div>
                 <div class="card height200 shadow">
                     <div class="card-header text-center primary">ПЛАНОВЫЙ ВЕС</div>
-                    <div class="swiper-container mySwiper7">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center display-3" id="planweight"></p>
-                            <p class="swiper-slide card-text text-center display-3" id="planweight">50</p>
-                            <p class="swiper-slide card-text text-center display-3" id="planweight">73</p>
-                        </div>
+                    <div class="text-center mt-3">
+                        <p class="card-text text-center display-3" id="planweight"></p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
                     <div class="card-header text-center card-h-uppercase primary">СРЕДНИЙ ВЕС</div>
-                    <div class="swiper-container mySwiper8">
-                        <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center display-3" id="average_weigth">0</p>
-                            <p class="swiper-slide card-text text-center display-3" id="average_weigth">0</p>
-                            <p class="swiper-slide card-text text-center display-3" id="average_weigth">0</p>
-                        </div>
+                    <div class="text-center">
+                        <p class="card-text text-center display-3" id="average_weigth">0</p>
                     </div>
                 </div>
                 <div class="card height100 shadow">
@@ -232,30 +264,18 @@
     const swiper2 = new Swiper(".mySwiper2", {});
     const swiper3 = new Swiper(".mySwiper3", {});
     const swiper4 = new Swiper(".mySwiper4", {});
-    const swiper5 = new Swiper(".mySwiper5", {});
-    const swiper6 = new Swiper(".mySwiper6", {});
-    const swiper7 = new Swiper(".mySwiper7", {});
-    const swiper8 = new Swiper(".mySwiper8", {});
 
     const swipeAllSliders = (index) => {
         swiper1.slideTo(index);
         swiper2.slideTo(index);
         swiper3.slideTo(index);
         swiper4.slideTo(index);
-        swiper5.slideTo(index);
-        swiper6.slideTo(index);
-        swiper7.slideTo(index);
-        swiper8.slideTo(index);
     }
 
     swiper1.on('slideChange', () => swipeAllSliders(swiper1.activeIndex));
     swiper2.on('slideChange', () => swipeAllSliders(swiper2.activeIndex));
     swiper3.on('slideChange', () => swipeAllSliders(swiper3.activeIndex));
     swiper4.on('slideChange', () => swipeAllSliders(swiper4.activeIndex));
-    swiper5.on('slideChange', () => swipeAllSliders(swiper5.activeIndex));
-    swiper6.on('slideChange', () => swipeAllSliders(swiper6.activeIndex));
-    swiper7.on('slideChange', () => swipeAllSliders(swiper7.activeIndex));
-    swiper8.on('slideChange', () => swipeAllSliders(swiper8.activeIndex));
 </script>
 
 <script src="{{url_for('static', filename='/js/main.js')}}"></script>

@@ -21,6 +21,9 @@ p {
 button {
   border: none; }
 
+.swiper-container {
+  overflow: hidden; }
+
 .swiper-slide {
   display: flex;
   justify-content: center;
@@ -181,6 +184,24 @@ button {
 
 .btn-light {
   border: 2px dashed black !important; }
+
+.show-more {
+  position: absolute;
+  left: 185px;
+  top: 55px;
+  width: 25px;
+  height: 50px;
+  background: url("show-more.png") no-repeat;
+  z-index: 10; }
+
+.close-more {
+  position: absolute;
+  left: 185px;
+  top: 13px;
+  width: 25px;
+  height: 50px;
+  background: url("close-more.png") no-repeat;
+  z-index: 10; }
 
 /* Стили клавиатур */
 .keyboard {
@@ -558,9 +579,6 @@ table .red {
 .left-padding {
   padding-left: 1rem; }
 
-.hidden {
-  display: none; }
-
 .flex-end {
   align-items: flex-end; }
 
@@ -598,23 +616,43 @@ table .red {
 
 .height100 {
   height: 45px;
-  margin: 5px 0px;
-  overflow: hidden; }
+  margin: 5px 0px; }
 
 .height120 {
   height: 115px;
-  margin: 5px 0;
-  overflow: hidden; }
+  margin: 5px 0; }
 
 .height150 {
   height: 145px;
-  margin: 5px 0;
-  overflow: hidden; }
+  margin: 5px 0; }
 
 .height200 {
   height: 177px;
-  margin: 5px 0px;
-  overflow: hidden; }
+  margin: 5px 0px; }
+
+.custom-option {
+  position: absolute;
+  margin-left: 3px;
+  display: flex;
+  flex-direction: row;
+  z-index: 2;
+  top: 41px;
+  left: 184px;
+  transform: translateX(-380px);
+  transition: 1s; }
+  .custom-option__item {
+    position: relative;
+    margin-left: 3px;
+    width: 185px;
+    text-align: center;
+    background-color: #fff;
+    border-radius: 7px; }
+  .custom-option_product {
+    height: 103px; }
+  .custom-option_prodPlan {
+    height: 73px; }
+  .custom-option_prodFact {
+    height: 73px; }
 
 .height-bottom {
   height: 130px;
@@ -623,3 +661,10 @@ table .red {
 
 .width-bottom {
   width: 200px; }
+
+.anim-products {
+  transform: translateX(0px);
+  transition: 1s; }
+
+.hidden {
+  display: none; }

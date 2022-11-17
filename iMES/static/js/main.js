@@ -9,6 +9,9 @@ let ttpa = document.getElementById('ttpa').innerHTML,
     operator = document.getElementById('operator').innerHTML,
     clock = document.getElementById('clock').innerHTML
 
+let showMoreButton = document.querySelectorAll('.show-more')
+    closeMoreButton = document.querySelectorAll('.close-more')
+
 setTimeout(function(){
     ttpa = document.getElementById('ttpa').innerHTML,
     tprod = document.getElementById('tprod').innerHTML,
@@ -134,4 +137,31 @@ if(jsScroll){
             item.removeEventListener('mousemove', endListener);
         });
     });
+}
+
+
+function showMore(event) {
+    for (let i = 0; i < showMoreButton.length; i++) {
+        showMoreButton[i].classList.add('hidden')
+        closeMoreButton[i].classList.remove('hidden')
+    }
+    optionList = document.querySelectorAll('.custom-option')
+
+    for (let i = 0; i < optionList.length; i++) {
+        optionList[i].classList.remove('opacity-0')
+        optionList[i].classList.add('anim-products')
+    }
+}
+function closeMore(event) {
+    for (let i = 0; i < showMoreButton.length; i++) {
+        setTimeout(() =>
+            showMoreButton[i].classList.remove('hidden')
+            
+        ,350);
+    }
+    optionList = document.querySelectorAll('.custom-option')
+    for (let i = 0; i < optionList.length; i++) {
+        optionList[i].classList.add('opacity-0')
+        optionList[i].classList.remove('anim-products')
+    }
 }
