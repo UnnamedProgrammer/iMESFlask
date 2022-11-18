@@ -40,7 +40,6 @@ def tableWeight():
     if product_weight:
         table_info = list()
         for product_weight_quantity in range(len(product_weight)):
-            print(1)
             table_info.append([product_weight[product_weight_quantity][0], f'{product_weight[product_weight_quantity][1]:.3f}', str(
                                 product_weight[product_weight_quantity][2].strftime('%d.%m.%Y %H:%M:%S')), 
                                 f'{product_weight[product_weight_quantity][3]} {product_weight[product_weight_quantity][4]} {product_weight[product_weight_quantity][5]}'])
@@ -82,19 +81,39 @@ def tableWasteDefect():
     ip_addr = request.remote_addr
 
     # Получаем данные о текущих отходах и браке
-    sql_GetCurrentProductWaste = f"""SELECT Product.Name, ProductWaste.Type, Material.Name, ProductWaste.Count, ProductWaste.Weight,
-                                        ProductWaste.Note, ProductWaste.CreateDate, ProductWaste.Creator
+    sql_GetCurrentProductWaste = f"""SELECT ProductWaste.Material, Product.Name, ProductWaste.Type, ProductWaste.Count, ProductWaste.Weight,
+                                        ProductWaste.Note, ProductWaste.CreateDate, Employee.LastName, Employee.FirstName, Employee.MiddleName
                                         FROM ShiftTask INNER JOIN
                                         Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
                                         Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
                                         Product ON ShiftTask.Product = Product.Oid INNER JOIN
                                         ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask INNER JOIN
                                         ProductWaste ON ProductionData.Oid = ProductWaste.ProductionData INNER JOIN
-                                        Material ON ProductWaste.Material = Material.Oid"""
+                                        [User] ON ProductWaste.Creator = [User].Oid INNER JOIN
+                                        Employee ON [User].Employee = Employee.Oid"""
     current_product_waste = SQLManipulator.SQLExecute(sql_GetCurrentProductWaste)
 
+    # Проверяем были ли введены отходы и/или брак в текущую смену
+    # Если был, то записываем данные в кортежи в нужном формате для отображения на странице
+    if current_product_waste:
+        waste_defect_info = list()
+
+        for product_waste_quantity in range(len(current_product_waste)):
+            
+            sql_GetCurrentMaterial  = f"""SELECT Name FROM Material WHERE Material.Oid = '{current_product_waste[0][0]}'"""
+            current_material = SQLManipulator.SQLExecute(sql_GetCurrentMaterial)
+
+            waste_defect_info.append([current_product_waste[product_waste_quantity][1], current_product_waste[product_waste_quantity][2],
+                                current_material[0][0], f'{current_product_waste[product_waste_quantity][3]:.0f}' if current_product_waste[product_waste_quantity][3] else '', 
+                                f'{current_product_waste[product_waste_quantity][4]:.3f}', current_product_waste[product_waste_quantity][5] if current_product_waste[product_waste_quantity][5] else '',
+                                str(current_product_waste[product_waste_quantity][6].strftime('%d.%m.%Y %H:%M:%S')), 
+                                f'{current_product_waste[product_waste_quantity][7]} {current_product_waste[product_waste_quantity][8]} {current_product_waste[product_waste_quantity][9]}'])
+    # Если за смену вес никто не вводил, то формируем пустой массив
+    else:
+        waste_defect_info = list()
+
     # Получаем данные о текущем продукте и производственных данных
-    sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name, ProductionData.Oid
+    sql_GetCurrentProduct = f"""SELECT DISTINCT ProductionData.Oid, Product.Name 
                                 FROM ShiftTask INNER JOIN
                                 Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
                                 Product ON ShiftTask.Product = Product.Oid INNER JOIN
@@ -108,22 +127,39 @@ def tableWasteDefect():
     ORDER BY Name"""
     all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
 
-    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', [current_product_waste, current_product, all_wastes])
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', [waste_defect_info, current_product, all_wastes])
 
 
-# # Кнопка ввода веса изделия во всплывающей клавиатуре была нажата
-# @socketio.on('product_wastes')
-# def handle_entered_product_wastes(data):
-#     entered_weight = float(data[0])
-#     production_data = str(data[1])
+# Кнопка ввода веса отходов во всплывающей клавиатуре была нажата
+@socketio.on('product_wastes')
+def handle_entered_product_wastes(data):
+    production_data = str(data[0])
+    material_oid = str(data[1])
+    entered_waste_weight = float(data[2])
 
-#     sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
-#     current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
+    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
+    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
 
-#     # Создаем запись введенного изделия в таблице ProductWeight
-#     sql_PostProductWeight = f"""INSERT INTO ProductWeight (Oid, ProductionData, Weight, CreateDate, Creator)
-#                                 VALUES (NEWID(), '{production_data}', {entered_weight}, GETDATE(), '{current_User[0][0]}');"""
-#     SQLManipulator.SQLExecute(sql_PostProductWeight)
+    # Создаем запись введенного отхода в таблице ProductWaste
+    sql_PostProductWaste = f"""INSERT INTO ProductWaste (Oid, ProductionData, Material, Type, Weight, CreateDate, Creator)
+                                VALUES (NEWID(), '{production_data}', '{material_oid}', 0, {entered_waste_weight}, GETDATE(), '{current_User[0][0]}');"""
+    SQLManipulator.SQLExecute(sql_PostProductWaste)
+
+
+# Кнопка ввода брака во всплывающей клавиатуре была нажата
+@socketio.on('product_defect')
+def handle_entered_product_wastes(data):
+    production_data = str(data[0])
+    entered_defect_weight = float(data[1])
+    entered_defect_count = float(data[2])
+
+    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
+    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
+
+    # Создаем запись введенного отхода в таблице ProductWaste
+    sql_PostProductWaste = f"""INSERT INTO ProductWaste (Oid, ProductionData, Type, Weight, Count, CreateDate, Creator)
+                                VALUES (NEWID(), '{production_data}', 1, {entered_defect_weight}, {entered_defect_count}, GETDATE(), '{current_User[0][0]}');"""
+    SQLManipulator.SQLExecute(sql_PostProductWaste)
 
 
 # Окно ввода отходов

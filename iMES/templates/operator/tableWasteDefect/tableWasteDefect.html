@@ -118,12 +118,12 @@
                         </thead>
                         <tbody>
                             {% for products in current_product %}
-                            <tr>
-                                <td class="nopadding table__button col-3">
-                                    <button type="button" class="btn__table" id="selectProductButton" data-target="" data-proddataoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
-                                </td>
-                                <td> {{ products[1] }} </td>
-                            </tr>
+                                <tr>
+                                    <td class="nopadding table__button col-3">
+                                        <button type="button" class="btn__table" id="selectProductButton" data-target="" data-proddataoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
+                                    </td>
+                                    <td> {{ products[1] }} </td>
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>

@@ -34,6 +34,9 @@ function numberModalControl(event){
         if(display.textContent != "")
         {
             if(enter.id == 'addWasteWeight'){
+                let entered_waste_weight = document.getElementById('inputDefect').textContent;
+                var socket = io();
+                socket.emit('product_wastes', [productData[0], wasteData[0], entered_waste_weight]);
                 $(table).find('tbody').append('<tr> <td id="wasteProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="table-warning" id="wasteData" data-wasteoid="'+ wasteData[0] +'">'+ wasteData[1] +'</td> <td></td> <td id="wasteWeight">'+ display.textContent +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
             
@@ -49,6 +52,8 @@ function numberModalControl(event){
             {
                 defectWeight = display.textContent;
                 enter.id = 'defectEnterCount';
+                var socket = io();
+                socket.emit('product_defect', [productData[0], defectWeight, defectCount]);
                 $(table).find('tbody').append('<tr> <td id="defectProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="red"> Брак </td> <td id="defectCount">'+ defectCount +'</td> <td id="defectWeight">'+ defectWeight +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
 
