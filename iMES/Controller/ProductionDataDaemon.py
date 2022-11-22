@@ -21,17 +21,21 @@ class ProductionDataDaemon():
         while True:
             for tpanum in range(0,len(self.tpalist)):
                 try:
-                    self.tpalist[tpanum][3]['ShiftTask']
-                except IndexError:
-                    self.tpalist[tpanum].append({"ShiftTask":self.GetShiftTaskForTpa(self.tpalist[tpanum][0])})
-                    self.CreateProductionDataRecord(self.tpalist[tpanum][3]['ShiftTask'])
-                if(self.tpalist[tpanum][3]['ShiftTask'] != ''):
-                    self.UpdateCountClosures(self.tpalist[tpanum][3]['ShiftTask'][0],
-                                             self.tpalist[tpanum][3]['ShiftTask'][16],
-                                             self.tpalist[tpanum][3]['ShiftTask'][5],
-                                             self.tpalist[tpanum][3]['ShiftTask'][11],
-                                             self.tpalist[tpanum][3]['ShiftTask'][10],
-                                             self.tpalist[tpanum][0])
+                    if len(self.tpalist[tpanum][3]['ShiftTask']) > 0:
+                        for shift_task in self.tpalist[tpanum][3]['ShiftTask']: 
+                            self.CreateProductionDataRecord(shift_task)
+                            self.UpdateCountClosures(shift_task[0],
+                                                    shift_task[16],
+                                                    shift_task[5],
+                                                    shift_task[11],
+                                                    shift_task[10],
+                                                    shift_task[2])
+                    else:
+                        shift_task_list = self.GetShiftTaskForTpa(self.tpalist[tpanum][0])
+                        self.tpalist[tpanum][3]["ShiftTask"] = shift_task_list
+                except Exception as error:
+                    print(error, "on", str(self.tpalist[tpanum]))
+                    continue
             sleep(30)
 
     def GetAllTpa(self):
@@ -46,76 +50,59 @@ class ProductionDataDaemon():
         """
         result_sql = SQLManipulator.SQLExecute(sql)
         for tpa in result_sql:
-            TpaList.append(list(tpa))
+            tpa_obj = list(tpa)
+            tpa_obj.append({'ShiftTask':[]})
+            TpaList.append(tpa_obj)
         return TpaList
 
     def GetShiftTaskForTpa(self,tpaoid):
-        self.completed_clousers[tpaoid] = 0
-        sql_shiftask = f"""
-            SELECT TOP (1000) [ShiftTask].[Oid]
-                ,[Shift].Note
-                ,[Equipment]
-                ,[Ordinal]
-                ,[Product].Name
-                ,[Specification]
-                ,[Traits]
-                ,[ExtraTraits]
-                ,[PackingScheme]
-                ,[PackingCount]
-                ,[SocketCount]
-                ,[ProductCount]
-                ,[Cycle]
-                ,[Weight]
-                ,[ProductURL]
-                ,[PackingURL]
-                ,[Shift]
-            FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
-            [ShiftTask].Equipment = '{tpaoid}' AND
-            Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
-            ShiftTask.Product = Product.Oid AND
-			ShiftTask.Shift = Shift.Oid
-            ORDER BY ProductCount ASC
-        """
-        sql_product = f"""
-            SELECT TOP (1000) [Oid]
-                ,[ShiftTask]
-                ,[RigEquipment]
-                ,[Status]
-                ,[StartDate]
-                ,[EndDate]
-                ,[CountFact]
-                ,[CycleFact]
-                ,[WeightFact]
-                ,[SpecificationFact]
-            FROM [MES_Iplast].[dbo].[ProductionData] WHERE Status = 2
-        """
-        completed_products = SQLManipulator.SQLExecute(sql_product)
-        shifttasks = SQLManipulator.SQLExecute(sql_shiftask)
-        pass_clousers = 0
-        new_shift_task = ''
-        ended_shifttasks = []
-        for shifttask in shifttasks:
-            if(completed_products != []):
-                for complete_product in completed_products:
-                    if complete_product[1] != shifttask[0]:
-                        new_shift_task = shifttask
-                        continue
-                    else:
-                        if complete_product[6] != None:
-                            pass_clousers += complete_product[6]
-                        ended_shifttasks.append(shifttask[0])
-                        new_shift_task = ''
-                        continue
-                if (new_shift_task == '') or (new_shift_task[0] in ended_shifttasks):
-                    continue
-                else:
-                    break
-            else:
-                new_shift_task = shifttask
-                break
-        self.completed_clousers[tpaoid] = pass_clousers
-        return new_shift_task
+        shift_tasks = self.GetShiftTaskByEquipmentPerformance(tpaoid)
+        
+        return shift_tasks
     
+    def GetShiftTaskByEquipmentPerformance(self,tpaoid):
+        shift_tasks = []
+        pressform = self.GetTpaPressFrom(tpaoid)
+        equipment_performance = self.GetEquipmentPerformance(tpaoid,pressform)
+        if equipment_performance != None:
+            products = self.GetProductionProducts(equipment_performance[0])
+            print(products)
+        
+        return shift_tasks
+        
+    def GetEquipmentPerformance(self,tpaoid,rigoid):
+        if rigoid != None:
+            sql = f"""
+                SELECT [Oid]
+                    ,[NomenclatureGroup]
+                    ,[MainEquipment]
+                    ,[RigEquipment]
+                    ,[TotalSocketCount]
+                FROM [MES_Iplast].[dbo].[EquipmentPerformance]
+                WHERE MainEquipment = '{tpaoid}' AND
+                    RigEquipment = '{rigoid}'
+            """
+            EP = SQLManipulator.SQLExecute(sql)
+            if bool(EP):
+                return EP[0]
+            else:
+                return None
+
+    def GetProductionProducts(self,equipment_performance_oid):
+        sql = f"""
+            SELECT [EquipmentPerformance]
+                ,[Product]
+                ,[SocketCount]
+                ,[Cycle]
+            FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
+            WHERE EquipmentPerformance = '{equipment_performance_oid}'
+        """
+        list = SQLManipulator.SQLExecute(sql)
+        products = []
+        for product in list:
+            products.append(product[1])
+        return products
+
     def ProductionDataRecordIsCreated(self,ShiftTaskOid):
         sql = f"""
             SELECT TOP (1000) [Oid]
@@ -156,26 +143,29 @@ class ProductionDataDaemon():
 
     def GetTpaPressFrom(self,tpaoid):
         sql = f"""
-                SELECT TOP (1) Equipment.Oid, RFIDClosureData.Date
-                FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
-                WHERE 
-                Controller = (SELECT RFIDEquipment 
-                                FROM RFIDEquipmentBinding 
-                                WHERE Equipment = '{tpaoid}') AND
-                RFIDClosureData.Label = RFIDEquipmentBinding.RFIDEquipment AND
-                RFIDEquipmentBinding.Equipment = Equipment.Oid
-                ORDER BY Date DESC
+            SELECT TOP (1) RFIDEquipmentBinding.Equipment, RFIDClosureData.Date
+            FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
+            WHERE 
+            Controller = (SELECT RFIDEquipment 
+                            FROM RFIDEquipmentBinding 
+                            WHERE Equipment = '{tpaoid}') AND
+            RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label
+            ORDER BY Date DESC
             """
         pressform = SQLManipulator.SQLExecute(sql)
         if len(pressform) > 0:
             return pressform[0][0]
         else:
-            return ''
+            return None
 
     def UpdateCountClosures(self, ShiftTaskOid,ShiftOid, specification, plan, socketcount, tpaoid):
+        for ip_addr in TpaList.keys():
+            for tpa in TpaList[ip_addr]:
+                if tpa['Oid'] == tpaoid:
+                    tpa['WorkStatus'] = self.Get_Tpa_Status(ShiftTaskOid)
         if ShiftTaskOid == '':
             return
-        offset = self.completed_clousers[tpaoid]
+        offset = 0
         sql = f"""
             SELECT RCD.[Oid]
                 ,[Controller]
@@ -197,10 +187,6 @@ class ProductionDataDaemon():
             ORDER BY Date ASC OFFSET {offset} ROWS   
         """
         result = SQLManipulator.SQLExecute(sql)
-        for ip_addr in TpaList.keys():
-            for tpa in TpaList[ip_addr]:
-                if tpa['Oid'] == tpaoid:
-                    tpa['WorkStatus'] = self.Get_Tpa_Status(ShiftTaskOid)
         if len(result) > 0:
             count = (len(result)) * socketcount
             startdate = result[0][3].strftime('%Y-%m-%dT%H:%M:%S')

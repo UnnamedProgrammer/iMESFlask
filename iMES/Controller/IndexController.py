@@ -48,7 +48,28 @@ class IndexController():
             (SELECT * FROM ProductionData WHERE ProductionData.ShiftTask = ShiftTask.Oid AND Status = 1)
         """
         data = SQLManipulator.SQLExecute(sql)
-        pf = ''
+        # Проверка прессформы
+        sql = f"""
+            SELECT TOP (1) Equipment.Name, RFIDClosureData.Date
+            FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
+            WHERE 
+            Controller = (SELECT RFIDEquipment 
+                            FROM RFIDEquipmentBinding 
+                            WHERE Equipment = '{self.tpa}') AND
+            RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
+            Equipment.Oid = RFIDEquipmentBinding.Equipment
+            ORDER BY Date DESC
+            """
+        pf = SQLManipulator.SQLExecute(sql)
+        if len(pf) > 0:
+            if pf[0][0] == None:
+                self.pressform = 'Метка не привязана к прессформе'
+            else:
+                self.pressform = pf[0][0]
+        else:
+            self.pressform = 'Не определена'
+        #---------------------------------------------------
+
         if len(data) > 0:
             data = data[0]
             self.shift_task_oid = data[0]
@@ -58,18 +79,6 @@ class IndexController():
             self.plan_weight = round(data[13])
             self.shift = data[1]
             self.PackingURL = data[15]
-            sql = f"""
-                SELECT TOP (1) Equipment.Name, RFIDClosureData.Date
-                FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
-                WHERE 
-                Controller = (SELECT RFIDEquipment 
-                                FROM RFIDEquipmentBinding 
-                                WHERE Equipment = '{self.tpa}') AND
-                RFIDClosureData.Label = RFIDEquipmentBinding.RFIDEquipment AND
-                RFIDEquipmentBinding.Equipment = Equipment.Oid
-                ORDER BY Date DESC
-            """
-            pf = SQLManipulator.SQLExecute(sql)
         else:
             self.shift_task_oid = ''
             self.product = 'Нет сменного задания'
@@ -80,10 +89,7 @@ class IndexController():
             SELECT TOP (1) [Note]
             FROM [MES_Iplast].[dbo].[Shift] ORDER BY StartDate DESC            
             """)[0][0]
-        if len(pf) > 0:
-            self.pressform = pf[0][0]
-        else:
-            self.pressform = 'Не определена'
+
         if self.shift_task_oid != None and self.shift_task_oid != '':
             production_data_sql = f"""
                 SELECT
