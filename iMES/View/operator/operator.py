@@ -216,17 +216,47 @@ def handle_entered_product_wastes(data):
 def OperatorShiftTask():
     return CheckRolesForInterface('Оператор', 'operator/ShiftTask.html')
 
+
 # Изменение этикетки
-
-
 @app.route('/operator/ChangeLabel')
 @login_required
 def OperatorChangeLabel():
-    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html')
+    ip_addr = request.remote_addr
+    
+    # Получаем данные о текущих продуктах за смену и название смены
+    sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name
+                                FROM ShiftTask INNER JOIN
+                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
+                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
+                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask"""
+    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+
+    # Получаем данные о текущей смене
+    sql_GetCurrentShift = f"""SELECT Note FROM Shift WHERE Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE()"""
+    current_shift = SQLManipulator.SQLExecute(sql_GetCurrentShift)
+
+    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html', [current_product, current_shift[0][0]])
+
+
+# # Кнопка ввода брака во всплывающей клавиатуре была нажата
+# @socketio.on('product_defect')
+# def handle_entered_product_wastes(data):
+#     ip_addr = request.remote_addr  
+
+#     product = str(data[0])
+#     entered_sticker_count = int(data[1])
+
+#     sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
+#     current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
+
+#     # Создаем запись введенного отхода в таблице ProductWaste
+#     sql_PostStickerInfo = f"""INSERT INTO ProductWaste (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
+#                                 VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');"""
+#     SQLManipulator.SQLExecute(sql_PostStickerInfo)
+
 
 # Схема упаковки
-
-
 @app.route('/operator/PackingScheme')
 @login_required
 def OperatorPackingScheme():
