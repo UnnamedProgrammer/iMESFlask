@@ -99,9 +99,14 @@ def tableWasteDefect():
         waste_defect_info = list()
 
         for product_waste_quantity in range(len(current_product_waste)):
-            
-            sql_GetCurrentMaterial  = f"""SELECT Name FROM Material WHERE Material.Oid = '{current_product_waste[0][0]}'"""
-            current_material = SQLManipulator.SQLExecute(sql_GetCurrentMaterial)
+
+            if current_product_waste[product_waste_quantity][0] != None or current_product_waste[product_waste_quantity][2] == 0:
+                sql_GetCurrentMaterial  = f"""SELECT Name FROM Material WHERE Material.Oid = '{current_product_waste[product_waste_quantity][0]}'"""
+                current_material = SQLManipulator.SQLExecute(sql_GetCurrentMaterial)
+                
+            else:
+                current_material = [['']]
+
 
             waste_defect_info.append([current_product_waste[product_waste_quantity][1], current_product_waste[product_waste_quantity][2],
                                 current_material[0][0], f'{current_product_waste[product_waste_quantity][3]:.0f}' if current_product_waste[product_waste_quantity][3] else '', 
