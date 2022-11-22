@@ -9,10 +9,13 @@ let productList = document.querySelector('#currentProductList')
 
 let productData = null
 
+let wasteData = null
+
 let defectCount = 0
 let defectWeight = 0
 
 function numberModalControl(event){
+    console.log(event)
     numberModal.classList.toggle('hidden');
     display.textContent = '';
     let buttonID = event.target.id;
@@ -30,9 +33,11 @@ function numberModalControl(event){
 
         if(display.textContent != "")
         {
-            if(event.target.id == 'addWasteWeight'){
-                let count = event.target.parentNode.parentNode.cells[2];
-                count.innerHTML = display.textContent;
+            if(enter.id == 'addWasteWeight'){
+                let entered_waste_weight = document.getElementById('inputDefect').textContent;
+                var socket = io();
+                socket.emit('product_wastes', [productData[0], wasteData[0], entered_waste_weight]);
+                $(table).find('tbody').append('<tr> <td id="wasteProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="table-warning" id="wasteData" data-wasteoid="'+ wasteData[0] +'">'+ wasteData[1] +'</td> <td></td> <td id="wasteWeight">'+ display.textContent +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
             
             else if(enter.id == 'defectEnterCount')
@@ -46,13 +51,18 @@ function numberModalControl(event){
             else if(enter.id == 'defectEnterWeight')
             {
                 defectWeight = display.textContent;
-                selectCurrentProductDefect();
                 enter.id = 'defectEnterCount';
+                var socket = io();
+                socket.emit('product_defect', [productData[0], defectWeight, defectCount]);
+                $(table).find('tbody').append('<tr> <td id="defectProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="red"> Брак </td> <td id="defectCount">'+ defectCount +'</td> <td id="defectWeight">'+ defectWeight +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
 
             else if (enter.id == 'productWeight') {
-                productData = display.textContent;
-                productList.classList.toggle('hidden')
+                productWeight = display.textContent;
+                let entered_weight = document.getElementById('inputWeight').textContent;
+                var socket = io();
+                socket.emit('product_weight_entering', [entered_weight, productData[0]]);
+                $(table).find('tbody').append('<tr> <td id="weightProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
             }
 
             else if(event.target.tagName == 'INPUT')
@@ -78,44 +88,30 @@ function numberModalControl(event){
     }
 }
 
-// Ввод веса с выбором продукта
-function selectCurrentProductWeight(event) {
-    let currentProduct = event.target.dataset.selectproduct
-    $(table).find('tbody').append('<tr> <td>'+ currentProduct +'</td> <td class="green" id="productWeightData">'+ productData +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
+function selectProduct(event) {
+    productData = [event.target.dataset.proddataoid, event.target.dataset.prodname]
     productList.classList.toggle('hidden')
+    if (event.target.dataset.target == 'wasteSelect'){
+        document.getElementById('addWaste').classList.toggle('hidden')
+    }
+
+    else if (event.target.dataset.target == 'addProductWeight') {
+        numberModalControl(event)
+    }
+
+    else {
+        enter.id = 'defectEnterCount'
+        enter.innerHTML = 'ВВОД КОЛ.'
+        numberModalControl(event)
+    }
 }
 
-// --------------- Ввод отхода с выбором продукта ---------------
-// Получение данных о выбранном отходе, при нажатии на кнопку "Выбрать"
-function selectCurrentProductWaste(event) {
-    let selectedWasteData = [event.target.parentNode.parentNode.cells[1].dataset.oid, event.target.parentNode.parentNode.cells[1].innerHTML] // Массив с даннымы отхода [Oid, Name]
-    document.getElementById(event.target.id).classList.toggle('hidden') // Скрыть модальное окно с выбором отходов
-    addWasteData(selectedWasteData) // Передача массива данных отхода в функцию выбора продутк
-    
-}
+function selectWaste(event) {
+    wasteData = [event.target.dataset.wasteoid, event.target.dataset.wastename]
+    document.getElementById('addWaste').classList.toggle('hidden')
 
-function addWasteData(data) {
-    productList.classList.toggle('hidden') // Отображение модульного окна с выбором продуктов для добавления отхода
+    enter.innerHTML = 'ВВОД КГ.'
+    enter.id = 'addWasteWeight'
 
-    document.addEventListener("click", function(e) {
-        if (e.target.id == ('addWasteButton')) {
-            let selectedProductData = [e.target.parentNode.parentNode.cells[1].dataset.oid, e.target.parentNode.parentNode.cells[1].innerHTML] // Массив с даннымы продукта [Oid, Name]
-            $(table).find('tbody').append('<tr id="wasteData"> <td data-productoid="'+selectedProductData[0]+'">'+ selectedProductData[1] +'</td> <td data-wasteoid="'+data[0]+'" style="overflow:hidden">'+ data[1] +'</td> <td id="wasteCount_Data"></td>   <td class="nopadding col-2 table__button"><button type="button" class="btn__table" id="addWasteWeight" onClick="numberModalControl(event)">Ввод</button>/td></tr>'); // Добавление новой строки в таблицу
-            productList.classList.toggle('hidden')
-        }
-    });
-}
-// ------------------------------------------------------------
-
-// Ввод отхода с выбором продукта
-function selectCurrentProductDefect() {
-    productList.classList.toggle('hidden')
-
-    document.addEventListener("click", function(e) {
-        if (e.target.id == ('addWasteButton')) {
-            let selectedProductData = [e.target.parentNode.parentNode.cells[1].dataset.oid, e.target.parentNode.parentNode.cells[1].innerHTML] // Массив с даннымы продукта [Oid, Name]
-            $(table).find('tbody').append('<tr id="defectData"> <td data-productoid="'+selectedProductData[0]+'">'+ selectedProductData[1] +' <td class="red"> Брак </td> <td id="defectCount_Data">'+ defectCount +'</td> <td id="defectWeight_Data">'+defectWeight+'</td> <td id="defectReason_Data"></td> <td id="defectTime_Data">'+ clock +'</td> <td id="defectUser_Data">'+ current_user +'</td>'); // Добавление новой строки в таблицу
-            productList.classList.toggle('hidden')
-        }
-    });
+    numberModalControl(event)
 }

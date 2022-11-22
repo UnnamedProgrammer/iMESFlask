@@ -85,9 +85,6 @@ table .red
 .left-padding
     padding-left: 1rem
 
-.hidden
-    display: none
-
 .flex-end
     align-items: flex-end
 
@@ -126,13 +123,12 @@ table .red
 .height100
     height: 45px
     margin: 5px 0px
-    overflow: hidden
 
 .height120 
     height: 115px
     margin: 5px 0
 
-.height150 
+.height150
     height: 145px
     margin: 5px 0
 
@@ -140,6 +136,31 @@ table .red
     height: 177px
     margin: 5px 0px
 
+.custom-option
+    position: absolute
+    margin-left: 3px
+    display: flex
+    flex-direction: row
+    z-index: 2
+    top: 41px
+    left: 184px
+    transform: translateX(-380px)
+    transition: 1s
+    &__item
+        position: relative
+        margin-left: 3px
+        width: 185px
+        text-align: center
+        background-color: #fff
+        border-radius: 7px
+    &_product
+        height: 103px
+    &_prodPlan
+        height: 73px
+    &_prodFact
+        height: 73px
+
+    
 .height-bottom 
     height: 130px
     margin: 0px 0px
