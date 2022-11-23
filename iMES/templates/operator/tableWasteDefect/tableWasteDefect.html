@@ -23,7 +23,11 @@
                 {% for wastes in current_product_waste %}
                 <tr>
                     <td> {{ wastes[0] }} </td>
-                    <td> {{ wastes[2] if wastes[1] == 0 else 'Брак'}} </td>
+                    {% if wastes[1] == 0 %}
+                        <td class="table-warning">{{wastes[2]}}</td>
+                    {% else  %}
+                        <td class="red">Брак</td>
+                    {% endif %}
                     <td> {{ wastes[3] }} </td>
                     <td> {{ wastes[4] }} </td>
                     <td> {{ wastes[5] }} </td>
