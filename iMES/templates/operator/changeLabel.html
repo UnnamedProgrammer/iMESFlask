@@ -24,7 +24,7 @@
                 </tr>
                 <tr>
                     <th>Количество</th>
-                    <td id="selectProductCountData">13</td>
+                    <td id="selectProductCountData">1</td>
                     <td class="nopadding table__button">
                         <a href="#" class="btn__table" id="selectProductCount" onClick="numberModalControl(event)">Изменить</a>
                     </td>
@@ -35,7 +35,7 @@
     <div class="view-footer">
         <div class="row">
             <div class="col-6">
-                <a type="button" href="/operator" class="btn btn__view primary" onClick="saveStickerChange()">Сохранить</a>
+                <a type="button" class="btn btn__view primary" onClick="saveStickerChange()">Сохранить</a>
             </div>
             <div class="col-6">
                 <a type="button" href="/operator" class="btn btn__view secondary">Закрыть</a>
@@ -140,13 +140,21 @@
         let selectedStickerProduct = row.cells[1] // Получения значения второй ячейки (названия)
 
         const stickerProductCell = document.querySelector('#stickerProductCell'); // Получение ячейки с артикулом 
-        stickerProductCell.innerText = selectedStickerProduct.innerText // Замена значения чейки артикула выбранным
+        stickerProductCell.innerText = selectedStickerProduct.innerText // Замена значения ячейки артикула выбранным
         stickerProductCell.dataset.proddataoid = selectedStickerProduct.dataset.proddataoid
         modal.classList.add('hidden') // Закрываем модальное окно
     });
 
     function saveStickerChange() {
+        let entered_product = stickerProductCell.getAttribute('data-prodoid')
+        let entered_sticker_count = document.getElementById('selectProductCountData').textContent;
         
+        var socket = io();
+        socket.emit('sticker_info_change', [entered_product, entered_sticker_count]);
+
+        setTimeout(function(){
+            window.location.href = '/operator';
+        }, 200);
     }
 </script>
 {% endblock %}

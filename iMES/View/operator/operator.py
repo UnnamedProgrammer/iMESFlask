@@ -239,22 +239,21 @@ def OperatorChangeLabel():
     return CheckRolesForInterface('Оператор', 'operator/changeLabel.html', [current_product, current_shift[0][0]])
 
 
-# # Кнопка ввода брака во всплывающей клавиатуре была нажата
-# @socketio.on('product_defect')
-# def handle_entered_product_wastes(data):
-#     ip_addr = request.remote_addr  
+# Кнопка сохранить на странице изменение этикетки была нажата
+@socketio.on('sticker_info_change')
+def handle_sticker_info_change(data):
+    ip_addr = request.remote_addr  
 
-#     product = str(data[0])
-#     entered_sticker_count = int(data[1])
+    entered_product = str(data[0])
+    entered_sticker_count = int(data[1])
 
-#     sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
-#     current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
+    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
+    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
 
-#     # Создаем запись введенного отхода в таблице ProductWaste
-#     sql_PostStickerInfo = f"""INSERT INTO ProductWaste (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
-#                                 VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');"""
-#     SQLManipulator.SQLExecute(sql_PostStickerInfo)
-
+    # Создаем запись введенной этикетки в таблице StickerInfo
+    sql_PostStickerInfo = f"""INSERT INTO StickerInfo (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
+                                VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{entered_product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');"""
+    SQLManipulator.SQLExecute(sql_PostStickerInfo)
 
 # Схема упаковки
 @app.route('/operator/PackingScheme')
