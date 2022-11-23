@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/preload.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/icons.css') }}">
+    <title>TERMINAL IPLAST</title>
+</head>
+<body ondragstart="event.preventDefault()" ondrop="event.preventDefault()">
+    <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
+    <input type="hidden" id="current_user" value="{{ current_user }}">
+
+    <div class="view">
+        <div class="view-header"> ПРОСТО И НЕПОЛАДКИ </div>
+        <div class="view-body jsScroll">
+            <table class="table table-bordered text-center" id="table" border="1" bordercolor="black">
+                <thead class="table-dark align-middle">
+                    <tr>
+                        <th scope="col">+</th>
+                        <th scope="col">Тип /<br>Вид работ</th>
+                        <th scope="col">Начало</th>
+                        <th scope="col">Конец</th>
+                        <th scope="col">Причина /<br>Состоянием ЕАМ</th>
+                        <th scope="col">Примечание /<br>Номер работ</th>
+                        <th scope="col">Исполнитель</th>
+                        <th scope="col">Ввод причины /<br>Выполнение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between px-3">
+            <div class="col-6 row">
+                <div class="col nopadding me-1">
+                    <button type="button" class="btn btn__view btn__view_journal primary fs-3">
+                       НЕПОЛАДКА<br>( ввод неполадки )
+                    </button>
+                </div>
+                <div class="col nopadding ms-1">
+                    <button type="button" class="btn btn__view btn__view_journal primary fs-4" id=""></button>
+                </div>
+            </div>
+            <div class="col-6 row">
+                <div class="col nopadding ms-1">
+                    <button type="button" class="btn btn__view btn__view_journal secondary fs-1" onclick="location.href='/adjuster'">
+                        Выход
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% block navbar_footer %}
+    {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
