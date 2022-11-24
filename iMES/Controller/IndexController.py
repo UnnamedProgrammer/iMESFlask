@@ -23,6 +23,7 @@ class IndexController():
     StartDate: datetime = None
     EndDate: datetime = None
     ProductCount = 0
+    tpa_message: str = ''
 
     def data_from_shifttask(self):
         sql = f"""
@@ -63,8 +64,9 @@ class IndexController():
             """
         pf = SQLManipulator.SQLExecute(sql)
         if len(pf) > 0:
-            if pf[0][0] == None:
+            if pf[0][0] == None or pf == () or pf == []:
                 self.pressform = 'Метка не привязана к прессформе'
+                self.tpa_message = 'Для получения сменного задания выберите пресс-форму'
             else:
                 self.pressform = pf[0][0]
         else:
@@ -119,7 +121,7 @@ class IndexController():
                     self.StartDate = pd[3]
                     self.EndDate = pd[4]
                     if pd[0] == None:               
-                        product_fact.append(0)
+                        product_fact = (0)
                     else:
                         product_fact.append(pd[0])
                     if pd[1] == None:
@@ -128,3 +130,7 @@ class IndexController():
                         self.cycle_fact = round(float(pd[1]))
                 self.product_fact = tuple(product_fact)
                 self.ProductCount = len(self.product)
+        
+        average_weight_sql = """
+
+        """

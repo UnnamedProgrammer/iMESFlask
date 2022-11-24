@@ -77,7 +77,7 @@
                     <div class="card-header text-center primary">ПЛАН ПО ПРОД.</div>
                     <div class="swiper-container mySwiper2">
                         <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center nplan" id="nplan"></p>
+                            <p class="swiper-slide card-text text-center nplan" id="nplan">0</p>
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                             <p class="swiper-slide card-text text-center nplan" id="nplan">0</p>
                         {% endfor %}
@@ -230,13 +230,13 @@
                     {%if current_user.is_authenticated and current_user.device_type == 'Веб'%}
                         <a href="/menu">
                             <div class="card height-bottom shadow">
-                                <!-- <div class="accent left-padding">УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ</div> -->
+                                <div class="accent left-padding">{{current_tpa[2].tpa_message}}</div>
                             </div>
                         </a>
                     {%else%}
                         <a>
                             <div class="card height-bottom shadow">
-                                <!-- <div class="accent left-padding">УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ</div> -->
+                                <div class="accent left-padding">{{current_tpa[2].tpa_message}}</div>
                             </div>
                         </a>
                     {%endif%}
@@ -400,8 +400,8 @@
                 else{
                     product[0].textContent = arr[address]['Product'][0]
                 }
-                product_plan[0].textContent = arr[address]['Plan']
-                product_fact[0].textContent = arr[address]['Fact']
+                product_plan[0].textContent = arr[address]['Plan'][0]
+                product_fact[0].textContent = arr[address]['Fact'][0]
             }
             else
             {
