@@ -99,9 +99,14 @@ def tableWasteDefect():
         waste_defect_info = list()
 
         for product_waste_quantity in range(len(current_product_waste)):
-            
-            sql_GetCurrentMaterial  = f"""SELECT Name FROM Material WHERE Material.Oid = '{current_product_waste[0][0]}'"""
-            current_material = SQLManipulator.SQLExecute(sql_GetCurrentMaterial)
+
+            if current_product_waste[product_waste_quantity][0] != None or current_product_waste[product_waste_quantity][2] == 0:
+                sql_GetCurrentMaterial  = f"""SELECT Name FROM Material WHERE Material.Oid = '{current_product_waste[product_waste_quantity][0]}'"""
+                current_material = SQLManipulator.SQLExecute(sql_GetCurrentMaterial)
+                
+            else:
+                current_material = [['']]
+
 
             waste_defect_info.append([current_product_waste[product_waste_quantity][1], current_product_waste[product_waste_quantity][2],
                                 current_material[0][0], f'{current_product_waste[product_waste_quantity][3]:.0f}' if current_product_waste[product_waste_quantity][3] else '', 
@@ -211,17 +216,46 @@ def handle_entered_product_wastes(data):
 def OperatorShiftTask():
     return CheckRolesForInterface('Оператор', 'operator/ShiftTask.html')
 
+
 # Изменение этикетки
-
-
 @app.route('/operator/ChangeLabel')
 @login_required
 def OperatorChangeLabel():
-    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html')
+    ip_addr = request.remote_addr
+    
+    # Получаем данные о текущих продуктах за смену и название смены
+    sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name
+                                FROM ShiftTask INNER JOIN
+                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
+                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
+                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask"""
+    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+
+    # Получаем данные о текущей смене
+    sql_GetCurrentShift = f"""SELECT Note FROM Shift WHERE Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE()"""
+    current_shift = SQLManipulator.SQLExecute(sql_GetCurrentShift)
+
+    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html', [current_product, current_shift[0][0]])
+
+
+# Кнопка сохранить на странице изменение этикетки была нажата
+@socketio.on('sticker_info_change')
+def handle_sticker_info_change(data):
+    ip_addr = request.remote_addr  
+
+    entered_product = str(data[0])
+    entered_sticker_count = int(data[1])
+
+    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
+    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
+
+    # Создаем запись введенной этикетки в таблице StickerInfo
+    sql_PostStickerInfo = f"""INSERT INTO StickerInfo (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
+                                VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{entered_product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');"""
+    SQLManipulator.SQLExecute(sql_PostStickerInfo)
 
 # Схема упаковки
-
-
 @app.route('/operator/PackingScheme')
 @login_required
 def OperatorPackingScheme():

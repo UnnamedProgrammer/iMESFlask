@@ -146,7 +146,7 @@
         let clock = document.getElementById('clock').innerHTML
 
         for ( let i = 0; i < productWeightRows.length; i++) {
-            weightHTML += productWeightRows[i].cells[1].innerHTML+' кг. '+ productWeightRows[i].cells[2].innerHTML.substr(productWeightRows[i].cells[2].innerHTML.indexOf(" ") + 1) +'<br>';
+            weightHTML += productWeightRows[i].cells[1].innerHTML+' кг. '+ productWeightRows[i].cells[2].innerHTML.trim().substr(11, 8) +'<br>';
         }
 
         let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');

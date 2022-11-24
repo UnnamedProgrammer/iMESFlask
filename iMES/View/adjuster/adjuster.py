@@ -10,6 +10,14 @@ from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 def adjuster():
     return CheckRolesForInterface('Наладчик', 'adjuster/adjuster.html')
 
+# Простои, неполадки и чеклисты
+
+
+@app.route('/adjuster/journal')
+@login_required
+def adjusterJournal():
+    return CheckRolesForInterface('Наладчик', 'adjuster/journal.html')
+
 # Сырье до конца выпуска
 
 
