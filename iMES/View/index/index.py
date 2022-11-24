@@ -1,4 +1,3 @@
-from ipaddress import ip_address
 from iMES import socketio
 from iMES import app
 from iMES import UserController
@@ -73,15 +72,15 @@ def ChangeTPA():
 @socketio.on(message = "getTrendPlanData")
 def GetPlan(data):
     ip_addr = request.remote_addr
-    # Проверяем есть ли сменное задание на ТПА
-    if current_tpa[ip_addr][2].shift_task_oid == '':
+    # Проверяем есть ли сменное задание на ТП
+    if len(current_tpa[ip_addr][2].shift_task_oid) == 0:
         pass
     else:
         # Получаем Oid смены 
         sql_GetShiftOid = f"""
                                 SELECT TOP(1) ShiftTask.Shift
                                 FROM Shift, ShiftTask
-                                WHERE ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}'
+                                WHERE ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}'
                             """
         ShiftOid = SQLManipulator.SQLExecute(sql_GetShiftOid)[0][0]
         
@@ -109,7 +108,7 @@ def GetPlan(data):
         # Подсчет выпущенных изделий (СОМНИТЕЛЬНО)
         y = 0
         # Запрос на время и статус смыкания
-        if (current_tpa[ip_addr][2].shift_task_oid != ''):
+        if (len(current_tpa[ip_addr][2].shift_task_oid) > 0):
             sql_GetСlosures = f"""
                                     SELECT [Date]
                                         ,[Status]
@@ -118,8 +117,8 @@ def GetPlan(data):
                                     Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
                                                         FROM RFIDEquipmentBinding, ShiftTask
                                                         WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
-                                                        ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}') AND
-                                    ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid}' AND
+                                                        ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}') AND
+                                    ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}' AND
                                     Shift.Oid = ShiftTask.Shift AND
                                     Date between Shift.StartDate AND Shift.EndDate
 
@@ -529,9 +528,9 @@ def UpdateMainWindowData(data):
         current_tpa[ip_addr][2].data_from_shifttask()
         MWData = {
             ip_addr: {"PF": str(current_tpa[ip_addr][2].pressform),
-                      "Product": str(current_tpa[ip_addr][2].product),
-                      "Plan": str(current_tpa[ip_addr][2].production_plan),
-                      "Fact": str(current_tpa[ip_addr][2].product_fact),
+                      "Product": current_tpa[ip_addr][2].product,
+                      "Plan": current_tpa[ip_addr][2].production_plan,
+                      "Fact": current_tpa[ip_addr][2].product_fact,
                       "PlanCycle": str(current_tpa[ip_addr][2].cycle),
                       "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
                       "PlanWeight": str(current_tpa[ip_addr][2].plan_weight),
@@ -555,10 +554,10 @@ def GetExecutePlan(data):
                 ,[CountFact]
                 ,[CycleFact]
                 ,[EndDate]
-            FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{current_tpa[ip_addr][2].shift_task_oid}'
+            FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{current_tpa[ip_addr][2].shift_task_oid[0]}'
         """
         get_last_closure = SQLManipulator.SQLExecute(get_last_closure_sql)
-        remaining_quantity = current_tpa[ip_addr][2].production_plan - \
+        remaining_quantity = current_tpa[ip_addr][2].production_plan[0] - \
             get_last_closure[0][1]
         production_time = (get_last_closure[0][2] / 60)
         minutes_to_plan_end = remaining_quantity * production_time
@@ -567,7 +566,7 @@ def GetExecutePlan(data):
             datetime.now() + timedelta(minutes=float(minutes_to_plan_end))) - old_diff_time
         socketio.emit("GetExecutePlan", data=json.dumps(
             {ip_addr: str(end_date)}), ensure_ascii=False, indent=4)
-    except:
+    except Exception as error:
         pass
 
 @socketio.on(message="GetUpTubsStatus")
@@ -576,6 +575,32 @@ def UpTubsStatus(data):
     active_tpa = []
     tub_dict = {"Active":active_tpa,"CurrentTpa":current_tpa[ip_addr][0]}
     for tpa in TpaList[ip_addr]:
+        tpa['WorkStatus'] = Get_Tpa_Status(tpa['Oid'],ip_addr)
         if tpa['WorkStatus'] == True:
             active_tpa.append(tpa)
     socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
+
+def Get_Tpa_Status(tpaoid,ip):
+    if tpaoid == None or tpaoid == '':
+        return False
+    sql = f"""
+        SELECT TOP(1) [Date],Controller,[RFIDEquipmentBinding].RFIDEquipment
+        FROM [MES_Iplast].[dbo].[RFIDClosureData], Equipment, [RFIDEquipmentBinding]
+        WHERE 
+            Equipment.Oid = '{tpaoid}' AND
+            [RFIDEquipmentBinding].Equipment = Equipment.Oid AND
+            [RFIDClosureData].Controller = [RFIDEquipmentBinding].RFIDEquipment
+        ORDER BY Date DESC
+    """
+    last_closure_date = SQLManipulator.SQLExecute(sql)
+    if len(last_closure_date) > 0:
+        last_closure_date = last_closure_date[0][0]
+        current_date = datetime.now()
+        last_closure_date = last_closure_date
+        seconds = (current_date - last_closure_date).total_seconds()
+        if seconds >= 400:
+            return False
+        else:
+            return True
+    else:
+        return False

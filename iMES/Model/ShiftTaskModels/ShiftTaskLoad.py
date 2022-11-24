@@ -309,6 +309,28 @@ class ShiftTaskLoader():
                 SQLManipulator.SQLExecute(insertshiftsql)
             getshift = SQLManipulator.SQLExecute(shiftsql)
             self.LoadEquipmentPerfomance(self.shift_task_list,self.data)
+            # Определение цикла для прокдукта в сменном задании
+            for i in range(0,len(self.shift_task_list)):
+                if self.shift_task_list[i].Cycle == '0':
+                    product = f"""
+                        SELECT [Oid]
+                            ,[Code]
+                            ,[Name]
+                            ,[Article]
+                        FROM [MES_Iplast].[dbo].[Product] 
+                        WHERE Code = '{self.shift_task_list[i].ProductCode}'    
+                    """
+                    product = SQLManipulator.SQLExecute(product)[0][0]
+
+                    sql = f"""
+                        SELECT [Cycle]
+                        FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
+                        WHERE Product = '{product}'
+                    """
+                    product_cycle = SQLManipulator.SQLExecute(sql)
+                    if bool(product_cycle):
+                        self.shift_task_list[i].Cycle = str(product_cycle[0][0])
+                    
             self.InsertShiftTask(getshift, self.shift_task_list)
         return
 
@@ -446,7 +468,8 @@ class ShiftTaskLoader():
                             SELECT Equipment.Oid
                             FROM [MES_Iplast].[dbo].[Equipment], NomenclatureGroup 
                             WHERE NomenclatureGroup.Code = '{EP['NomenclatureGroupCode']}' AND
-                                Equipment.NomenclatureGroup = NomenclatureGroup.Oid
+                                  Equipment.NomenclatureGroup = NomenclatureGroup.Oid AND
+                                  EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D'
                         """
                         get_rigequipment_sql = f"""
                             SELECT [Oid]
