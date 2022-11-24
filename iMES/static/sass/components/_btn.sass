@@ -90,6 +90,8 @@
         box-shadow: 2px 1px 4px 0px #7e7e7e
         &_subtitle
             font-size: 18pt
+        &_journal
+            height: 160px
 
     &__modal
         font-size: 28pt
@@ -113,8 +115,11 @@
     top: 55px
     width: 25px
     height: 50px
-    background: url('show-more.png') no-repeat
+    background: url('show-more_right.png') no-repeat
     z-index: 10
+    &_left
+        left: -25px
+        background: url('show-more_left.png') no-repeat
 
 .close-more
     position: absolute
@@ -122,5 +127,8 @@
     top: 13px
     width: 25px
     height: 50px
-    background: url('close-more.png') no-repeat
+    background: url('close-more_right.png') no-repeat
     z-index: 10
+    &_left
+        left: -20px
+        background: url('close-more_left.png') no-repeat

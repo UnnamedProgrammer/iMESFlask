@@ -149,7 +149,11 @@ function showMore(event) {
 
     for (let i = 0; i < optionList.length; i++) {
         optionList[i].classList.remove('opacity-0')
-        optionList[i].classList.add('anim-products')
+        if (optionList[i].id == 'showMoreRight') {
+            optionList[i].classList.add('anim-products_right')
+        } else {
+            optionList[i].classList.add('anim-products_left')
+        }
     }
 }
 function closeMore(event) {
@@ -162,6 +166,10 @@ function closeMore(event) {
     optionList = document.querySelectorAll('.custom-option')
     for (let i = 0; i < optionList.length; i++) {
         optionList[i].classList.add('opacity-0')
-        optionList[i].classList.remove('anim-products')
+        if (optionList[i].id == 'showMoreRight') {
+            optionList[i].classList.remove('anim-products_right')
+        } else {
+            optionList[i].classList.remove('anim-products_left')
+        }
     }
 }

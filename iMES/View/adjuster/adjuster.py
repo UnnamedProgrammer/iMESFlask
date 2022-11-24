@@ -18,6 +18,14 @@ def adjuster():
 def adjusterJournal():
     return CheckRolesForInterface('Наладчик', 'adjuster/journal.html')
 
+# Фиксация простоя
+
+
+@app.route('/adjuster/journal/idleEnter')
+@login_required
+def adjusterIdleEnter():
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html')
+
 # Сырье до конца выпуска
 
 
