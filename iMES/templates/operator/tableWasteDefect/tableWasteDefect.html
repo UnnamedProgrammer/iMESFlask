@@ -21,19 +21,27 @@
             </thead>
             <tbody>
                 {% for wastes in current_product_waste %}
-                <tr>
-                    <td> {{ wastes[0] }} </td>
                     {% if wastes[1] == 0 %}
-                        <td class="table-warning">{{wastes[2]}}</td>
-                    {% else  %}
-                        <td class="red">Брак</td>
+                        <tr id="wasteRow">
+                            <td> {{ wastes[0] }} </td>
+                            <td class="table-warning">{{wastes[2]}}</td>
+                            <td> {{ wastes[3] }} </td>
+                            <td> {{ wastes[4] }} </td>
+                            <td> {{ wastes[5] }} </td>
+                            <td> {{ wastes[6] }} </td>
+                            <td> {{ wastes[7] }} </td>
+                        </tr>
+                    {% else %}
+                        <tr id="defectRow">
+                            <td> {{ wastes[0] }} </td>
+                            <td class="red">Брак</td>
+                            <td> {{ wastes[3] }} </td>
+                            <td> {{ wastes[4] }} </td>
+                            <td> {{ wastes[5] }} </td>
+                            <td> {{ wastes[6] }} </td>
+                            <td> {{ wastes[7] }} </td>
+                        </tr>
                     {% endif %}
-                    <td> {{ wastes[3] }} </td>
-                    <td> {{ wastes[4] }} </td>
-                    <td> {{ wastes[5] }} </td>
-                    <td> {{ wastes[6] }} </td>
-                    <td> {{ wastes[7] }} </td>
-                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -190,7 +198,31 @@
             document.getElementById('selectProductButton').dataset.target = 'wasteSelect'
             productList.classList.toggle('hidden')
         } else {
-            alert('Печать отходов')
+            let wastesHTML = ''
+            let clock = document.getElementById('clock').innerHTML
+            let shift = document.getElementById('smena').innerHTML
+
+            for ( let i = 0; i < wasteDefectRows.length; i++) {
+                if(wasteDefectRows[i].id == 'wasteRow')
+                {
+                    wastesHTML +='<b>Артикул: </b>'+ wasteDefectRows[i].cells[0].innerHTML +'<br> <b>Вес: </b>'+ wasteDefectRows[i].cells[3].innerHTML+' кг. <br>';
+                }
+            }
+    
+            let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+    
+            let html ="";
+    
+            html += '<div>----------------------------------</div>'
+            +'<b>Оборудование</b> '+ ttpa +'<br>'
+            +'<b>Дата</b> '+ clock +'<br>'
+            +'<b>Смена</b> '+ shift +'<br>'
+            +'<b>Вес тары</b> <br>'
+            + wastesHTML
+            +'<b>Ф.И.О: </b>'+ current_user +'<br>'
+            var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+    
+            printStickerWindow(div, mywindow);
         }
     })
 
@@ -205,7 +237,10 @@
             let shift = document.getElementById('smena').innerHTML
 
             for ( let i = 0; i < wasteDefectRows.length; i++) {
-                defectHTML +='<b>Артикул: </b>'+ wasteDefectRows[i].cells[0].innerHTML +'<br> <b>Количество: </b>'+ wasteDefectRows[i].cells[2].innerHTML +' <b>Вес: </b>'+ wasteDefectRows[i].cells[3].innerHTML+' кг. <br>';
+                if(wasteDefectRows[i].id == 'defectRow')
+                {
+                    defectHTML +='<b>Артикул: </b>'+ wasteDefectRows[i].cells[0].innerHTML +'<br> <b>Количество: </b>'+ wasteDefectRows[i].cells[2].innerHTML +' <b>Вес: </b>'+ wasteDefectRows[i].cells[3].innerHTML+' кг. <br>';
+                }
             }
     
             let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');

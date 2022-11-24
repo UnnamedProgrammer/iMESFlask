@@ -48,6 +48,10 @@ button {
   background: rgba(0, 0, 0, 0.5);
   z-index: 3; }
 
+.big-checkbox {
+  width: 30px;
+  height: 30px; }
+
 .display-3 {
   font-size: 4.5rem;
   font-weight: 300;
@@ -170,6 +174,8 @@ button {
     box-shadow: 2px 1px 4px 0px #7e7e7e; }
     .btn__view_subtitle {
       font-size: 18pt; }
+    .btn__view_journal {
+      height: 160px; }
   .btn__modal {
     font-size: 28pt;
     width: 100%;
@@ -449,6 +455,8 @@ button {
   .view-body {
     height: 530px;
     overflow: hidden; }
+    .view-body_journal {
+      height: 700px; }
 
 .idle-form {
   display: flex;

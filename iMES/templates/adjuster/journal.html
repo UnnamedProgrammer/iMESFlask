@@ -17,7 +17,7 @@
 
     <div class="view">
         <div class="view-header"> ПРОСТО И НЕПОЛАДКИ </div>
-        <div class="view-body jsScroll">
+        <div class="view-body view-body_journal jsScroll">
             <table class="table table-bordered text-center" id="table" border="1" bordercolor="black">
                 <thead class="table-dark align-middle">
                     <tr>
@@ -32,7 +32,34 @@
                     </tr>
                 </thead>
                 <tbody>
-                    
+                    <tr>
+                        <td class="align-middle" id="8959BD53-3547-4F65-B865-0D36A6125CF8">
+                            <input class="big-checkbox" type="checkbox">
+                        </td>
+                        <td class="align-middle red">Простой</td>
+                        <td class="align-middle">2022-11-23 11:10:44</td>
+                        <td class="align-middle">2022-11-23 11:18:46</td>
+                        <td class="align-middle"></td>
+                        <td class="align-middle"></td>
+                        <td class="align-middle"></td>
+                        <td class="nopadding table__button">
+                            <a type="button" class="btn__table" href="/adjuster/journal/idleEnter">Причина</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="align-middle" id="8959BD53-3547-4F65-B865-0D36A6125CF8">
+                            <input class="big-checkbox" type="checkbox">
+                        </td>
+                        <td class="align-middle red">Простой</td>
+                        <td class="align-middle">2022-11-23 11:10:44</td>
+                        <td class="align-middle">2022-11-23 11:18:46</td>
+                        <td class="align-middle"></td>
+                        <td class="align-middle"></td>
+                        <td class="align-middle"></td>
+                        <td class="nopadding table__button">
+                            <button type="button" class="btn__table">Причина</button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -42,9 +69,6 @@
                     <button type="button" class="btn btn__view btn__view_journal primary fs-3">
                        НЕПОЛАДКА<br>( ввод неполадки )
                     </button>
-                </div>
-                <div class="col nopadding ms-1">
-                    <button type="button" class="btn btn__view btn__view_journal primary fs-4" id=""></button>
                 </div>
             </div>
             <div class="col-6 row">
@@ -59,4 +83,9 @@
 </body>
 {% block navbar_footer %}
     {% include 'navbar_footer/navbar_footer.html' %}        
+{% endblock %}
+{% block script %}
+<script>
+    trCheck = document.getElementsByClassName('tr-check')
+</script>
 {% endblock %}
