@@ -155,6 +155,7 @@ function showMore(event) {
             optionList[i].classList.add('anim-products_left')
         }
     }
+    swipeAllSliders(0)
 }
 function closeMore(event) {
     for (let i = 0; i < showMoreButton.length; i++) {
