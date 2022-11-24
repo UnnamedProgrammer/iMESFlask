@@ -289,6 +289,7 @@
     {% endblock %}
 </body>
 <script src="{{url_for('static', filename='/js/swiper-bundle.min.js')}}"></script>
+<script src="{{url_for('static', filename='/js/main.js')}}"></script>
 
 <script>
     
@@ -314,10 +315,7 @@
     swiper4.on('slideChange', () => swipeAllSliders(swiper4.activeIndex));
     swiper5.on('slideChange', () => swipeAllSliders(swiper5.activeIndex));
     swiper6.on('slideChange', () => swipeAllSliders(swiper6.activeIndex));
-</script>
 
-<script src="{{url_for('static', filename='/js/main.js')}}"></script>
-<script>
     let end_date = NaN
     let product_count = 0
     devicetype = "Терминал"
