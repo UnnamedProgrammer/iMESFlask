@@ -6,22 +6,23 @@ from datetime import datetime
 class IndexController():
     tpa: str = ''
     pressform: str = ''
-    product: str = ''
-    production_plan: int = 0
+    product : tuple = ()
+    production_plan : tuple = ()
     cycle: int = 0
     cycle_fact: float = 0
     plan_weight: float = 0
     average_weight: float = 0
     shift: str = ''
     print_paper: int = 0
-    shift_task_oid: str = ''
-    product_fact: str = 0
+    shift_task_oid : tuple = ()
+    product_fact : tuple  = ()
     label: str = ''
     controller: str = ''
     tpa_is_works: bool = False
     PackingURL: str = ''
     StartDate: datetime = None
     EndDate: datetime = None
+    ProductCount = 0
 
     def data_from_shifttask(self):
         sql = f"""
@@ -71,16 +72,23 @@ class IndexController():
         #---------------------------------------------------
 
         if len(data) > 0:
-            data = data[0]
-            self.shift_task_oid = data[0]
-            self.product = data[4]
-            self.production_plan = data[11]
-            self.cycle = data[12]
-            self.plan_weight = round(data[13])
-            self.shift = data[1]
-            self.PackingURL = data[15]
+            st_oid = []
+            product_list = []
+            production_plan = []
+            for shift_task in data:
+                st_oid.append(shift_task[0])
+                product_list.append(shift_task[4])
+                production_plan.append(shift_task[11])
+                self.cycle = shift_task[12]
+                self.plan_weight = round(shift_task[13])
+                self.shift = shift_task[1]
+                self.PackingURL = shift_task[15]
+
+            self.shift_task_oid = st_oid
+            self.product = tuple(product_list)
+            self.production_plan = tuple(production_plan)
         else:
-            self.shift_task_oid = ''
+            self.shift_task_oid = ()
             self.product = 'Нет сменного задания'
             self.production_plan = 0
             self.cycle = 0
@@ -90,26 +98,33 @@ class IndexController():
             FROM [MES_Iplast].[dbo].[Shift] ORDER BY StartDate DESC            
             """)[0][0]
 
-        if self.shift_task_oid != None and self.shift_task_oid != '':
-            production_data_sql = f"""
-                SELECT
-                    [CountFact]
-                    ,[CycleFact]
-                    ,[WeightFact]
-                    ,[StartDate]
-                    ,[EndDate]
-                FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{self.shift_task_oid}'
-            """
-            production_data = SQLManipulator.SQLExecute(production_data_sql)
+        if self.shift_task_oid != None and len(self.shift_task_oid) > 0:
+            production_data = []
+            for task_oid in self.shift_task_oid:
+                production_data_sql = f"""
+                    SELECT
+                        [CountFact]
+                        ,[CycleFact]
+                        ,[WeightFact]
+                        ,[StartDate]
+                        ,[EndDate]
+                    FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid}'
+                """
+                result = SQLManipulator.SQLExecute(production_data_sql)
+                production_data.append(result)
             if len(production_data) > 0:
-                production_data = production_data[0]
-                self.StartDate = production_data[3]
-                self.EndDate = production_data[4]
-                if production_data[0] == None:               
-                    self.product_fact = 0
-                else:
-                    self.product_fact = production_data[0]
-                if production_data[1] == None:
-                    self.cycle_fact = 0
-                else:
-                    self.cycle_fact = round(float(production_data[1]))
+                product_fact = []
+                for pd in production_data:
+                    pd = pd[0]
+                    self.StartDate = pd[3]
+                    self.EndDate = pd[4]
+                    if pd[0] == None:               
+                        product_fact.append(0)
+                    else:
+                        product_fact.append(pd[0])
+                    if pd[1] == None:
+                        self.cycle_fact = 0
+                    else:
+                        self.cycle_fact = round(float(pd[1]))
+                self.product_fact = tuple(product_fact)
+                self.ProductCount = len(self.product)

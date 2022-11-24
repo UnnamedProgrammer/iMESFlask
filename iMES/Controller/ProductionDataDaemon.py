@@ -22,6 +22,7 @@ class ProductionDataDaemon():
             for tpanum in range(0,len(self.tpalist)):
                 try:
                     if len(self.tpalist[tpanum][3]['ShiftTask']) > 0:
+                        #print(len(self.tpalist[tpanum][3]['ShiftTask']),self.tpalist[tpanum][1])
                         for shift_task in self.tpalist[tpanum][3]['ShiftTask']: 
                             self.CreateProductionDataRecord(shift_task)
                             self.UpdateCountClosures(shift_task[0],
@@ -33,10 +34,12 @@ class ProductionDataDaemon():
                     else:
                         shift_task_list = self.GetShiftTaskForTpa(self.tpalist[tpanum][0])
                         self.tpalist[tpanum][3]["ShiftTask"] = shift_task_list
+                except IndexError:
+                    continue
                 except Exception as error:
                     print(error, "on", str(self.tpalist[tpanum]))
                     continue
-            sleep(30)
+            sleep(3)
 
     def GetAllTpa(self):
         TpaList = []
@@ -65,10 +68,70 @@ class ProductionDataDaemon():
         pressform = self.GetTpaPressFrom(tpaoid)
         equipment_performance = self.GetEquipmentPerformance(tpaoid,pressform)
         if equipment_performance != None:
+            total_socket_count = equipment_performance[4]
+            if total_socket_count == 0:
+                total_socket_count = 1
             products = self.GetProductionProducts(equipment_performance[0])
-            print(products)
-        
+            for product in products:
+                empty_sockets = total_socket_count
+                shift = self.GetCurrentShift()
+                shift_task = self.GetShiftTask(shift,tpaoid,product[1],product[3])
+                if len(shift_task) > 0:
+                    if total_socket_count == product[2]:
+                        if product[2] > empty_sockets:
+                            continue
+                        shift_tasks.append(shift_task[0])
+                        break
+                    else:
+                        if empty_sockets != 0:
+                            empty_sockets -= product[2]
+                            shift_tasks.append(shift_task[0])
+                        else:
+                            break
+                
         return shift_tasks
+    
+    # Метод возвращает Oid текущей смены
+    def GetCurrentShift(self):
+        sql = """
+            SELECT TOP(1) [Oid]
+            FROM [MES_Iplast].[dbo].[Shift] ORDER BY StartDate DESC
+        """
+        shift_oid = SQLManipulator.SQLExecute(sql)
+        return shift_oid[0][0]
+
+    # Метод ищет совпадающее по заданным параметрам сменное задание
+    def GetShiftTask(self,shift,equipment,product,cycle):
+        sql_ST = f"""
+            SELECT [ShiftTask].[Oid]
+                ,[Shift].Note
+                ,[Equipment]
+                ,[Ordinal]
+                ,[Product].Name
+                ,[Specification]
+                ,[Traits]
+                ,[ExtraTraits]
+                ,[PackingScheme]
+                ,[PackingCount]
+                ,[SocketCount]
+                ,[ProductCount]
+                ,[Cycle]
+                ,[Weight]
+                ,[ProductURL]
+                ,[PackingURL]
+                ,[Shift]
+            FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift 
+            WHERE 
+                Shift = '{shift}' AND
+                Equipment = '{equipment}' AND
+                Product = '{product}' AND
+                Cycle = '{cycle}' AND
+                ShiftTask.Product = Product.Oid AND
+                Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
+                ShiftTask.Shift = Shift.Oid
+        """
+        st = SQLManipulator.SQLExecute(sql_ST)
+        return st
         
     def GetEquipmentPerformance(self,tpaoid,rigoid):
         if rigoid != None:
@@ -100,7 +163,7 @@ class ProductionDataDaemon():
         list = SQLManipulator.SQLExecute(sql)
         products = []
         for product in list:
-            products.append(product[1])
+            products.append(product)
         return products
 
     def ProductionDataRecordIsCreated(self,ShiftTaskOid):
@@ -159,10 +222,6 @@ class ProductionDataDaemon():
             return None
 
     def UpdateCountClosures(self, ShiftTaskOid,ShiftOid, specification, plan, socketcount, tpaoid):
-        for ip_addr in TpaList.keys():
-            for tpa in TpaList[ip_addr]:
-                if tpa['Oid'] == tpaoid:
-                    tpa['WorkStatus'] = self.Get_Tpa_Status(ShiftTaskOid)
         if ShiftTaskOid == '':
             return
         offset = 0
@@ -322,33 +381,3 @@ class ProductionDataDaemon():
                WHERE Oid = '{production_data[0]}'
                """
                SQLManipulator.SQLExecute(update_sql)
-
-    def Get_Tpa_Status(self,shifttaskoid):
-        if shifttaskoid == None or shifttaskoid == '':
-            self.tpa_is_works = False
-            return False
-        sql = f"""
-            SELECT TOP(1) [Date]
-            FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
-            WHERE 
-            Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
-                                FROM RFIDEquipmentBinding, ShiftTask
-                                WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
-                                ShiftTask.Oid = '{shifttaskoid}') AND
-            ShiftTask.Oid = '{shifttaskoid}' AND
-            Shift.Oid = ShiftTask.Shift AND
-            Date between Shift.StartDate AND Shift.EndDate
-            ORDER BY Date DESC 
-        """
-        last_closure_date = SQLManipulator.SQLExecute(sql)
-        if len(last_closure_date) > 0:
-            last_closure_date = last_closure_date[0][0]
-            current_date = datetime.now()
-            last_closure_date = last_closure_date
-            seconds = (current_date - last_closure_date).total_seconds()
-            if seconds >= 600:
-                return False
-            else:
-                return True
-        else:
-            return False
