@@ -10,8 +10,8 @@ class IndexController():
     production_plan : tuple = ()
     cycle: int = 0
     cycle_fact: float = 0
-    plan_weight: float = 0
-    average_weight: float = 0
+    plan_weight: tuple = ()
+    average_weight: tuple = ()
     shift: str = ''
     print_paper: int = 0
     shift_task_oid : tuple = ()
@@ -24,6 +24,7 @@ class IndexController():
     EndDate: datetime = None
     ProductCount = 0
     tpa_message: str = ''
+    wastes: tuple = ()
 
     def data_from_shifttask(self):
         sql = f"""
@@ -77,18 +78,20 @@ class IndexController():
             st_oid = []
             product_list = []
             production_plan = []
+            plan_weight = []
             for shift_task in data:
                 st_oid.append(shift_task[0])
                 product_list.append(shift_task[4])
                 production_plan.append(shift_task[11])
                 self.cycle = shift_task[12]
-                self.plan_weight = round(shift_task[13])
+                plan_weight.append(f"{float(shift_task[13]):.{2}f}")
                 self.shift = shift_task[1]
                 self.PackingURL = shift_task[15]
 
             self.shift_task_oid = st_oid
             self.product = tuple(product_list)
             self.production_plan = tuple(production_plan)
+            self.plan_weight = tuple(plan_weight)
         else:
             self.shift_task_oid = ()
             self.product = 'Нет сменного задания'
@@ -127,10 +130,43 @@ class IndexController():
                     if pd[1] == None:
                         self.cycle_fact = 0
                     else:
-                        self.cycle_fact = round(float(pd[1]))
+                        self.cycle_fact = f"{float(pd[1]):.{1}f}"
                 self.product_fact = tuple(product_fact)
                 self.ProductCount = len(self.product)
-        
-        average_weight_sql = """
+        average_weight = []
+        wastes = []
+        for task_oid in self.shift_task_oid:
+            get_production_data_sql = f"""
+                SELECT TOP(1) [Oid]
+                FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid}'
+            """
+            production_data_oid = SQLManipulator.SQLExecute(get_production_data_sql)
+            if len(production_data_oid) > 0:
+                production_data_oid = production_data_oid[0][0]
+                average_weight_sql = f"""
+                    SELECT SUM(Weight)/COUNT(Weight)
+                    FROM [MES_Iplast].[dbo].[ProductWeight] 
+                    WHERE ProductionData = '{production_data_oid}'
+                """
+                wastes_sql = f"""
+                    SELECT [Count]
+                    FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
+                """
+                average_weight_result = SQLManipulator.SQLExecute(average_weight_sql)
+                wastes_result = SQLManipulator.SQLExecute(wastes_sql)
+                if len(average_weight_result) > 0:
+                    if (average_weight_result[0][0] != None):
+                        average_weight.append(f"{float(average_weight_result[0][0]):.{2}f}")
+                    else:
+                        average_weight.append(f"{0.00:.{2}f}")
+                if len(wastes_result) > 0:
+                    if (wastes_result[0][0] != None):
+                        wastes.append(f"{float(wastes_result[0][0]):.{0}f}")
+                    else:
+                        wastes.append(0)
+                else:
+                    wastes.append(0)
 
-        """
+        self.wastes = tuple(wastes)
+        self.average_weight = tuple(average_weight)
+        

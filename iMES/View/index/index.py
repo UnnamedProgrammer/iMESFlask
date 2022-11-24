@@ -533,14 +533,15 @@ def UpdateMainWindowData(data):
                       "Fact": current_tpa[ip_addr][2].product_fact,
                       "PlanCycle": str(current_tpa[ip_addr][2].cycle),
                       "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
-                      "PlanWeight": str(current_tpa[ip_addr][2].plan_weight),
-                      "AverageWeight": str(current_tpa[ip_addr][2].average_weight),
+                      "PlanWeight": current_tpa[ip_addr][2].plan_weight,
+                      "AverageWeight": current_tpa[ip_addr][2].average_weight,
                       "Shift": str(current_tpa[ip_addr][2].shift),
-                      "Defective": 0}
+                      "Wastes": current_tpa[ip_addr][2].wastes}
         }
         socketio.emit("GetMainWindowData", data=json.dumps(
             MWData, ensure_ascii=False, indent=4))
-    except:
+    except Exception as error:
+        print(error)
         pass
 
 

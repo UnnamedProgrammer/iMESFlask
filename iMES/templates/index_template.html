@@ -411,24 +411,22 @@
     socket.on('GetMainWindowData', function(data){
         arr = JSON.parse(data)
         if (address == Object.keys(arr))
-        {
+        {   
             let pressform = document.getElementById('tpf')
             let product = document.querySelectorAll('#tprod')
             let product_plan = document.querySelectorAll('#nplan')
             let product_fact = document.querySelectorAll('#nvplan')
             let cycle = document.getElementById('pointTC')
             let cycle_fact = document.getElementById('pointVCS')
-            let plan_weight = document.getElementById('planweight')
-            let average_weight = document.getElementById('average_weigth')
+            let plan_weight = document.querySelectorAll('#planweight')
+            let average_weight = document.querySelectorAll('#average_weigth')
             let shift = document.getElementById('smena')
-            let defective = document.getElementById('nvDefect')
+            let defective = document.querySelectorAll('#nvDefect')
             pressform.textContent = arr[address]['PF']
             cycle.textContent = arr[address]['PlanCycle']
             cycle_fact.textContent = arr[address]['FactCycle']
-            plan_weight.textContent = arr[address]['PlanWeight']
             average_weight.textContent = arr[address]['AverageWeight']
             shift.textContent = arr[address]['Shift']
-            defective.textContent = arr[address]['Defective']
             if ((arr[address]['Product'].length == 1) ||
                 (arr[address]['Product'] == 'Нет сменного задания')){
                 if (arr[address]['Product'] == 'Нет сменного задания')
@@ -440,6 +438,10 @@
                 }
                 product_plan[0].textContent = arr[address]['Plan'][0]
                 product_fact[0].textContent = arr[address]['Fact'][0]
+                plan_weight[0].textContent = arr[address]['PlanWeight'][0]
+                average_weight[0].textContent = arr[address]['AverageWeight'][0]
+                defective[0].textContent = arr[address]['Wastes'][0]
+                console.log(arr[address]['Wastes'][0])
             }
             else
             {
@@ -449,6 +451,9 @@
                     product[item].textContent = arr[address]['Product'][item]
                     product_plan[item].textContent = arr[address]['Plan'][item]
                     product_fact[item].textContent = arr[address]['Fact'][item]
+                    plan_weight[item].textContent = arr[address]['PlanWeight'][item]
+                    average_weight[item].textContent = arr[address]['AverageWeight'][item]
+                    defective[item].textContent = arr[address]['Wastes'][item]
                     count += 1 
                 }
                 for (let item = count; item < product.length; item++)
@@ -456,6 +461,9 @@
                     product[item].textContent = arr[address]['Product'][item - 1]
                     product_plan[item].textContent = arr[address]['Plan'][item - 1]
                     product_fact[item].textContent = arr[address]['Fact'][item - 1]
+                    plan_weight[item].textContent = arr[address]['PlanWeight'][item - 1]
+                    average_weight[item].textContent = arr[address]['AverageWeight'][item - 1]
+                    defective[item].textContent = arr[address]['Wastes'][item - 1]
                 }
             }
         }
