@@ -11,6 +11,7 @@ from flask_login import login_required
 def bindPressForms():
     ip_addr = request.remote_addr
     device_tpa = TpaList[ip_addr]
+    
     # Вытаскиваем Oid и названия существующих пресс-форм
     sql_GetPressForms = """SELECT Equipment.Oid, Equipment.Name
                                                 FROM Equipment 
@@ -19,7 +20,7 @@ def bindPressForms():
                                                 ORDER BY Equipment.Name"""
     press_forms = SQLManipulator.SQLExecute(sql_GetPressForms)
 
-    return render_template("/bind_press_form/bind_press_form.html",  device_tpa=device_tpa,current_tpa = current_tpa[ip_addr], press_forms=press_forms)
+    return render_template("/bind_press_form/bind_press_form.html", device_tpa=device_tpa, current_tpa=current_tpa[ip_addr], press_forms=press_forms)
 
 
 @socketio.on('press_form_binding')
