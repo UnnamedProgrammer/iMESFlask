@@ -25,6 +25,7 @@ class IndexController():
     ProductCount = 0
     tpa_message: str = ''
     wastes: tuple = ()
+    shift_tasks_traits: tuple = ()
 
     def data_from_shifttask(self):
         sql = f"""
@@ -44,6 +45,8 @@ class IndexController():
                 ,[Weight]
                 ,[ProductURL]
                 ,[PackingURL]
+                ,[Traits]
+                ,[ExtraTraits]
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{self.tpa}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
@@ -79,6 +82,7 @@ class IndexController():
             product_list = []
             production_plan = []
             plan_weight = []
+            traits = []
             for shift_task in data:
                 st_oid.append(shift_task[0])
                 product_list.append(shift_task[4])
@@ -92,6 +96,14 @@ class IndexController():
             self.product = tuple(product_list)
             self.production_plan = tuple(production_plan)
             self.plan_weight = tuple(plan_weight)
+
+            for i in range(0,len(data)):
+                traits.append([self.product[i],
+                               f"{data[i][16]} {data[i][17]}",
+                               self.production_plan[i],
+                               self.cycle,
+                               self.cycle,self.plan_weight[i]])
+            self.shift_tasks_traits = tuple(traits)
         else:
             self.shift_task_oid = ()
             self.product = 'Нет сменного задания'
@@ -124,7 +136,7 @@ class IndexController():
                     self.StartDate = pd[3]
                     self.EndDate = pd[4]
                     if pd[0] == None:               
-                        product_fact = (0)
+                        product_fact = [0]
                     else:
                         product_fact.append(pd[0])
                     if pd[1] == None:

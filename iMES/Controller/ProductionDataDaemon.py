@@ -1,8 +1,7 @@
 from threading import Thread
 from time import sleep
 from iMES.Model.SQLManipulator import SQLManipulator
-from iMES import current_tpa,TpaList
-from datetime import datetime
+from iMES import app
 
 
 
@@ -11,18 +10,17 @@ class ProductionDataDaemon():
         self.shift = 0
         self.tpalist = self.GetAllTpa()
         self.completed_clousers = {}
-
+        self.offsetlist = {}
     def Start(self):
         thread = Thread(target=self.TpaProductionDataMonitoring, args=())
         thread.start()
-        print("Демон мониторинга продукции запущен")
+        app.logger.info("Демон мониторинга продукции запущен")
 
     def TpaProductionDataMonitoring(self):
         while True:
             for tpanum in range(0,len(self.tpalist)):
                 try:
                     if len(self.tpalist[tpanum][3]['ShiftTask']) > 0:
-                        #print(len(self.tpalist[tpanum][3]['ShiftTask']),self.tpalist[tpanum][1])
                         for shift_task in self.tpalist[tpanum][3]['ShiftTask']: 
                             self.CreateProductionDataRecord(shift_task)
                             self.UpdateCountClosures(shift_task[0],
@@ -37,7 +35,7 @@ class ProductionDataDaemon():
                 except IndexError:
                     continue
                 except Exception as error:
-                    print(error, "on", str(self.tpalist[tpanum]))
+                    app.logger.info(error, "on", str(self.tpalist[tpanum]))
                     continue
             sleep(3)
 
@@ -130,8 +128,21 @@ class ProductionDataDaemon():
                 Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
                 ShiftTask.Shift = Shift.Oid
         """
-        st = SQLManipulator.SQLExecute(sql_ST)
-        return st
+        offset = 0
+        shift_task = SQLManipulator.SQLExecute(sql_ST)
+        if len(shift_task) > 0:
+            for st in shift_task:
+                sql = f"""
+                    SELECT [Oid] ,[CountFact]
+                    FROM [MES_Iplast].[dbo].[ProductionData] 
+                    WHERE ShiftTask = '{st[0]}' AND Status = 2
+                """
+                find_shifttask_ended = SQLManipulator.SQLExecute(sql)
+                if len(find_shifttask_ended):
+                    shift_task.remove(st)
+                    offset += find_shifttask_ended[0][1]
+        self.offsetlist[equipment] = offset
+        return shift_task
         
     def GetEquipmentPerformance(self,tpaoid,rigoid):
         if rigoid != None:
@@ -224,7 +235,7 @@ class ProductionDataDaemon():
     def UpdateCountClosures(self, ShiftTaskOid,ShiftOid, specification, plan, socketcount, tpaoid):
         if ShiftTaskOid == '':
             return
-        offset = 0
+        offset = self.offsetlist[tpaoid]
         sql = f"""
             SELECT RCD.[Oid]
                 ,[Controller]
