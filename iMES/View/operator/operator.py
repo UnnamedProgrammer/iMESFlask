@@ -250,10 +250,15 @@ def handle_sticker_info_change(data):
     sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
     current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
 
-    # Создаем запись введенной этикетки в таблице StickerInfo
-    sql_PostStickerInfo = f"""INSERT INTO StickerInfo (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
-                                VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{entered_product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');"""
-    SQLManipulator.SQLExecute(sql_PostStickerInfo)
+    if SQLManipulator.SQLExecute(f"SELECT Equipment FROM StickerInfo WHERE Equipment = '{current_tpa[ip_addr][0]}'")[0][0]:
+        print('you have')
+    else:
+        print('have not')
+
+    # # Создаем запись введенной этикетки в таблице StickerInfo
+    # sql_PostStickerInfo = f"""INSERT INTO StickerInfo (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
+    #                             VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{entered_product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');"""
+    # SQLManipulator.SQLExecute(sql_PostStickerInfo)
 
 # Схема упаковки
 @app.route('/operator/PackingScheme')

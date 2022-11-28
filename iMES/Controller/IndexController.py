@@ -17,7 +17,7 @@ class IndexController():
     shift_task_oid : tuple = ()
     product_fact : tuple  = ()
     label: str = ''
-    controller: str = ''
+    controller: str = 'Empty'
     tpa_is_works: bool = False
     PackingURL: str = ''
     StartDate: datetime = None
@@ -169,4 +169,14 @@ class IndexController():
 
         self.wastes = tuple(wastes)
         self.average_weight = tuple(average_weight)
+        sql_controller = SQLManipulator.SQLExecute(f"""
+            SELECT [RFIDEquipment]
+            FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding]
+            WHERE Equipment = '{self.tpa}'
+            """)
+        if len(sql_controller) > 0:
+            self.controller = sql_controller[0][0]
+        else:
+            self.controller = 'Empty'
+
         

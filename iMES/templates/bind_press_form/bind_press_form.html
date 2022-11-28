@@ -9,7 +9,8 @@
             <input class="search-input openKeyBig use-keyboard-input" id="searchPressForm" type="text">
         </div>
         <form action="bind_press_form.py" method="post" id="form">
-            <select class="custom-select jsScroll my-scrollbar" id="selectPressForm" size="12">
+            <input type="hidden" id="pressFormData">
+            <select class="custom-select jsScroll my-scrollbar" id="selectPressForm"  size="12">
                 {% for press_form in press_forms %}
                     <option value="{{ press_form[0] }}">{{ press_form[1] }}</option>
                 {% endfor %}
@@ -29,17 +30,9 @@
         </div>
     </div>        
 </div>
-<script src="/static/js/BindPressForm/selected_PF.js"></script>
 <script src="/static/js/keyboard.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {  
-        var selectPressForm = document.getElementById('selectPressForm'),
-            id = document.getElementById('adjuster').getAttribute('online'),
-            bindPressForm = document.getElementById('bindPressForm');
-
-        function openKeboard() {
-            let keyboard = document.getElementsByClassName('keyboard');  
-        }
 
         //--------------------------СИСТЕМА ПОИСКА-----------------------------
         document.addEventListener("click", function(e) {
@@ -90,8 +83,24 @@
                     });
                 });
             }
-        }  
-    });
+        }
+        
+        // Смена пресс-формы
+        let pressFormData = document.getElementById('pressFormData')
+        let pressFormName = null
+
+        document.getElementById('selectPressForm').addEventListener('change', function() {
+            pressFormData.value = this[this.selectedIndex].value
+            pressFormName = this[this.selectedIndex].text
+        })
+
+        // При нажатии на кнопку отправляю идентификаторы контроллера и выбранной пресс-формы на сервер
+        document.getElementById('bindPressForm').addEventListener('click', function() {
+            let socket = io();
+            tpf.innerHTML = pressFormName // Визуальная замена пресс-формы
+            socket.emit('press_form_binding', pressFormData.value);
+        })
+    })
 </script>
 {% endblock %}
 {% block navbar_footer %}
