@@ -348,8 +348,8 @@ class ShiftTaskLoader():
             if len(SpecificationCodeCorrection) < 11:
                 while len(SpecificationCodeCorrection) != 11:
                     SpecificationCodeCorrection = '0' + SpecificationCodeCorrection
-            if ((task['oid'] == NomenclatureGroup) or
-                    (self.nomenclature_group == "")):
+            if (((task['oid'] == NomenclatureGroup) or
+                (self.nomenclature_group == "")) and 'Socket' in task):
                 ShiftTask = ShiftTaskModel(task_id,
                                            task['Shift'],
                                            task['oid'],
