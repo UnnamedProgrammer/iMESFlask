@@ -98,8 +98,7 @@
         document.getElementById('bindPressForm').addEventListener('click', function() {
             let socket = io();
             tpf.innerHTML = pressFormName // Визуальная замена пресс-формы
-            // socket.emit('press_form_binding', [selected_press_form, pressFormData.value]);
-            // socket.emit('press_form_binding', [selected_press_form, tpaOid]);
+            socket.emit('press_form_binding', pressFormData.value);
         })
     })
 </script>
