@@ -348,15 +348,25 @@ class ShiftTaskLoader():
             if len(SpecificationCodeCorrection) < 11:
                 while len(SpecificationCodeCorrection) != 11:
                     SpecificationCodeCorrection = '0' + SpecificationCodeCorrection
-            if ((task['oid'] == NomenclatureGroup) or
-                    (self.nomenclature_group == "")):
+            if (((task['oid'] == NomenclatureGroup) or
+                (self.nomenclature_group == "")) and 'Socket' in task):
+
+                traits = ""
+                extratraits = ""
+                if len(task["Characteristic"]) > 0:
+                    dict_keys = [*task["Characteristic"].keys()]
+                    for key in dict_keys:
+                        traits = traits + f"{key}: {task['Characteristic'][key]}, "
+                if len(task["Ingredient"]) > 0:
+                    extratraits = task["Ingredient"]
+
                 ShiftTask = ShiftTaskModel(task_id,
                                            task['Shift'],
                                            task['oid'],
                                            task['ProductCode'],
                                            SpecificationCodeCorrection,
-                                           "",
-                                           "",
+                                           traits,
+                                           extratraits,
                                            task['Packing'],
                                            task['PackingCount'],
                                            task['Socket'],

@@ -42,6 +42,11 @@ class ShiftTaskDaemon():
                 date = int(str(year + month + day))
                 hour = now.hour
                 if len(tpa_list) > 0:
+                    SQLManipulator.SQLExecute("""
+                        UPDATE [MES_Iplast].[dbo].[ProductionData]
+                        SET Status = 2
+                        WHERE Status = 1    
+                    """)
                     Loader = ShiftTaskLoader(self.tpa_list, date, 3)
                     Loader.Get_ShiftTask()
                     Loader.InsertToDataBase()

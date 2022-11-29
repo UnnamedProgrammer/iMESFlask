@@ -37,10 +37,23 @@ def handle_selected_press_forms(data):
                                             ORDER BY Date DESC"""
         label = SQLManipulator.SQLExecute(sql_GetLabelOid)
 
-        # Ищем старую запись по Oid метки из последнего смыкания и перезаписываем значение на Oid новой метки
-        SQLManipulator.SQLExecute(f"""UPDATE RFIDEquipmentBinding
-                                        SET Equipment = '{selected_press_form}'
-                                        WHERE RFIDEquipment = '{label[0][0]}'""")
+        # Проверяем создана ли привязка метки к прессофрме
+        control_label_binding = SQLManipulator.SQLExecute(f"""
+            SELECT [Oid]
+            FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding] 
+            WHERE RFIDEquipment = '{label[0][0]}'
+        """)
+        if len(control_label_binding) > 0:
+            # Ищем старую запись по Oid метки из последнего смыкания и перезаписываем значение на Oid новой метки
+            SQLManipulator.SQLExecute(f"""UPDATE RFIDEquipmentBinding
+                                            SET Equipment = '{selected_press_form}'
+                                            WHERE RFIDEquipment = '{label[0][0]}'""")
+        else:
+            # Создаём новую привязку метки и прессформы
+            SQLManipulator.SQLExecute(f"""
+                INSERT INTO [RFIDEquipmentBinding] (Oid,RFIDEquipment,Equipment,InstallDate,RemoveDate,State)
+                VALUES (NEWID(),'{label[0][0]}','{selected_press_form}',GETDATE(),NULL,1)
+            """)
     
     else:
         app.logger.critical(f"[{datetime.datetime.now()}] Нет привязки контроллера к ТПА ({current_tpa[ip_addr][2].tpa})")

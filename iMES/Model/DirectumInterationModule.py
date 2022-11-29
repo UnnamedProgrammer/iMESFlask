@@ -2,6 +2,7 @@ import requests
 import json
 import os
 from bs4 import BeautifulSoup
+from iMES import app
 
 
 class DirectumIntegration():
@@ -57,14 +58,14 @@ class DirectumIntegration():
             if (post_request.status_code == 200):
                 response_data = json.loads(post_request.text)
                 if (response_data['d']['Success'] == True):
-                    print(f"Авторизация [{post_request.status_code}]. ОК.")
+                    app.logger.info(f"Авторизация [{post_request.status_code}]. ОК.")
                     return True
             else:
-                print(f"Ошибка: Статус запроса [{post_request.status_code}]")
+                app.logger.critical(f"Ошибка: Статус запроса [{post_request.status_code}]")
                 return False
         except:
-            print(f"Авторизация [{post_request.status_code}]. Проблема.")
-            print(
+            app.logger.error(f"Авторизация [{post_request.status_code}]. Проблема.")
+            app.logger.error(
                 "Ошибка: 'Неизвестная ошибка при загрузке ответа в виде JSON.'")
             return False
         return 'Не удалось авторизоваться в СЭД "Directum"'
