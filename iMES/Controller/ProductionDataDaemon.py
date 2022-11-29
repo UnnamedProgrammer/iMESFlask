@@ -37,7 +37,7 @@ class ProductionDataDaemon():
                 except Exception as error:
                     app.logger.info(error, "on", str(self.tpalist[tpanum]))
                     continue
-            sleep(3)
+            sleep(8)
 
     def GetAllTpa(self):
         TpaList = []
@@ -284,7 +284,7 @@ class ProductionDataDaemon():
                             ShiftTask.Oid = '{ShiftTaskOid}' AND
                             Shift.Oid = ShiftTask.Shift AND
                             Date between Shift.StartDate AND Shift.EndDate
-                            ORDER BY Date ASC OFFSET {offset} ROWS   
+                            ORDER BY Date ASC OFFSET 0 ROWS   
             """
             cycle_request = SQLManipulator.SQLExecute(sql_get_average_cycle)
             average_cycle = 0
