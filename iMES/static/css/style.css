@@ -213,6 +213,25 @@ button {
     left: -20px;
     background: url("close-more_left.png") no-repeat; }
 
+.btn_add-waste {
+  text-align: center;
+  margin-right: 16px;
+  width: 10%;
+  height: 53px;
+  line-height: 53px;
+  color: white;
+  background-color: #254063;
+  border-radius: 4px; }
+
+.btn_delete-waste {
+  text-align: center;
+  width: 10%;
+  height: 53px;
+  line-height: 53px;
+  color: white;
+  background-color: #dc3545;
+  border-radius: 4px; }
+
 /* Стили клавиатур */
 .keyboard {
   position: absolute;
@@ -461,13 +480,14 @@ button {
     overflow: hidden; }
     .view-body_journal {
       height: 700px; }
+    .view-body_idleEnter {
+      height: 780px; }
 
 .idle-form {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 15px;
-  height: 965px;
   background-color: #fff; }
 
 .form-control_idle {
@@ -671,6 +691,17 @@ table .red {
     height: 135px; }
   .custom-option_averageWeight {
     height: 135px; }
+
+.custom-select {
+  padding: .375rem 1.75rem .375rem .75rem;
+  width: 100%;
+  color: #495057;
+  border: none; }
+  .custom-select_waste {
+    width: 55%;
+    height: 3.3rem;
+    font-size: 16pt;
+    border: 1px solid #d1d7dc; }
 
 .height-bottom {
   height: 130px;

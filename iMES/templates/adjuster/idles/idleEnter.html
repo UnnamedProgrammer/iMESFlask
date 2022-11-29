@@ -13,27 +13,144 @@
 </head>
 <body ondragstart="event.preventDefault()" ondrop="event.preventDefault()">
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
-    <input type="hidden" id="current_user" value="{{ current_user }}">
+    <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 
     <div class="view">
         <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
-        <div class="view-body view-body_journal"></div>
-        <div class="d-flex justify-content-between px-3">
+        <div class="view-body view-body_idleEnter">
+            <form action="" class="idle-form" id="idleEnterForm">
+                <div class="idle-form__body mt-2">
+                    <input class="input-group-text_idle idle-data" type="hidden" name="idleOid" value="">
+                    <div class="row">
+                        <div class="input-group mb-2 input-group_double">
+                            <span class="input-group-text input-group-text_idle input-group-text_green">Прошло времени</span>
+                            <input type="text" class="form-control form-control_idle" value="" placeholder="Время простоя" readonly>
+                        </div>
+                        <div class="input-group mb-2 input-group_double">
+                            <span class="input-group-text input-group-text_idle input-group-text_green">Наладчик</span>
+                            <input class="idle-data" type="hidden" name="userOid" value="">
+                            <input type="text" class="form-control form-control_idle idle-data" value="{{ current_user }}" name="idleCreator" placeholder="Ф.И.О Наладчика" readonly>
+                        </div>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Причина неисправности</span> 
+                        <input type="text" class="form-control form-control_idle idle-data" id="idleCause" name="idleCause" value="" onclick="modalController(event)" placeholder="Выберите причину неисправности..." readonly>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Описание неисправности</span>
+                        <input type="text" class="form-control form-control_idle idle-data" id="idleDescription" name="idleDescription" value="" onclick="modalController(event)" placeholder="Выберите описание неисправности..." readonly>  
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Предпринятые меры</span>
+                        <input type="text" class="form-control form-control_idle idle-data" id="idleTakenMeasures" name="idleTakenMeasures" value="" onclick="modalController(event)" placeholder="Выберите предпринятые меры..." readonly>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Комментарий</span>
+                        <input type="text" class="form-control form-control_idle idle-data use-wordKeyboard-input" id="idleNote" name="idleNote" value="" placeholder="Введите комментарий...">
+                    </div>
+                    <input type="hidden" class="idle-data" name="shiftTaskData" id="shiftTaskData" value="">
+
+                    <div class="idle-form__body_waste mt-4">
+                        <span class="input-group-text input-group-text_idle input-group-text_green input-group-text_waste mb-3">Отходы</span>
+                        <div class="waste-card mb-2 row">
+                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                                <option>Выберите отход</option>
+                            </select>
+                            <div class="weight-input input-group">
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" value="" aria-describedby="" readonly>
+                                <span class="input-group-text">КГ</span>
+                            </div>
+                            <div class="btn_add-waste align-middle" onClick="addWaste()">Добавить</div>
+                            <div class="btn_delete-waste" onClick="deleteWaste()">Удалить</div>
+                        </div>
+                        <div class="waste-card mb-2 row hidden">
+                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                                <option selected>Выберите отход</option>
+                            </select>
+                            <div class="weight-input input-group">
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" aria-describedby="" readonly>
+                                <span class="input-group-text">КГ</span>
+                            </div>
+                        </div>
+                        <div class="waste-card mb-2 row hidden">
+                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                                <option selected>Выберите отход</option>
+                            </select>
+                            <div class="weight-input input-group">
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" aria-describedby="" readonly>
+                                <span class="input-group-text">КГ</span>
+                            </div>
+                        </div>
+                        <div class="waste-card mb-2 row hidden">
+                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                                <option selected>Выберите отход</option>
+                            </select>
+                            <div class="weight-input input-group">
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" aria-describedby="" readonly>
+                                <span class="input-group-text">КГ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="d-flex justify-content-between px-3 pb-4">
             <div class="col-6 row">
-                <div class="col nopadding me-1">
+                <div class="col me-1">
                     <button type="button" class="btn btn__view btn__view_journal primary fs-3">
-                       НЕПОЛАДКА<br>( ввод неполадки )
+                       Ввести простой
                     </button>
                 </div>
             </div>
             <div class="col-6 row">
-                <div class="col nopadding ms-1">
+                <div class="col ms-1">
                     <button type="button" class="btn btn__view btn__view_journal secondary fs-1" onclick="location.href='/adjuster'">
                         Выход
                     </button>
                 </div>
             </div>
         </div>
-    </div>  
+
+        <!-- Модальное (всплывающее) окно выбора причины неисправности -->
+        <div class="modal hidden" id="idleCause">
+            <div class="modal__list">
+                <div class="modal_header">
+                    <h5 class="modal_title">Выберите причину</h5>
+                </div>
+                <div class="modal_content">
+                    <div class="modal_body">
+                        <table class="table table-bordered text-center" id="selectStickerProduct" border="1" bordercolor="black">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">Выбор</th>
+                                    <th scope="col">Продукт</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal_footer">
+                        <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="changeProductModal" onClick="modalController(event)"> Закрыть </button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+        <!-- ----------------------------------------------------------- -->
+
+    </div> 
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            // Управление модальным окном
+            function modalController(event){ 
+                toggler = event.target.dataset.toggle // Кнопка открытия/закрытия модального окна
+                target = event.target.dataset.target // ID модального окна ( атрибут data-target )
+                modal = document.getElementById(target) // Получение нужного модальног окна по ID
+                // Открытие/закрытие модального окна
+                modal.classList.toggle('hidden');
+            }
+        });
+    </script>
 </body>
 </html>
