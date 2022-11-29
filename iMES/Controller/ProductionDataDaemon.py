@@ -320,56 +320,53 @@ class ProductionDataDaemon():
                 """
                 current_shift = SQLManipulator.SQLExecute(get_current_shift)
                 current_shift = current_shift[0][0]
+                average_weight = SQLManipulator.SQLExecute(f"""
+                    SELECT SUM(Weight)/COUNT(Weight)
+                        FROM [MES_Iplast].[dbo].[ProductWeight]
+                        WHERE ProductionData = '{production_data[0]}'
+                """)
+                if len(average_weight) > 0:
+                    if average_weight[0][0] != None:
+                        average_weight = average_weight[0][0]
+                    else:
+                        average_weight = 0
                 if count >= plan:
                     update_sql = f"""
                         UPDATE ProductionData
-                        SET CountFact = '{plan}'
-                        WHERE Oid = '{production_data[0]}'
-                        UPDATE ProductionData
-                        SET CycleFact = '{average_cycle}'
-                        WHERE Oid = '{production_data[0]}'
-                        UPDATE ProductionData
-                        SET SpecificationFact = '{specification}'
-                        WHERE Oid = '{production_data[0]}'
-                        UPDATE ProductionData
-                        SET Status = 2
+                        SET CountFact = '{plan}', 
+                            CycleFact = '{average_cycle}', 
+                            SpecificationFact = '{specification}', 
+                            Status = 2,
+                            WeightFact = '{average_weight}'
                         WHERE Oid = '{production_data[0]}'
                     """
                     for i in range(0, len(self.tpalist)):
                         if self.tpalist[i][0] == tpaoid:
                             self.tpalist[i].pop(3)
+                            break
                 else:
                     if current_shift != ShiftOid:
                         update_sql = f"""
-                        UPDATE ProductionData
-                        SET CountFact = {count}
-                        WHERE Oid = '{production_data[0]}'
-                        UPDATE ProductionData
-                        SET CycleFact = '{average_cycle}'
-                        WHERE Oid = '{production_data[0]}'
-                        UPDATE ProductionData
-                        SET SpecificationFact = '{specification}'
-                        WHERE Oid = '{production_data[0]}'
-                        UPDATE ProductionData
-                        SET Status = 2
-                        WHERE Oid = '{production_data[0]}'
+                            UPDATE ProductionData
+                            SET CountFact = '{plan}', 
+                                CycleFact = '{average_cycle}', 
+                                SpecificationFact = '{specification}', 
+                                Status = 2,
+                                WeightFact = '{average_weight}'
+                            WHERE Oid = '{production_data[0]}'
                         """
                         for i in range(0, len(self.tpalist)):
                             if self.tpalist[i][0] == tpaoid:
                                 self.tpalist[i].pop(3)
+                                break
                     else:
                         update_sql = f"""
                             UPDATE ProductionData
-                            SET CountFact = {count}
-                            WHERE Oid = '{production_data[0]}'
-                            UPDATE ProductionData
-                            SET CycleFact = '{average_cycle}'
-                            WHERE Oid = '{production_data[0]}'
-                            UPDATE ProductionData
-                            SET SpecificationFact = '{specification}'
-                            WHERE Oid = '{production_data[0]}'
-                            UPDATE ProductionData
-                            SET EndDate = '{enddate}'
+                            SET CountFact = '{count}',
+                                CycleFact = '{average_cycle}',
+                                SpecificationFact = '{specification}',
+                                EndDate = '{enddate}',
+                                WeightFact = '{average_weight}'
                             WHERE Oid = '{production_data[0]}'
                         """
                 SQLManipulator.SQLExecute(update_sql)
@@ -379,16 +376,10 @@ class ProductionDataDaemon():
                (production_data[6] != 2)):
                update_sql = f"""
                UPDATE ProductionData
-               SET StartDate = '{startdate}'
-               WHERE Oid = '{production_data[0]}'
-               UPDATE ProductionData
-               SET EndDate = '{enddate}'
-               WHERE Oid = '{production_data[0]}'
-               UPDATE ProductionData
-               SET Status = 1
-               WHERE Oid = '{production_data[0]}'
-               UPDATE ProductionData
-               SET SpecificationFact = '{specification}'
+               SET StartDate = '{startdate}',
+                    EndDate = '{enddate}',
+                    Status = 1,
+                    SpecificationFact = '{specification}'
                WHERE Oid = '{production_data[0]}'
                """
                SQLManipulator.SQLExecute(update_sql)
