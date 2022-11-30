@@ -1,10 +1,7 @@
 import pyodbc
 
-
-
 class SQLManipulator():
-    @classmethod
-    def SQLExecute(self,sqlcode):
+    def __init__(self) -> None:
         self.connection_string = """
             DRIVER={ODBC Driver 18 for SQL Server};
             SERVER=OFC-APPSERV-13;
@@ -12,7 +9,9 @@ class SQLManipulator():
             UID=terminal;
             PWD=xAlTeS3dGrh7;
             TrustServerCertificate=yes;
-            """
+        """
+    @classmethod
+    def SQLExecute(self,sqlcode):
         result = []
         while True:
             connection = pyodbc.connect(self.connection_string)
@@ -31,6 +30,7 @@ class SQLManipulator():
                     cursor.close()
                     connection.close()
                     break
-            except pyodbc.ProgrammingError:
-                continue
+            except pyodbc.ProgrammingError as Error:
+                print(Error)
+                break
         return result

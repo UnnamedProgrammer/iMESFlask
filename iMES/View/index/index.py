@@ -1,11 +1,11 @@
 from iMES import socketio
 from iMES import app
 from iMES import UserController
-from flask import redirect, render_template, request
+from flask import redirect, render_template, request, jsonify
 from flask_login import login_required, login_user, logout_user, current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
-from iMES.Controller.IndexController import IndexController
+from iMES.Controller.TpaController import TpaController
 import json
 from iMES import TpaList, current_tpa, user
 import requests
@@ -57,12 +57,13 @@ def index():
 @app.route("/changeTpa", methods=["GET"])
 def ChangeTPA():
     ip_addr = request.remote_addr
-    controller = IndexController(request.args.getlist(
-        'oid')[0])
-    controller.data_from_shifttask()
-    current_tpa[ip_addr] = list((request.args.getlist(
-        'oid')[0], request.args.getlist('name')[0], controller))
-    return current_tpa
+    for tpa in TpaList[ip_addr]:
+        print(tpa)
+        if tpa['Oid'] == request.args.getlist('oid')[0]:
+            current_tpa[ip_addr] = [request.args.getlist('oid')[0], request.args.getlist('name')[0], tpa['Controller']]
+            current_tpa[ip_addr][2].data_from_shifttask() 
+            break
+    return {}
 
 
 # Метод возвращающий данные о плане и факте выпускаемой продукции на графике
@@ -573,11 +574,12 @@ def GetExecutePlan(data):
 def UpTubsStatus(data):
     ip_addr = request.remote_addr
     active_tpa = []
-    tub_dict = {"Active":active_tpa,"CurrentTpa":current_tpa[ip_addr][0]}
+    current_machine = current_tpa[ip_addr][0]
+    tub_dict = {"Active":active_tpa,"CurrentTpa":current_machine}
     for tpa in TpaList[ip_addr]:
         tpa['WorkStatus'] = Get_Tpa_Status(tpa['Oid'],ip_addr)
         if tpa['WorkStatus'] == True:
-            active_tpa.append(tpa)
+            active_tpa.append(tpa['Oid'])
     socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
 
 def Get_Tpa_Status(tpaoid,ip):

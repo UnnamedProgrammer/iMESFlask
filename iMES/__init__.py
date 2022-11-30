@@ -3,9 +3,9 @@ from flask_socketio import SocketIO
 from flask import Flask
 from flask_login import LoginManager
 from iMES.Controller.UserCountController import UserCountController
-from iMES.Model.SQLManipulator import SQLManipulator
+from iMES.Model.BaseObjectModel import BaseObjectModel
 from iMES.Model.UserModel import UserModel
-from iMES.Controller.IndexController import IndexController 
+from iMES.Controller.TpaController import TpaController 
 import configparser
 import logging
 import os
@@ -27,6 +27,7 @@ config.read("iMES/config.cfg")
 host = config["Host-data"]["ip_address"]
 port = int(config["Host-data"]["port"])
 app = Flask(__name__)
+Initiator = BaseObjectModel()
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 login_manager = LoginManager()
@@ -40,7 +41,7 @@ sqldevices = """
                 FROM [MES_Iplast].[dbo].[Device]
             """
 
-Devices = SQLManipulator.SQLExecute(sqldevices)
+Devices = Initiator.SQLExecute(sqldevices)
 current_tpa = {}
 
 TpaList = {}
@@ -52,16 +53,19 @@ for device in Devices:
                         Equipment.Oid = Relation_DeviceEquipment.Equipment AND
                         Device.Oid = Relation_DeviceEquipment.Device
               """
-    tpas = SQLManipulator.SQLExecute(sqltpa)
+    tpas = Initiator.SQLExecute(sqltpa)
+
     tpasresult = []
     for tpa in tpas:
-        tpasresult.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False})
+        controller = TpaController(tpa[0])
+        tpasresult.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False,'Controller':controller})
+
     TpaList[device[0]] = tpasresult
-    controller = IndexController(TpaList[device[0]]
-                              [0]['Oid'])
-    current_tpa[device[0]] = list([TpaList[device[0]]
-                              [0]['Oid'], TpaList[device[0]][0]['Name'],controller])   
-ShiftTasksOnTpa = None
+
+    current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],
+                                TpaList[device[0]][0]['Name'],
+                                TpaList[device[0]][0]['Controller']]
+
 from iMES.View.operator import operator, visualInstructions
 from iMES.View.navbar_footer import navbar_footer
 from iMES.View.adjuster import adjuster

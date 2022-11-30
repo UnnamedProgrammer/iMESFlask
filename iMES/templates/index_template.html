@@ -439,7 +439,6 @@
                 plan_weight[0].textContent = arr[address]['PlanWeight'][0]
                 average_weight[0].textContent = arr[address]['AverageWeight'][0]
                 defective[0].textContent = arr[address]['Wastes'][0]
-                console.log(arr[address]['Wastes'][0])
             }
             else
             {
@@ -487,9 +486,8 @@
             {
                 for(let status of tabs_status['Active'])
                 {
-                    if (tab.dataset.oid == status['Oid'])
+                    if (tab.dataset.oid == status)
                     {
-                        console.log(status['Oid'])
                         tab.className = "nav-link nav_tpa nav_green"
                         if(tab.dataset.oid == tabs_status['CurrentTpa'])
                         {
@@ -497,7 +495,7 @@
                         }
                         break
                     }
-                    if(tab.dataset.oid != status['Oid'])
+                    if(tab.dataset.oid != status)
                     {
                         tab.className = "nav-link nav_tpa nav_red"
                         if(tab.dataset.oid == tabs_status['CurrentTpa'])
