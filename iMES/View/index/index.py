@@ -58,7 +58,6 @@ def index():
 def ChangeTPA():
     ip_addr = request.remote_addr
     for tpa in TpaList[ip_addr]:
-        print(tpa)
         if tpa['Oid'] == request.args.getlist('oid')[0]:
             current_tpa[ip_addr] = [request.args.getlist('oid')[0], request.args.getlist('name')[0], tpa['Controller']]
             current_tpa[ip_addr][2].data_from_shifttask() 
@@ -577,12 +576,12 @@ def UpTubsStatus(data):
     current_machine = current_tpa[ip_addr][0]
     tub_dict = {"Active":active_tpa,"CurrentTpa":current_machine}
     for tpa in TpaList[ip_addr]:
-        tpa['WorkStatus'] = Get_Tpa_Status(tpa['Oid'],ip_addr)
+        tpa['WorkStatus'] = Get_Tpa_Status(tpa['Oid'])
         if tpa['WorkStatus'] == True:
             active_tpa.append(tpa['Oid'])
     socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
 
-def Get_Tpa_Status(tpaoid,ip):
+def Get_Tpa_Status(tpaoid):
     if tpaoid == None or tpaoid == '':
         return False
     sql = f"""
