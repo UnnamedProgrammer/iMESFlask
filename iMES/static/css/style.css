@@ -235,7 +235,7 @@ button {
 /* Стили клавиатур */
 .keyboard {
   position: absolute;
-  z-index: 150;
+  z-index: 2000;
   padding: 20px;
   top: 600px;
   left: 125px;
@@ -553,7 +553,8 @@ select.clip {
 .search-input {
   width: 76%;
   border: none;
-  font-size: 24pt; }
+  font-size: 24pt;
+  border-bottom: 1px solid #ced4da; }
 
 .search-label {
   display: inline-block;
@@ -586,17 +587,18 @@ table .primary {
 table .red {
   background: #f77; }
 
-.my-scrollbar::-webkit-scrollbar {
+.custom-select::-webkit-scrollbar {
   width: 80px;
   height: 60px; }
 
-.my-scrollbar::-webkit-scrollbar-thumb {
+.custom-select::-webkit-scrollbar-thumb {
+  height: 100px;
   background-color: #254063; }
 
-.my-scrollbar::-webkit-scrollbar-track {
+.custom-select::-webkit-scrollbar-track {
   border-width: 0; }
 
-.my-scrollbar::-webkit-scrollbar-track:hover {
+.custom-select::-webkit-scrollbar-track:hover {
   background-color: #eee; }
 
 .acces-blocked {

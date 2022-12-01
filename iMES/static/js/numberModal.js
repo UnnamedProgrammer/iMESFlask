@@ -29,7 +29,7 @@ function numberModalControl(event){
     // Строка в которую будут вносится введенные данные должна иметь ID кнопки отрытия окна +Data, вида: exmapleData (например, wasteData)
     enter.onclick = function(){
         data = document.getElementById(buttonID+'Data');
-        clock = document.getElementById('clock').innerHTML
+        // clock = document.getElementById('clock').innerHTML
 
         if(display.textContent != "")
         {
