@@ -11,40 +11,49 @@ import logging
 import os
 from engineio.payload import Payload
 
+# Максимальное число обрабатываемых пакетов за раз
 Payload.max_decode_packets = 16
 
+# Настройки логов
 if (not os.path.exists('log/')):
     os.mkdir('log/')
 file_log = logging.FileHandler(
     "log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log")
 console_out = logging.StreamHandler()
-
 logging.basicConfig(handlers=(file_log, console_out), level=logging.NOTSET)
 
+# Чтение конфига
 config = configparser.ConfigParser()
 config.read("iMES/config.cfg")
-
 host = config["Host-data"]["ip_address"]
 port = int(config["Host-data"]["port"])
+
+# Создание объектов 
 app = Flask(__name__)
-Initiator = BaseObjectModel()
 app.config['SECRET_KEY'] = 'secret!'
+Initiator = BaseObjectModel()
 socketio = SocketIO(app)
+
+# Подключение менеджера авторизации
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.login_message_category = "info"
 login_manager.init_app(app=app)
 user = UserModel()
 UserController = UserCountController()
+
+# Переменные текущего ТПА и всех ТПА
+current_tpa = []
+TpaList = {}
+
+# Инициализация списка и словаря с ТПА
 sqldevices = """
                 SELECT[DeviceId]
                 FROM [MES_Iplast].[dbo].[Device]
             """
-
 Devices = Initiator.SQLExecute(sqldevices)
-current_tpa = {}
-
-TpaList = {}
+# Проход по всем ТПА, задание начальных значенией, и присвоение
+# класса-контроллера для ТПА
 for device in Devices:
     sqltpa = f"""
                 SELECT [Equipment].[Oid],[Equipment].[Name]
@@ -61,11 +70,11 @@ for device in Devices:
         tpasresult.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False,'Controller':controller})
 
     TpaList[device[0]] = tpasresult
-
     current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],
                                 TpaList[device[0]][0]['Name'],
                                 TpaList[device[0]][0]['Controller']]
 
+# Импорт роутингов
 from iMES.View.operator import operator, visualInstructions
 from iMES.View.navbar_footer import navbar_footer
 from iMES.View.adjuster import adjuster

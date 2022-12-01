@@ -1,5 +1,4 @@
-from iMES.Model.SQLManipulator import SQLManipulator
-from progress.bar import IncrementalBar
+
 
 
 class ShiftTaskModel(object):

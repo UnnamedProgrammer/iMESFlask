@@ -3,6 +3,9 @@ from flask_login import UserMixin
 
 
 class UserModel(UserMixin):
+    """
+        Класс модель для взаимодействия с авторизованным пользователем в системе
+    """
     id = NULL
     name = NULL
     username = NULL

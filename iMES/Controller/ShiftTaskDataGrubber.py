@@ -2,6 +2,10 @@ from iMES.Model.BaseObjectModel import BaseObjectModel
 
 
 class ShiftTaskDataGrubber(BaseObjectModel):
+    """
+        Класс отвечающий за хранение данных по выполняемому на данный момент
+        сменному задания на определённом ТПА
+    """
     def __init__(self) -> None:
         super().__init__()
         self.tpa = ''
@@ -23,6 +27,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.wastes = ()
         self.shift_tasks_traits = ()
 
+    # Метод получения данных из сменного задания
     def data_from_shifttask(self):
         sql = f"""
             SELECT [ShiftTask].[Oid]
@@ -73,6 +78,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             self.pressform = 'Не определена'
         #---------------------------------------------------
 
+        # Простая передача из БД в поля класса
         if len(data) > 0:
             st_oid = []
             product_list = []

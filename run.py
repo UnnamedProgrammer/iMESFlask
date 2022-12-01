@@ -1,7 +1,7 @@
 import importlib
 import os
 
-
+# Функция проверки установленных библиотек
 def Dependency_check():
     dependences = ['flask',
                    'flask_login',
@@ -26,7 +26,7 @@ def Dependency_check():
         except:
             pass
 
-
+# Пытаемся импортировать модули, если не получилось, загружаем через pip
 while True:
     try:
         from iMES import app, socketio, host, port
@@ -34,6 +34,8 @@ while True:
         break
     except ModuleNotFoundError:
         Dependency_check()
+
+# Точка входа в основной цикл программы
 if __name__ == "__main__":
     from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
     from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon

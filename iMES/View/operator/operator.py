@@ -6,7 +6,6 @@ from iMES.Model.SQLManipulator import SQLManipulator
 from iMES import current_tpa
 from flask_login import current_user
 from flask import request
-import json
 
 
 # Отображение окна оператора
