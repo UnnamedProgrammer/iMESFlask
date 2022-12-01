@@ -18,6 +18,7 @@
     {% set malfunctionCause = somedata[0] %}
     {% set malfunctionDescription = somedata[1] %}
     {% set takenMeasures = somedata[2] %}
+    {% set all_wastes = somedata[3] %}
 
     <div class="view">
         <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
@@ -59,6 +60,9 @@
                         <div class="waste-card mb-2 row">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
                                 <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" value="" aria-describedby="" readonly>
@@ -70,6 +74,9 @@
                         <div class="waste-card mb-2 row hidden">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option selected>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
                                 <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
@@ -79,6 +86,9 @@
                         <div class="waste-card mb-2 row hidden">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option selected>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
                                 <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
@@ -88,6 +98,9 @@
                         <div class="waste-card mb-2 row hidden">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option selected>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
                                 <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>

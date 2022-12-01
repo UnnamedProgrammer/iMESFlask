@@ -47,7 +47,7 @@ def adjusterIdleEnter():
                             ORDER BY Name"""
     all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
     
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [malfunctionCause, malfunctionDescription, takenMeasures])
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [malfunctionCause, malfunctionDescription, takenMeasures, all_wastes])
 
 # Сырье до конца выпуска
 
