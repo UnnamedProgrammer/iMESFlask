@@ -63,7 +63,9 @@ function commentModalController(event) {
     target = event.target.dataset.target
     modal = document.getElementById(target)
     modal.classList.toggle('hidden')
-    document.getElementById('commentInput').focus();
+    commentInput = document.getElementById('commentInput')
+    commentInput.focus()
+    commentInput.dataset.data = event.target.dataset.wasteoid
 }
 
 // Печать этикетки

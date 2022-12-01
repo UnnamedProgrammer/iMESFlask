@@ -71,7 +71,7 @@
 <!-- Модальное (всплывающее) окно выбора причины отхода и брака -->
 <div class="modal hidden" id="modalComment">
     <div class="modal__comment">
-        <input class="comment-input use-keyboard-input" id="commentInput" type="text" placeholder="Введите причину...">
+        <input class="comment-input use-keyboard-input" id="commentInput" data-data="" type="text" placeholder="Введите причину...">
     </div>
     <div class="bg-blur"></div>
 </div>
@@ -83,8 +83,11 @@
     document.addEventListener("click", function(e) {
         if (e.target.classList.contains('keyboard__key--done')) {
             document.getElementById('modalComment').classList.toggle('hidden')
+            commentInput = document.getElementById('commentInput')
+            
+            // !!! СЮДА ПИШИ ОТПРАВКУ ДАННЫХ НА СЕРВЕР (Oid отхода/брака, к которому нужно добавить причину возьми через commentInput.dataset.data)
 
-            // !!! СЮДА ПИШИ ОТПРАВКУ ДАННЫХ НА СЕРВЕР
+            commentInput.dataset.data = ''
         }
     })
 
