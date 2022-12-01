@@ -30,7 +30,7 @@
                             <td> {{ wastes[6] }} </td>
                             {% if wastes[7] == '' %}
                                 <td class="nopadding table__button col-2">
-                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
+                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}" data-target="wasteDefectCause" onclick="commentModalController(event)">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
                                 </td>
                             {% else %}
                                 <td> {{ wastes[7] }} </td>
@@ -46,7 +46,7 @@
                             <td> {{ wastes[6] }} </td>
                             {% if wastes[7] == '' %}
                                 <td class="nopadding table__button col-2">
-                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
+                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}" data-target="modalComment" onclick="commentModalController(event)">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
                                 </td>
                             {% else %}
                                 <td> {{ wastes[7] }} </td>
@@ -67,6 +67,28 @@
         </div> 
     </div>       
 </div>
+
+<!-- Модальное (всплывающее) окно выбора причины отхода и брака -->
+<div class="modal hidden" id="modalComment">
+    <div class="modal__comment">
+        <input class="comment-input use-keyboard-input" id="commentInput" type="text" placeholder="Введите причину...">
+    </div>
+    <div class="bg-blur"></div>
+</div>
+<!-- ----------------------------------------------------------- -->
+<script src="/static/js/keyboard.js"></script>
+<script src="/static/js/numberModal.js"></script>
+<script>
+    
+    document.addEventListener("click", function(e) {
+        if (e.target.classList.contains('keyboard__key--done')) {
+            document.getElementById('modalComment').classList.toggle('hidden')
+
+            // !!! СЮДА ПИШИ ОТПРАВКУ ДАННЫХ НА СЕРВЕР
+        }
+    })
+
+</script>
 {% endblock %}
 {% block navbar_footer %}
     {% include 'navbar_footer/navbar_footer.html' %}        

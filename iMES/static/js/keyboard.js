@@ -108,7 +108,7 @@ const Keyboard = {
                     break;
 
                 case "done":
-                    keyElement.classList.add("keyboard__key--wide");
+                    keyElement.classList.add("keyboard__key--wide", "keyboard__key--done");
                     keyElement.innerHTML = ("ВВОД");
 
                     keyElement.addEventListener("click", () => {
