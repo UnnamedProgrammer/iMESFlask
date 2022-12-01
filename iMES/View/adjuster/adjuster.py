@@ -40,6 +40,12 @@ def adjusterIdleEnter():
     sql_GetTakenMeasures = f""" SELECT [Oid],[Name],[Status]
                                 FROM [MES_Iplast].[dbo].[TakenMeasures] """
     takenMeasures = SQLManipulator.SQLExecute(sql_GetTakenMeasures)
+
+    # Получаем данные о всех существующих отходах
+    sql_GetAllWastes = f"""SELECT Oid, Name  
+                            FROM Material WHERE Type = 1
+                            ORDER BY Name"""
+    all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
     
     return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [malfunctionCause, malfunctionDescription, takenMeasures])
 
