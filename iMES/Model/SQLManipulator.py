@@ -1,10 +1,12 @@
 import pyodbc
 
-
-
 class SQLManipulator():
-    @classmethod
-    def SQLExecute(self,sqlcode):
+    """
+        Класс подключения к базе данных выполняющий передачу запроса в БД и 
+        получения ответа
+    """
+    def __init__(self) -> None:
+        # Строка подключения
         self.connection_string = """
             DRIVER={ODBC Driver 18 for SQL Server};
             SERVER=OFC-APPSERV-13;
@@ -12,7 +14,11 @@ class SQLManipulator():
             UID=terminal;
             PWD=xAlTeS3dGrh7;
             TrustServerCertificate=yes;
-            """
+        """
+
+    # Метод отправляющий запрос на сервер БД
+    @classmethod
+    def SQLExecute(self,sqlcode):
         result = []
         while True:
             connection = pyodbc.connect(self.connection_string)
@@ -31,6 +37,7 @@ class SQLManipulator():
                     cursor.close()
                     connection.close()
                     break
-            except pyodbc.ProgrammingError:
-                continue
+            except pyodbc.ProgrammingError as Error:
+                print(Error)
+                break
         return result

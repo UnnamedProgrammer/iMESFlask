@@ -1,32 +1,33 @@
-from iMES.Model.SQLManipulator import SQLManipulator
-from dataclasses import dataclass
-from datetime import datetime
+from iMES.Model.BaseObjectModel import BaseObjectModel
 
-@dataclass
-class IndexController():
-    tpa: str = ''
-    pressform: str = ''
-    product : tuple = ()
-    production_plan : tuple = ()
-    cycle: int = 0
-    cycle_fact: float = 0
-    plan_weight: tuple = ()
-    average_weight: tuple = ()
-    shift: str = ''
-    print_paper: int = 0
-    shift_task_oid : tuple = ()
-    product_fact : tuple  = ()
-    label: str = ''
-    controller: str = 'Empty'
-    tpa_is_works: bool = False
-    PackingURL: str = ''
-    StartDate: datetime = None
-    EndDate: datetime = None
-    ProductCount = 0
-    tpa_message: str = ''
-    wastes: tuple = ()
-    shift_tasks_traits: tuple = ()
 
+class ShiftTaskDataGrubber(BaseObjectModel):
+    """
+        Класс отвечающий за хранение данных по выполняемому на данный момент
+        сменному задания на определённом ТПА
+    """
+    def __init__(self) -> None:
+        super().__init__()
+        self.tpa = ''
+        self.pressform = ''
+        self.production_plan = ()
+        self.cycle = 0
+        self.cycle_fact = 0
+        self.plan_weight = ()
+        self.average_weight = ()
+        self.shift = ''
+        self.shift_task_oid = ''
+        self.product_fact = ()
+        self.label = ''
+        self.controller = 'Empty'
+        self.PackingURL = ''
+        self.StartDate = None
+        self.EndDate = None
+        self.ProductCount = 0
+        self.wastes = ()
+        self.shift_tasks_traits = ()
+
+    # Метод получения данных из сменного задания
     def data_from_shifttask(self):
         sql = f"""
             SELECT [ShiftTask].[Oid]
@@ -53,7 +54,7 @@ class IndexController():
             ShiftTask.Product = Product.Oid AND EXISTS
             (SELECT * FROM ProductionData WHERE ProductionData.ShiftTask = ShiftTask.Oid AND Status = 1)
         """
-        data = SQLManipulator.SQLExecute(sql)
+        data = self.SQLExecute(sql)
         # Проверка прессформы
         sql = f"""
             SELECT TOP (1) Equipment.Name, RFIDClosureData.Date
@@ -66,7 +67,7 @@ class IndexController():
             Equipment.Oid = RFIDEquipmentBinding.Equipment
             ORDER BY Date DESC
             """
-        pf = SQLManipulator.SQLExecute(sql)
+        pf = self.SQLExecute(sql)
         if len(pf) > 0:
             if pf[0][0] == None or pf == () or pf == []:
                 self.pressform = 'Метка не привязана к прессформе'
@@ -77,6 +78,7 @@ class IndexController():
             self.pressform = 'Не определена'
         #---------------------------------------------------
 
+        # Простая передача из БД в поля класса
         if len(data) > 0:
             st_oid = []
             product_list = []
@@ -110,7 +112,7 @@ class IndexController():
             self.production_plan = 0
             self.cycle = 0
             self.plan_weight = 0
-            self.shift = SQLManipulator.SQLExecute("""
+            self.shift = self.SQLExecute("""
             SELECT TOP (1) [Note]
             FROM [MES_Iplast].[dbo].[Shift] ORDER BY StartDate DESC            
             """)[0][0]
@@ -127,7 +129,7 @@ class IndexController():
                         ,[EndDate]
                     FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid}'
                 """
-                result = SQLManipulator.SQLExecute(production_data_sql)
+                result = self.SQLExecute(production_data_sql)
                 production_data.append(result)
             if len(production_data) > 0:
                 product_fact = []
@@ -152,7 +154,7 @@ class IndexController():
                 SELECT TOP(1) [Oid]
                 FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid}'
             """
-            production_data_oid = SQLManipulator.SQLExecute(get_production_data_sql)
+            production_data_oid = self.SQLExecute(get_production_data_sql)
             if len(production_data_oid) > 0:
                 production_data_oid = production_data_oid[0][0]
                 average_weight_sql = f"""
@@ -164,8 +166,8 @@ class IndexController():
                     SELECT [Count]
                     FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
                 """
-                average_weight_result = SQLManipulator.SQLExecute(average_weight_sql)
-                wastes_result = SQLManipulator.SQLExecute(wastes_sql)
+                average_weight_result = self.SQLExecute(average_weight_sql)
+                wastes_result = self.SQLExecute(wastes_sql)
                 if len(average_weight_result) > 0:
                     if (average_weight_result[0][0] != None):
                         average_weight.append(f"{float(average_weight_result[0][0]):.{2}f}")
@@ -181,7 +183,7 @@ class IndexController():
 
         self.wastes = tuple(wastes)
         self.average_weight = tuple(average_weight)
-        sql_controller = SQLManipulator.SQLExecute(f"""
+        sql_controller = self.SQLExecute(f"""
             SELECT [RFIDEquipment]
             FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding]
             WHERE Equipment = '{self.tpa}'
@@ -190,5 +192,3 @@ class IndexController():
             self.controller = sql_controller[0][0]
         else:
             self.controller = 'Empty'
-
-        

@@ -1,16 +1,15 @@
 """Модуль для работы со сменными заданиями."""
 
-from logging import critical
 import requests
 import json
 from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
 from progress.bar import IncrementalBar
-from iMES.Model.SQLManipulator import SQLManipulator
+from iMES.Model.BaseObjectModel import BaseObjectModel
 import datetime
 from iMES import app
 import sys
 
-class ShiftTaskLoader():
+class ShiftTaskLoader(BaseObjectModel):
     """
         Класс выгрузки сменного задания из 1С
         :param _nomenclature_group - Номенклатурная группа ТПА, для поиска
@@ -138,7 +137,7 @@ class ShiftTaskLoader():
                 [Equipment].EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D' AND
                 EquipmentType.Oid = Equipment.EquipmentType
         """
-        equipment = SQLManipulator.SQLExecute(equipment_sql)
+        equipment = self.SQLExecute(equipment_sql)
         if len(equipment) > 0:
             pass
         else:
@@ -155,7 +154,7 @@ class ShiftTaskLoader():
                 FROM [MES_Iplast].[dbo].[Product] WHERE Code = '{ShiftTask.ProductCode}'
             """
             while True:
-                product = SQLManipulator.SQLExecute(productsql)
+                product = self.SQLExecute(productsql)
                 if (len(product) > 0):
                     app.logger.info(
                         f"        Продукт {ShiftTask.ProductCode} найден")
@@ -165,7 +164,7 @@ class ShiftTaskLoader():
                             SELECT [Oid]
                             FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{ShiftTask.Specification}'
                         """
-                    specification = SQLManipulator.SQLExecute(get_spec_sql)
+                    specification = self.SQLExecute(get_spec_sql)
                     if len(specification) > 0:
                         app.logger.info(
                             f"        Спецификация {ShiftTask.Specification} найдена")
@@ -194,10 +193,10 @@ class ShiftTaskLoader():
                                         {isActive})              
                                     """
                                 app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
-                                SQLManipulator.SQLExecute(insert_specsql)
+                                self.SQLExecute(insert_specsql)
                                 break
                         app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
-                        specification = SQLManipulator.SQLExecute(get_spec_sql)
+                        specification = self.SQLExecute(get_spec_sql)
                         if len(specification) > 0:
                             app.logger.info(
                                 f"        Спецификация {ShiftTask.Specification} найдена")
@@ -214,7 +213,7 @@ class ShiftTaskLoader():
                         f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
                     app.logger.info(
                         f"Сменное задание № {ShiftTask.Ordinal} - вставка нового продукта {ShiftTask.ProductCode} в базу данных")
-                    SQLManipulator.SQLExecute(f"""
+                    self.SQLExecute(f"""
                         INSERT INTO Product (Oid, Code, Name, Article) VALUES (NEWID(),'{ShiftTask.ProductCode}','{ShiftTask.Product}','{ShiftTask.Article}')                   
                     """)
                     app.logger.info(
@@ -269,7 +268,7 @@ class ShiftTaskLoader():
                     DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
                         """
-        getshift = SQLManipulator.SQLExecute(shiftsql)
+        getshift = self.SQLExecute(shiftsql)
         if len(getshift) == 0:
             if shift == 0:
                 start_date = datetime.datetime(datetime.datetime.now().year,
@@ -288,7 +287,7 @@ class ShiftTaskLoader():
                         Cast('{end_date}' AS DATETIME),
                         '{shift_name}')
                 """
-                SQLManipulator.SQLExecute(insertshiftsql)
+                self.SQLExecute(insertshiftsql)
             elif shift == 1:
                 start_date = datetime.datetime(datetime.datetime.now().year,
                                                datetime.datetime.now().month,
@@ -306,8 +305,8 @@ class ShiftTaskLoader():
                         Cast('{end_date}' AS DATETIME),
                         '{shift_name}')
                 """
-                SQLManipulator.SQLExecute(insertshiftsql)
-            getshift = SQLManipulator.SQLExecute(shiftsql)
+                self.SQLExecute(insertshiftsql)
+            getshift = self.SQLExecute(shiftsql)
             self.LoadEquipmentPerfomance(self.shift_task_list,self.data)
             # Определение цикла для прокдукта в сменном задании
             for i in range(0,len(self.shift_task_list)):
@@ -320,14 +319,14 @@ class ShiftTaskLoader():
                         FROM [MES_Iplast].[dbo].[Product] 
                         WHERE Code = '{self.shift_task_list[i].ProductCode}'    
                     """
-                    product = SQLManipulator.SQLExecute(product)[0][0]
+                    product = self.SQLExecute(product)[0][0]
 
                     sql = f"""
                         SELECT [Cycle]
                         FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
                         WHERE Product = '{product}'
                     """
-                    product_cycle = SQLManipulator.SQLExecute(sql)
+                    product_cycle = self.SQLExecute(sql)
                     if bool(product_cycle):
                         self.shift_task_list[i].Cycle = str(product_cycle[0][0])
                     
@@ -404,7 +403,7 @@ class ShiftTaskLoader():
                     FROM [MES_Iplast].[dbo].[Product] 
                     WHERE Code = '{task.ProductCode}'    
                 """
-            product = SQLManipulator.SQLExecute(product)[0][0]
+            product = self.SQLExecute(product)[0][0]
 
             equipment = f"""
                     SELECT [Equipment].[Oid],
@@ -417,14 +416,14 @@ class ShiftTaskLoader():
                     [Equipment].EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D' AND
                     EquipmentType.Oid = Equipment.EquipmentType
                 """
-            equipment_oid = SQLManipulator.SQLExecute(equipment)[0][0]
+            equipment_oid = self.SQLExecute(equipment)[0][0]
 
             specification = f"""
                     SELECT [Oid]
                     FROM [MES_Iplast].[dbo].[ProductSpecification] 
                     WHERE Code = '{task.Specification}'
                 """
-            specification = SQLManipulator.SQLExecute(specification)[0][0]
+            specification = self.SQLExecute(specification)[0][0]
 
             ShiftTaskInsertSQL = f"""
                     INSERT INTO [ShiftTask] (
@@ -462,7 +461,7 @@ class ShiftTaskLoader():
                         '{task.PackingURL}')
                     """
             app.logger.info("Вставка сменного задания №" + task.Ordinal)
-            SQLManipulator.SQLExecute(ShiftTaskInsertSQL)
+            self.SQLExecute(ShiftTaskInsertSQL)
 
     def LoadEquipmentPerfomance(self,tasklist,jsondata):
         for task in tasklist:
@@ -486,9 +485,9 @@ class ShiftTaskLoader():
                             FROM [MES_Iplast].[dbo].[Equipment]
                             WHERE Code = '{ep["EquipmentPerformance"]}'
                         """
-                        main_equipment_oid = SQLManipulator.SQLExecute(get_tpa_from_db_sql)[0][0]
-                        nomenclaturegroup_oid = SQLManipulator.SQLExecute(get_nomenclaturegroup_sql)[0][0]
-                        rig_equipment_oid = SQLManipulator.SQLExecute(get_rigequipment_sql)[0][0]
+                        main_equipment_oid = self.SQLExecute(get_tpa_from_db_sql)[0][0]
+                        nomenclaturegroup_oid = self.SQLExecute(get_nomenclaturegroup_sql)[0][0]
+                        rig_equipment_oid = self.SQLExecute(get_rigequipment_sql)[0][0]
                         total_socket_count = ep["TotalSocketCount"]
 
                         check_isexists_ep_sql = f"""
@@ -500,14 +499,14 @@ class ShiftTaskLoader():
                             RigEquipment = '{rig_equipment_oid}' AND 
                             TotalSocketCount = {int(total_socket_count)}
                         """
-                        finded_ep = SQLManipulator.SQLExecute(check_isexists_ep_sql)
+                        finded_ep = self.SQLExecute(check_isexists_ep_sql)
                         if len(finded_ep) > 0:
                             get_product = f"""
                                 SELECT [Oid]
                                 FROM [MES_Iplast].[dbo].[Product]
                                 WHERE Code = '{EP["ProductCode"]}'
                             """
-                            product_oid = SQLManipulator.SQLExecute(get_product)[0][0]
+                            product_oid = self.SQLExecute(get_product)[0][0]
                             check_relation_product_ep_sql = f"""
                                 SELECT [EquipmentPerformance]
                                 FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
@@ -516,7 +515,7 @@ class ShiftTaskLoader():
                                 SocketCount = {int(ep['SocketCount'])} AND
                                 Cycle = {int(ep['Cycle'])} 
                             """
-                            relation_product_ep = SQLManipulator.SQLExecute(check_relation_product_ep_sql)
+                            relation_product_ep = self.SQLExecute(check_relation_product_ep_sql)
                             if (len(relation_product_ep) > 0):
                                 continue
                             else:
@@ -524,7 +523,7 @@ class ShiftTaskLoader():
                                     INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
                                     VALUES ('{finded_ep[0][0]}','{product_oid}',{int(ep['SocketCount'])},{int(ep['Cycle'])})
                                 """
-                                SQLManipulator.SQLExecute(insert_rel_ep_sql)
+                                self.SQLExecute(insert_rel_ep_sql)
                         else:
                             get_product = f"""
                                 SELECT [Oid]
@@ -536,7 +535,7 @@ class ShiftTaskLoader():
                                 INSERT INTO EquipmentPerformance (Oid,NomenclatureGroup,MainEquipment,RigEquipment,TotalSocketCount)
                                 VALUES (NEWID(),'{nomenclaturegroup_oid}','{main_equipment_oid}','{rig_equipment_oid}',{int(total_socket_count)})
                             """
-                            SQLManipulator.SQLExecute(insert_ep_sql)
+                            self.SQLExecute(insert_ep_sql)
                             find_inserted_ep = f"""
                                 SELECT [Oid]
                                 FROM [MES_Iplast].[dbo].[EquipmentPerformance]
@@ -546,11 +545,11 @@ class ShiftTaskLoader():
                                 RigEquipment = '{rig_equipment_oid}' AND 
                                 TotalSocketCount = {int(total_socket_count)}
                             """
-                            ep_oid = SQLManipulator.SQLExecute(find_inserted_ep)
+                            ep_oid = self.SQLExecute(find_inserted_ep)
                             if len(ep_oid) > 0:
                                 ep_oid = ep_oid[0][0]
                             else: continue
-                            product_oid = SQLManipulator.SQLExecute(get_product)[0][0]
+                            product_oid = self.SQLExecute(get_product)[0][0]
                             check_relation_product_ep_sql = f"""
                                 SELECT [EquipmentPerformance]
                                 FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
@@ -559,7 +558,7 @@ class ShiftTaskLoader():
                                 SocketCount = {int(ep['SocketCount'])} AND
                                 Cycle = {int(ep['Cycle'])} 
                             """
-                            relation_product_ep = SQLManipulator.SQLExecute(check_relation_product_ep_sql)
+                            relation_product_ep = self.SQLExecute(check_relation_product_ep_sql)
                             if (len(relation_product_ep) > 0):
                                 continue
                             else:
@@ -567,5 +566,5 @@ class ShiftTaskLoader():
                                     INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
                                     VALUES ('{ep_oid}','{product_oid}',{int(ep['SocketCount'])},{int(ep['Cycle'])})
                                 """
-                                SQLManipulator.SQLExecute(insert_rel_ep_sql)
+                                self.SQLExecute(insert_rel_ep_sql)
         

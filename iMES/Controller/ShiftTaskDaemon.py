@@ -1,26 +1,37 @@
+from lib2to3.pytree import Base
 from iMES.Model.ShiftTaskModels.ShiftTaskLoad import ShiftTaskLoader
-from iMES.Model.SQLManipulator import SQLManipulator
+from iMES.Model.BaseObjectModel import BaseObjectModel
 from time import sleep
 from datetime import datetime
 from threading import Thread
 from iMES import app
 
-class ShiftTaskDaemon():
+class ShiftTaskDaemon(BaseObjectModel):
+    """
+        Класс мониторинга сменяемости смен для получения сменных заданий на новую смену
+    """
     def __init__(self):
+        # Инициализация начальных значений
         self.tpa_list = []
         self.insertedToDay = False
 
+    # Метод запускающий основной метод в отдельном потоке выполнения
     def Start(self):
         thread = Thread(target=self.DoWork, args=())
         thread.start()
         app.logger.info("Демон сменных заданий запущен")
 
+    # Основной метод
     def DoWork(self):
+        # Запуск бесконечного цикла с определённой переодичностью
         while True:
+            # Проверяем текущую смену, было ли получено сменное задание
             self.insertedToDay = self.CheckShift()
             now = datetime.now()
             if (self.insertedToDay == False):
+                # Если сменное задание небыло получено, то получаем
                 app.logger.info(f"Нет сменного задания, получение нового сменного задания на {now}")
+                # Получаем список всех ТПА
                 get_tpa_list = """
                     SELECT NomenclatureGroup.Code
                     FROM Equipment, NomenclatureGroup, RFIDEquipmentBinding
@@ -29,9 +40,10 @@ class ShiftTaskDaemon():
                         RFIDEquipmentBinding.[State] = 1 and
                         Equipment.EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D'
                         """
-                tpa_list = SQLManipulator.SQLExecute(get_tpa_list)
+                tpa_list = self.SQLExecute(get_tpa_list)
                 for NomGroup in tpa_list:
                     self.tpa_list.append(NomGroup[0])
+                # Определяем текущую дату
                 year = str(now.year)
                 month = str(now.month)
                 day = str(now.day)
@@ -40,9 +52,10 @@ class ShiftTaskDaemon():
                 if now.day < 10:
                     day = '0' + day
                 date = int(str(year + month + day))
-                hour = now.hour
+                # Если список ТПА небыл пуст то получаем сменные задания и
+                # добавляем их в базу данных в таблицу ShiftTask
                 if len(tpa_list) > 0:
-                    SQLManipulator.SQLExecute("""
+                    self.SQLExecute("""
                         UPDATE [MES_Iplast].[dbo].[ProductionData]
                         SET Status = 2
                         WHERE Status = 1    
@@ -53,6 +66,7 @@ class ShiftTaskDaemon():
                 app.logger.info("Новое сменное задание успешно получено")
             sleep(10)
 
+    # Метод проверки текущей смены
     def CheckShift(self):
         now = datetime.now()
         hour = now.hour
@@ -63,6 +77,7 @@ class ShiftTaskDaemon():
         elif hour >= 7 and hour < 19:
             shift = 0
 
+        # Если день то ищем дневную дату смены
         if shift == 0:
             shiftsql = """
                 SELECT [Oid]
@@ -90,7 +105,8 @@ class ShiftTaskDaemon():
                     DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
                         """
-        getshift = SQLManipulator.SQLExecute(shiftsql)
+        getshift = self.SQLExecute(shiftsql)
+        # Если была найдена смена значит сменное задание уже было получено ранее
         if len(getshift) == 0:
             return False
         else:

@@ -6,7 +6,6 @@ from iMES.Model.SQLManipulator import SQLManipulator
 from iMES import current_tpa
 from flask_login import current_user
 from flask import request
-import json
 
 
 # Отображение окна оператора
@@ -250,15 +249,17 @@ def handle_sticker_info_change(data):
     sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
     current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
 
-    if SQLManipulator.SQLExecute(f"SELECT Equipment FROM StickerInfo WHERE Equipment = '{current_tpa[ip_addr][0]}'")[0][0]:
-        print('you have')
+    # Проверяем, существует ли запись текущей ТПА в таблице StickerInfo
+    if SQLManipulator.SQLExecute(f"SELECT Equipment FROM StickerInfo WHERE Equipment = '{current_tpa[ip_addr][0]}'"):
+        # Обновляем запись этикетки в таблице StickerInfo
+        SQLManipulator.SQLExecute(f"""UPDATE StickerInfo
+                                        SET Product = '{entered_product}', StickerCount = '{entered_sticker_count}'
+                                        WHERE Equipment = '{current_tpa[ip_addr][0]}'""")
     else:
-        print('have not')
+        # Создаем запись введенной этикетки в таблице StickerInfo
+        SQLManipulator.SQLExecute(f"""INSERT INTO StickerInfo (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
+                                    VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{entered_product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');""")
 
-    # # Создаем запись введенной этикетки в таблице StickerInfo
-    # sql_PostStickerInfo = f"""INSERT INTO StickerInfo (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
-    #                             VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{entered_product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');"""
-    # SQLManipulator.SQLExecute(sql_PostStickerInfo)
 
 # Схема упаковки
 @app.route('/operator/PackingScheme')
