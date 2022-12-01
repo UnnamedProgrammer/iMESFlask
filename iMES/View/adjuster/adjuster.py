@@ -1,6 +1,7 @@
 from iMES import app
 from flask_login import login_required
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
+from iMES.Model.SQLManipulator import SQLManipulator
 
 # Метод возвращает окно наладчика
 
@@ -24,7 +25,23 @@ def adjusterJournal():
 @app.route('/adjuster/journal/idleEnter')
 @login_required
 def adjusterIdleEnter():
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html')
+    
+    # Получение справочника причин неисправности
+    sql_GetMalfunctionCause = f""" SELECT [Oid],[Name],[Status]
+                                    FROM [MES_Iplast].[dbo].[MalfunctionCause] """
+    malfunctionCause = SQLManipulator.SQLExecute(sql_GetMalfunctionCause)
+
+    # Получение справочника описаний неисправности
+    sql_GetMalfunctionDescription = f""" SELECT [Oid],[Name],[Status]
+                                            FROM [MES_Iplast].[dbo].[MalfunctionDescription] """
+    malfunctionDescription = SQLManipulator.SQLExecute(sql_GetMalfunctionDescription)
+                                            
+    # Получение справочника предпринятых мер
+    sql_GetTakenMeasures = f""" SELECT [Oid],[Name],[Status]
+                                FROM [MES_Iplast].[dbo].[TakenMeasures] """
+    takenMeasures = SQLManipulator.SQLExecute(sql_GetTakenMeasures)
+    
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [malfunctionCause, malfunctionDescription, takenMeasures])
 
 # Сырье до конца выпуска
 

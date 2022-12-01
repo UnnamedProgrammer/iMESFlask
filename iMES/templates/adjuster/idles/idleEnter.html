@@ -15,6 +15,10 @@
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 
+    {% set malfunctionCause = somedata[0] %}
+    {% set malfunctionDescription = somedata[1] %}
+    {% set takenMeasures = somedata[2] %}
+
     <div class="view">
         <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
         <div class="view-body view-body_idleEnter">
@@ -122,7 +126,9 @@
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleCause" size="15">
-                            <option value="">123</option>
+                            {% for cause in malfunctionCause %}
+                                <option value="{{ cause[0] }}"> {{ cause[1] }} </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="modal_footer">
@@ -146,7 +152,9 @@
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleCause" size="15">
-                            <option value="">123</option>
+                            {% for takenMeasure in takenMeasures %}
+                                <option value="{{ takenMeasure[0] }}"> {{ takenMeasure[1] }} </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="modal_footer">
@@ -170,7 +178,9 @@
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleCause" size="15">
-                            <option value="">123</option>
+                            {% for description in malfunctionDescription %}
+                                <option value="{{ description[0] }}"> {{ description[1] }} </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="modal_footer">
