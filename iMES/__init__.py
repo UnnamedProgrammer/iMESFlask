@@ -43,7 +43,7 @@ user = UserModel()
 UserController = UserCountController()
 
 # Переменные текущего ТПА и всех ТПА
-current_tpa = []
+current_tpa = {}
 TpaList = {}
 
 # Инициализация списка и словаря с ТПА
