@@ -112,14 +112,13 @@ def adjusterWasteDefectFix():
 # Кнопка "Указать причину" на странице "Зафиксировать брак и отход" была нажата
 @socketio.on('waste_note_change')
 def handle_waste_note_change(data):
-
     selected_waste_oid = str(data[0])
     entered_waste_note = str(data[1])
 
     # Обновляем запись отхода или брака в таблице ProductWaste
     SQLManipulator.SQLExecute(f"""UPDATE ProductWaste
                                     SET Note = '{entered_waste_note}'
-                                    WHERE Equipment = '{selected_waste_oid}'""")
+                                    WHERE Oid = '{selected_waste_oid}'""")
 
 
 # Сменное задание
