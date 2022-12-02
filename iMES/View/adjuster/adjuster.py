@@ -31,17 +31,20 @@ def adjusterIdleEnter():
     
     # Получение справочника причин неисправности
     sql_GetMalfunctionCause = f""" SELECT [Oid],[Name],[Status]
-                                    FROM [MES_Iplast].[dbo].[MalfunctionCause] """
+                                    FROM [MES_Iplast].[dbo].[MalfunctionCause]
+                                    ORDER BY Name"""
     malfunctionCause = SQLManipulator.SQLExecute(sql_GetMalfunctionCause)
 
     # Получение справочника описаний неисправности
     sql_GetMalfunctionDescription = f""" SELECT [Oid],[Name],[Status]
-                                            FROM [MES_Iplast].[dbo].[MalfunctionDescription] """
+                                            FROM [MES_Iplast].[dbo].[MalfunctionDescription]
+                                            ORDER BY Name """
     malfunctionDescription = SQLManipulator.SQLExecute(sql_GetMalfunctionDescription)
                                             
     # Получение справочника предпринятых мер
     sql_GetTakenMeasures = f""" SELECT [Oid],[Name],[Status]
-                                FROM [MES_Iplast].[dbo].[TakenMeasures] """
+                                FROM [MES_Iplast].[dbo].[TakenMeasures]
+                                ORDER BY Name """
     takenMeasures = SQLManipulator.SQLExecute(sql_GetTakenMeasures)
 
     # Получаем данные о всех существующих отходах

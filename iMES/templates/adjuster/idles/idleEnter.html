@@ -134,18 +134,18 @@
                 <div class="view-header">Причина неисправности</div>
                 <div class="row">
                     <div class="search-label" for="">Поиск</div>
-                    <input class="search-input use-keyboard-input" id="searchPressForm" type="text">
+                    <input class="search-input use-keyboard-input" id="idleCauseInput" type="text">
                 </div>
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleCause" size="15">
                             {% for cause in malfunctionCause %}
-                                <option value="{{ cause[0] }}"> {{ cause[1] }} </option>
+                                <option value="{{ cause[1] }}"> {{ cause[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="modal_footer">
-                        <button type="button" class="btn btn__modal btn_wide primary" > Выбрать </button>
+                        <button type="button" class="btn btn__modal btn_wide primary" id="idleCauseAccept" data-target="idleCause"> Выбрать </button>
                         <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="idleCause" onClick="modalController(event)"> Отмена </button>
                     </div>
                 </div>
@@ -160,18 +160,18 @@
                 <div class="view-header">Описание неисправности</div>
                 <div class="row">
                     <div class="search-label" for="">Поиск</div>
-                    <input class="search-input openKeyBig use-keyboard-input" id="searchPressForm" type="text">
+                    <input class="search-input openKeyBig use-keyboard-input" id="idleDescriptionInput" type="text">
                 </div>
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
-                        <select class="custom-select jsScroll" id="idleCause" size="15">
+                        <select class="custom-select jsScroll" id="idleDescription" size="15">
                             {% for takenMeasure in takenMeasures %}
-                                <option value="{{ takenMeasure[0] }}"> {{ takenMeasure[1] }} </option>
+                                <option value="{{ takenMeasure[1] }}"> {{ takenMeasure[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="modal_footer">
-                        <button type="button" class="btn btn__modal btn_wide primary" > Выбрать </button>
+                        <button type="button" class="btn btn__modal btn_wide primary" id="idleDescriptionAccept" data-target="idleDescription"> Выбрать </button>
                         <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="idleDescription" onClick="modalController(event)"> Отмена </button>
                     </div>
                 </div>
@@ -186,18 +186,18 @@
                 <div class="view-header">Предпринятые меры</div>
                 <div class="row">
                     <div class="search-label" for="">Поиск</div>
-                    <input class="search-input openKeyBig use-keyboard-input" id="searchPressForm" type="text">
+                    <input class="search-input openKeyBig use-keyboard-input" id="idleTakenMeasuresInput" type="text">
                 </div>
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
-                        <select class="custom-select jsScroll" id="idleCause" size="15">
+                        <select class="custom-select jsScroll" id="idleTakenMeasures" size="15">
                             {% for description in malfunctionDescription %}
-                                <option value="{{ description[0] }}"> {{ description[1] }} </option>
+                                <option value="{{ description[1] }}"> {{ description[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="modal_footer">
-                        <button type="button" class="btn btn__modal btn_wide primary" > Выбрать </button>
+                        <button type="button" class="btn btn__modal btn_wide primary" id="idleTakenMeasuresAccept" data-target="idleTakenMeasures"> Выбрать </button>
                         <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="idleTakenMeasures" onClick="modalController(event)"> Отмена </button>
                     </div>
                 </div>
@@ -262,12 +262,51 @@
         }
 
         // Управление модальным окном
-        function modalController(event){ 
+        function modalController(event){
+            dataInput = event.target // Инпукт/строка в который будут вноситься данные
             toggler = event.target.dataset.toggle // Кнопка открытия/закрытия модального окна
             target = event.target.dataset.target // ID модального окна ( атрибут data-target )
             modal = document.getElementById(target) // Получение нужного модальног окна по ID
             // Открытие/закрытие модального окна
             modal.classList.toggle('hidden');
+
+            //Функция поиска:
+            //Отслеживает изменение в строке ввода, далее отображает только те,
+            //которые совпадают с введенными символами, а остальные скрывает
+            document.addEventListener("click", function(e) {
+                let searchInput = document.getElementById(target + 'Input'); 
+                let val = searchInput.value.trim().toUpperCase();
+                let searchItems = document.querySelectorAll('#'+target + ' option');
+                if (e.target.classList.contains('keyboard__key')) {
+                    if (val != '') {
+                        searchItems.forEach(function (elem){
+                            if (elem.innerText.toUpperCase().search(val) == -1) {
+                                elem.classList.add('hidden')
+                            }
+                            else {
+                                elem.classList.remove('hidden');
+                            }
+                        });
+                    }
+                    else {
+                        searchItems.forEach(function (elem){
+                            elem.classList.remove('hidden');
+                        });
+                    }
+                }
+            })
+            //---------------------------------------------------------------------
+        
+            let select = document.querySelector('select#'+target)
+            let accept = document.getElementById(target+'Accept')
+
+            select.addEventListener('change', (event) => {
+                dataInput.value = event.target.value.trimStart();
+                select.classList.remove('outline-red')
+                accept.onclick = function(){
+                    document.getElementById(target).classList.toggle('hidden')
+                }
+            });
         }
 
         function addWaste() {
@@ -277,7 +316,6 @@
                     i++
                 }
             }
-            console.log(i)
         }
         
         function deleteWaste() {
