@@ -85,7 +85,8 @@
             document.getElementById('modalComment').classList.toggle('hidden')
             commentInput = document.getElementById('commentInput')
             
-            // !!! СЮДА ПИШИ ОТПРАВКУ ДАННЫХ НА СЕРВЕР (Oid отхода/брака, к которому нужно добавить причину возьми через commentInput.dataset.data)
+            let socket = io();
+            socket.emit('waste_note_change', [commentInput.dataset.data, commentInput.value]);
 
             commentInput.dataset.data = ''
         }
