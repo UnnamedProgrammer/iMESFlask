@@ -19,7 +19,7 @@ if (not os.path.exists('log/')):
 file_log = logging.FileHandler(
     "log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log")
 console_out = logging.StreamHandler()
-logging.basicConfig(handlers=(file_log, console_out), level=logging.NOTSET)
+logging.basicConfig(handlers=(file_log,), level=logging.NOTSET)
 
 # Чтение конфига
 config = configparser.ConfigParser()
