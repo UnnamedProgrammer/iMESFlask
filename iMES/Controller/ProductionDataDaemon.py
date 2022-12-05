@@ -11,11 +11,10 @@ class ProductionDataDaemon(BaseObjectModel):
         и за саму выдачу сменных заданий из базы данных для ТПА 
     """
     def __init__(self):
-        # Инициализация начальных значений, смены, спика ТПА, совершенных ТПА
-        # смыканий
-        self.shift = 0
+        # Инициализация начальных значений спика ТПА, совершенных ТПА смыканий
         self.tpalist = self.GetAllTpa()
         self.offsetlist = {}
+        self.last_shift = None
 
     # Метод запускающий основную функцию в отдельном потоке    
     def Start(self):
@@ -61,10 +60,10 @@ class ProductionDataDaemon(BaseObjectModel):
                     continue
                 except Exception as error:
                     # Вывод в лог возникших ошибок
-                    app.logger.info(error, "on", str(self.tpalist[tpanum]))
+                    app.logger.info(f"{error} in {str(self.tpalist[tpanum])}")
                     continue
             sleep(8)
-
+    
     # Метод получающий весь список ТПА, и задающий им новую опцию "Сменное задание"
     def GetAllTpa(self):
         TpaList = []
@@ -126,10 +125,20 @@ class ProductionDataDaemon(BaseObjectModel):
             FROM [MES_Iplast].[dbo].[Shift] ORDER BY StartDate DESC
         """
         shift_oid = self.SQLExecute(sql)
-        return shift_oid[0][0]
+        if len(shift_oid) > 0:
+            if self.last_shift != shift_oid[0][0]:
+                self.last_shift = shift_oid[0][0]
+                self.offsetlist = {}
+                return shift_oid[0][0]
+            else:
+                return shift_oid[0][0]
+        else:
+            return None
 
     # Метод ищет совпадающее по заданным параметрам сменное задание
     def GetShiftTask(self,shift,equipment,product,cycle):
+        if shift == None:
+            return []
         sql_ST = f"""
             SELECT [ShiftTask].[Oid]
                 ,[Shift].Note

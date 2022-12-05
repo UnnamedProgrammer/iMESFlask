@@ -3,7 +3,6 @@ from flask_socketio import SocketIO
 from flask import Flask
 from flask_login import LoginManager
 from iMES.Controller.UserCountController import UserCountController
-from iMES.Model.BaseObjectModel import BaseObjectModel
 from iMES.Model.UserModel import UserModel
 from iMES.Controller.TpaController import TpaController 
 import configparser
@@ -20,7 +19,7 @@ if (not os.path.exists('log/')):
 file_log = logging.FileHandler(
     "log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log")
 console_out = logging.StreamHandler()
-logging.basicConfig(handlers=(file_log, console_out), level=logging.NOTSET)
+logging.basicConfig(handlers=(file_log,), level=logging.NOTSET)
 
 # Чтение конфига
 config = configparser.ConfigParser()
@@ -31,7 +30,8 @@ port = int(config["Host-data"]["port"])
 # Создание объектов 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-Initiator = BaseObjectModel()
+from iMES.Model.BaseObjectModel import BaseObjectModel
+Initiator = BaseObjectModel(app)
 socketio = SocketIO(app)
 
 # Подключение менеджера авторизации
@@ -66,7 +66,7 @@ for device in Devices:
 
     tpasresult = []
     for tpa in tpas:
-        controller = TpaController(tpa[0])
+        controller = TpaController(app,tpa[0])
         tpasresult.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False,'Controller':controller})
 
     TpaList[device[0]] = tpasresult

@@ -8,7 +8,6 @@ def Dependency_check():
                    'pyodbc',
                    'progress',
                    'flask_socketio',
-                   'simple-websocket',
                    'requests',
                    'bs4']
     not_install = []
@@ -30,7 +29,6 @@ def Dependency_check():
 while True:
     try:
         from iMES import app, socketio, host, port
-        import simple_websocket
         break
     except ModuleNotFoundError:
         Dependency_check()
