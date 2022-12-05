@@ -252,6 +252,7 @@
     <script src="/static/js/keyboard.js"></script>
     <script src="/static/js/numberModal.js"></script>
     <script>
+        
         let i = 0
         let elementList = document.querySelectorAll('.waste-card')
         
@@ -270,33 +271,31 @@
             // Открытие/закрытие модального окна
             modal.classList.toggle('hidden');
 
-            //Функция поиска:
-            //Отслеживает изменение в строке ввода, далее отображает только те,
-            //которые совпадают с введенными символами, а остальные скрывает
+
+            // Новая система поиска, для списков с большим объемом данных
+            const searchInput = document.querySelector('#'+target+'Input');
+            const searchSelect = document.querySelector('select#'+target);
+            const searchItems = searchSelect.querySelectorAll('option');
+            
             document.addEventListener("click", function(e) {
-                let searchInput = document.getElementById(target + 'Input'); 
-                let val = searchInput.value.trim().toUpperCase();
-                let searchItems = document.querySelectorAll('#'+target + ' option');
+                const fragment = document.createDocumentFragment();
+                const val = searchInput.value.trim().toUpperCase();
+
                 if (e.target.classList.contains('keyboard__key')) {
-                    if (val != '') {
-                        searchItems.forEach(function (elem){
-                            if (elem.innerText.toUpperCase().search(val) == -1) {
-                                elem.classList.add('hidden')
-                            }
-                            else {
-                                elem.classList.remove('hidden');
-                            }
-                        });
-                    }
-                    else {
-                        searchItems.forEach(function (elem){
-                            elem.classList.remove('hidden');
-                        });
+                    for (const elem of searchItems) {
+                      elem.remove();
+                    
+                      if (val === '' || elem.innerText.toUpperCase().includes(val)) {
+                        fragment.append(elem);
+                      }
                     }
                 }
+
+                searchSelect.append(fragment);
             })
-            //---------------------------------------------------------------------
-        
+            // --------------------------------------------------------------
+
+
             let select = document.querySelector('select#'+target)
             let accept = document.getElementById(target+'Accept')
 
