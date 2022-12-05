@@ -75,7 +75,7 @@
     <!--Всплывающее окно ввода числовых значений-->
     <div class="modal hidden" id="numberModal">
         <div class="modal__number">
-            <div class="modal_header">Брак</div>
+            <div class="modal_header">ВВОД</div>
             <div class="modal-window__body">
                 <div class="row">
                     <div class="btn modal__input-number" id="inputDefect"></div>
@@ -94,7 +94,7 @@
                             <button type="button" class="keyboard__key">6</button>
                         </div>
                         <div class="col">
-                            <button type="button" class="keyboard__key">1</button>
+                            <button type="button" class="keyboard__key">1</button> 
                             <button type="button" class="keyboard__key">2</button>
                             <button type="button" class="keyboard__key">3</button>
                         </div>
@@ -114,7 +114,10 @@
     </div>
 
     <!-- Модальное (всплывающее) окно выбора продукта -->
-    <div class="modal hidden" id="currentProductList">
+    <div class="modal hidden" id="currentProductList" data-productcount="{{current_product|length}}">
+        {% if current_product|length == 1%}
+            <input type="hidden" id="oneProductData" data-proddataoid="{{ current_product[0][0] }}" data-prodname="{{ current_product[0][1] }}">
+        {% endif %}
         <div class="modal__list">
             <div class="modal_header">
                 <h5 class="modal_title">Список продуктов</h5>
@@ -196,7 +199,12 @@
     wasteButton.addEventListener('click', () => {
         if (wasteButton.id == 'wasteEnterButton') {
             document.getElementById('selectProductButton').dataset.target = 'wasteSelect'
-            productList.classList.toggle('hidden')
+            if (productList.dataset.productcount > 1) {
+                productList.classList.toggle('hidden')
+            } else {
+                productData = [document.getElementById('oneProductData').dataset.proddataoid, document.getElementById('oneProductData').dataset.prodname]
+                document.getElementById('addWaste').classList.toggle('hidden')
+            }
         } else {
             let wastesHTML = ''
             let clock = document.getElementById('clock').innerHTML
@@ -229,7 +237,15 @@
     defectButton.addEventListener('click', () => {
         if (defectButton.id == 'defectEnterButton') {
             document.getElementById('selectProductButton').dataset.target = 'defectSelect'
-            productList.classList.toggle('hidden')
+            if (productList.dataset.productcount > 1) {
+                productList.classList.toggle('hidden')
+            }
+            else {
+                productData = [document.getElementById('oneProductData').dataset.proddataoid, document.getElementById('oneProductData').dataset.prodname]
+                enter.id = 'defectEnterCount'
+                enter.innerHTML = 'ВВОД КОЛ.'
+                numberModalControl(event)
+            }
         } else {
 
             let defectHTML = ''

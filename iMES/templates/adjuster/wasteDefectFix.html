@@ -1,4 +1,7 @@
 {% extends 'index_template.html' %}
+
+{% set current_product_waste = somedata[0] %}
+
 {% block main_window %}
 <div class="view"> 
     <div class="view-header text-center primary">Брак и отход</div>
@@ -15,7 +18,42 @@
                     <th>Причина</th>
                 </tr>
             </thead>
-            <tbody id="">
+            <tbody>
+                {% for wastes in current_product_waste %}
+                    {% if wastes[1] == 0 %}
+                        <tr id="wasteRow">
+                            <td> {{ wastes[0] }} </td>
+                            <td class="table-warning">{{ wastes[2] }}</td>
+                            <td> {{ wastes[3] }} </td>
+                            <td> {{ wastes[4] }} </td>
+                            <td> {{ wastes[5] }} </td>
+                            <td> {{ wastes[6] }} </td>
+                            {% if wastes[7] == '' %}
+                                <td class="nopadding table__button col-2">
+                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}" data-target="wasteDefectCause" onclick="commentModalController(event)">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
+                                </td>
+                            {% else %}
+                                <td> {{ wastes[7] }} </td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr id="defectRow">
+                            <td> {{ wastes[0] }} </td>
+                            <td class="red">Брак</td>
+                            <td> {{ wastes[3] }} </td>
+                            <td> {{ wastes[4] }} </td>
+                            <td> {{ wastes[5] }} </td>
+                            <td> {{ wastes[6] }} </td>
+                            {% if wastes[7] == '' %}
+                                <td class="nopadding table__button col-2">
+                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}" data-target="modalComment" onclick="commentModalController(event)">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
+                                </td>
+                            {% else %}
+                                <td> {{ wastes[7] }} </td>
+                            {% endif %}
+                        </tr>
+                    {% endif %}
+                {% endfor %}
             </tbody>
         </table>     
     </div>
@@ -29,6 +67,33 @@
         </div> 
     </div>       
 </div>
+
+<!-- Модальное (всплывающее) окно выбора причины отхода и брака -->
+<div class="modal hidden" id="modalComment">
+    <div class="modal__comment">
+        <input class="comment-input use-keyboard-input" id="commentInput" data-data="" type="text" placeholder="Введите причину...">
+    </div>
+    <div class="bg-blur"></div>
+</div>
+<!-- ----------------------------------------------------------- -->
+<script src="/static/js/keyboard.js"></script>
+<script src="/static/js/numberModal.js"></script>
+<script>
+    
+    document.addEventListener("click", function(e) {
+        if (e.target.classList.contains('keyboard__key--done')) {
+            document.getElementById('modalComment').classList.toggle('hidden')
+            commentInput = document.getElementById('commentInput')
+            
+            let socket = io();
+            socket.emit('waste_note_change', [commentInput.dataset.data, commentInput.value]);
+
+
+            commentInput.dataset.data = ''
+        }
+    })
+
+</script>
 {% endblock %}
 {% block navbar_footer %}
     {% include 'navbar_footer/navbar_footer.html' %}        

@@ -15,6 +15,11 @@
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 
+    {% set malfunctionCause = somedata[0] %}
+    {% set malfunctionDescription = somedata[1] %}
+    {% set takenMeasures = somedata[2] %}
+    {% set all_wastes = somedata[3] %}
+
     <div class="view">
         <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
         <div class="view-body view-body_idleEnter">
@@ -34,19 +39,19 @@
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Причина неисправности</span> 
-                        <input type="text" class="form-control form-control_idle idle-data" id="idleCause" name="idleCause" value="" onclick="modalController(event)" placeholder="Выберите причину неисправности..." readonly>
+                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleCause" name="idleCause" value="" onclick="modalController(event)" placeholder="Выберите причину неисправности..." readonly>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Описание неисправности</span>
-                        <input type="text" class="form-control form-control_idle idle-data" id="idleDescription" name="idleDescription" value="" onclick="modalController(event)" placeholder="Выберите описание неисправности..." readonly>  
+                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleDescription" name="idleDescription" value="" onclick="modalController(event)" placeholder="Выберите описание неисправности..." readonly>  
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Предпринятые меры</span>
-                        <input type="text" class="form-control form-control_idle idle-data" id="idleTakenMeasures" name="idleTakenMeasures" value="" onclick="modalController(event)" placeholder="Выберите предпринятые меры..." readonly>
+                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleTakenMeasures" name="idleTakenMeasures" value="" onclick="modalController(event)" placeholder="Выберите предпринятые меры..." readonly>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Комментарий</span>
-                        <input type="text" class="form-control form-control_idle idle-data use-wordKeyboard-input" id="idleNote" name="idleNote" value="" placeholder="Введите комментарий...">
+                        <input type="text" class="form-control form-control_idle idle-data use-keyboard-input" name="idleNote" value="" placeholder="Введите комментарий...">
                     </div>
                     <input type="hidden" class="idle-data" name="shiftTaskData" id="shiftTaskData" value="">
 
@@ -55,9 +60,12 @@
                         <div class="waste-card mb-2 row">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" value="" aria-describedby="" readonly>
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" value="" aria-describedby="" readonly>
                                 <span class="input-group-text">КГ</span>
                             </div>
                             <div class="btn_add-waste align-middle" onClick="addWaste()">Добавить</div>
@@ -66,27 +74,36 @@
                         <div class="waste-card mb-2 row hidden">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option selected>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" aria-describedby="" readonly>
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
                                 <span class="input-group-text">КГ</span>
                             </div>
                         </div>
                         <div class="waste-card mb-2 row hidden">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option selected>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" aria-describedby="" readonly>
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
                                 <span class="input-group-text">КГ</span>
                             </div>
                         </div>
                         <div class="waste-card mb-2 row hidden">
                             <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
                                 <option selected>Выберите отход</option>
+                                {% for waste in all_wastes %}
+                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                                {% endfor %}
                             </select>
                             <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="enterWasteWeight(event)" placeholder="Вес" aria-describedby="" readonly>
+                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
                                 <span class="input-group-text">КГ</span>
                             </div>
                         </div>
@@ -114,24 +131,22 @@
         <!-- Модальное (всплывающее) окно выбора причины неисправности -->
         <div class="modal hidden" id="idleCause">
             <div class="modal__list">
-                <div class="modal_header">
-                    <h5 class="modal_title">Выберите причину</h5>
+                <div class="view-header">Причина неисправности</div>
+                <div class="row">
+                    <div class="search-label" for="">Поиск</div>
+                    <input class="search-input use-keyboard-input" id="idleCauseInput" type="text">
                 </div>
-                <div class="modal_content">
-                    <div class="modal_body">
-                        <table class="table table-bordered text-center" id="selectStickerProduct" border="1" bordercolor="black">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th scope="col">Выбор</th>
-                                    <th scope="col">Продукт</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                <div class="modal_content" style="height: 90%;">
+                    <div class="modal_body"> 
+                        <select class="custom-select jsScroll" id="idleCause" size="15">
+                            {% for cause in malfunctionCause %}
+                                <option value="{{ cause[1] }}"> {{ cause[1] }} </option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="modal_footer">
-                        <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="changeProductModal" onClick="modalController(event)"> Закрыть </button>
+                        <button type="button" class="btn btn__modal btn_wide primary" id="idleCauseAccept" data-target="idleCause"> Выбрать </button>
+                        <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="idleCause" onClick="modalController(event)"> Отмена </button>
                     </div>
                 </div>
             </div>
@@ -139,18 +154,214 @@
         </div>
         <!-- ----------------------------------------------------------- -->
 
-    </div> 
+        <!-- Модальное (всплывающее) окно выбора описания неисправности -->
+        <div class="modal hidden" id="idleDescription">
+            <div class="modal__list">
+                <div class="view-header">Описание неисправности</div>
+                <div class="row">
+                    <div class="search-label" for="">Поиск</div>
+                    <input class="search-input openKeyBig use-keyboard-input" id="idleDescriptionInput" type="text">
+                </div>
+                <div class="modal_content" style="height: 90%;">
+                    <div class="modal_body"> 
+                        <select class="custom-select jsScroll" id="idleDescription" size="15">
+                            {% for takenMeasure in takenMeasures %}
+                                <option value="{{ takenMeasure[1] }}"> {{ takenMeasure[1] }} </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal_footer">
+                        <button type="button" class="btn btn__modal btn_wide primary" id="idleDescriptionAccept" data-target="idleDescription"> Выбрать </button>
+                        <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="idleDescription" onClick="modalController(event)"> Отмена </button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+        <!-- ----------------------------------------------------------- -->
+
+        <!-- Модальное (всплывающее) окно выбора предпринятых мер -->
+        <div class="modal hidden" id="idleTakenMeasures">
+            <div class="modal__list">
+                <div class="view-header">Предпринятые меры</div>
+                <div class="row">
+                    <div class="search-label" for="">Поиск</div>
+                    <input class="search-input openKeyBig use-keyboard-input" id="idleTakenMeasuresInput" type="text">
+                </div>
+                <div class="modal_content" style="height: 90%;">
+                    <div class="modal_body"> 
+                        <select class="custom-select jsScroll" id="idleTakenMeasures" size="15">
+                            {% for description in malfunctionDescription %}
+                                <option value="{{ description[1] }}"> {{ description[1] }} </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal_footer">
+                        <button type="button" class="btn btn__modal btn_wide primary" id="idleTakenMeasuresAccept" data-target="idleTakenMeasures"> Выбрать </button>
+                        <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="idleTakenMeasures" onClick="modalController(event)"> Отмена </button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+        <!-- ----------------------------------------------------------- -->
+
+        <!--Всплывающее окно ввода числовых значений-->
+        <div class="modal hidden" id="numberModal">
+            <div class="modal__number">
+                <div class="modal_header">Количество</div>
+                <div class="modal-window__body">
+                    <div class="row">
+                        <div class="btn modal__input-number"></div>
+                        <button type="button" class="btn modal__enter-button secondary">ВВОД</button>
+                    </div>
+                    <div class="number-keyboard">
+                        <div class="keyboard__keys">
+                            <div class="col">
+                                <button type="button" class="keyboard__key">7</button>
+                                <button type="button" class="keyboard__key">8</button>
+                                <button type="button" class="keyboard__key">9</button>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="keyboard__key">4</button>
+                                <button type="button" class="keyboard__key">5</button>
+                                <button type="button" class="keyboard__key">6</button>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="keyboard__key">1</button>
+                                <button type="button" class="keyboard__key">2</button>
+                                <button type="button" class="keyboard__key">3</button>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="keyboard__key">.</button>
+                                <button type="button" class="keyboard__key">0</button>
+                                <button type="button" class="keyboard__key keyboard__key_del">DEL</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal_footer">
+                    <button type="button" class="btn btn__modal btn_wide secondary" onClick="numberModalControl(event)"> Закрыть </button>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+        <!-- ----------------------------------------------------------- -->
+
+    </div>
+    <script src="/static/js/keyboard.js"></script>
+    <script src="/static/js/numberModal.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function(){
-            // Управление модальным окном
-            function modalController(event){ 
-                toggler = event.target.dataset.toggle // Кнопка открытия/закрытия модального окна
-                target = event.target.dataset.target // ID модального окна ( атрибут data-target )
-                modal = document.getElementById(target) // Получение нужного модальног окна по ID
-                // Открытие/закрытие модального окна
-                modal.classList.toggle('hidden');
+        let i = 0
+        let elementList = document.querySelectorAll('.waste-card')
+        
+        for(let element of elementList){
+            if(!elementList[i].classList.contains('hidden')){
+                i++
             }
-        });
+        }
+
+        // Управление модальным окном
+        function modalController(event){
+            dataInput = event.target // Инпукт/строка в который будут вноситься данные
+            toggler = event.target.dataset.toggle // Кнопка открытия/закрытия модального окна
+            target = event.target.dataset.target // ID модального окна ( атрибут data-target )
+            modal = document.getElementById(target) // Получение нужного модальног окна по ID
+            // Открытие/закрытие модального окна
+            modal.classList.toggle('hidden');
+
+            //Функция поиска:
+            //Отслеживает изменение в строке ввода, далее отображает только те,
+            //которые совпадают с введенными символами, а остальные скрывает
+            document.addEventListener("click", function(e) {
+                let searchInput = document.getElementById(target + 'Input'); 
+                let val = searchInput.value.trim().toUpperCase();
+                let searchItems = document.querySelectorAll('#'+target + ' option');
+                if (e.target.classList.contains('keyboard__key')) {
+                    if (val != '') {
+                        searchItems.forEach(function (elem){
+                            if (elem.innerText.toUpperCase().search(val) == -1) {
+                                elem.classList.add('hidden')
+                            }
+                            else {
+                                elem.classList.remove('hidden');
+                            }
+                        });
+                    }
+                    else {
+                        searchItems.forEach(function (elem){
+                            elem.classList.remove('hidden');
+                        });
+                    }
+                }
+            })
+            //---------------------------------------------------------------------
+        
+            let select = document.querySelector('select#'+target)
+            let accept = document.getElementById(target+'Accept')
+
+            select.addEventListener('change', (event) => {
+                dataInput.value = event.target.value.trimStart();
+                select.classList.remove('outline-red')
+                accept.onclick = function(){
+                    document.getElementById(target).classList.toggle('hidden')
+                }
+            });
+        }
+
+        function addWaste() {
+            if(i < elementList.length){
+                if(elementList[i].classList.contains('hidden')){
+                    elementList[i].classList.remove('hidden')
+                    i++
+                }
+            }
+        }
+        
+        function deleteWaste() {
+            if(i != 1){
+                if( !elementList[i-1].classList.contains('hidden')){
+                    elementList[i-1].classList.add('hidden')
+                    let select = elementList[i-1].querySelector('#wasteSelect')
+                    let weight = elementList[i-1].querySelector('#wasteWeight')
+                    select.selectedIndex = 0
+                    weight.value = null
+                    i--
+                }
+            }
+            else if(i == 1) {
+                let select = elementList[i-1].querySelector('#wasteSelect')
+                let weight = elementList[i-1].querySelector('#wasteWeight')
+                select.selectedIndex = 0
+                weight.value = null
+            }
+        }
+        
+        let jsScroll = document.getElementsByClassName('jsScroll');
+
+        if(jsScroll){
+            [].forEach.call(jsScroll, function(item) {
+                let startX, startY;
+                let listener = function(e) {
+                    startX = this.scrollLeft + e.pageX;
+                    startY = this.scrollTop + e.pageY;
+                    item.addEventListener('mousemove', endListener);
+                };
+            
+                let endListener = function(e) {
+                    this.scrollLeft = startX - e.pageX;
+                    this.scrollTop = startY - e.pageY;
+                    return false;
+                };
+            
+                item.addEventListener('mousedown', listener);
+            
+                window.addEventListener("mouseup", function(){ 
+                    item.removeEventListener('mousemove', endListener);
+                });
+            });
+        }
+
     </script>
 </body>
 </html>

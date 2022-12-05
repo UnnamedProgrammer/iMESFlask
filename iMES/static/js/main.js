@@ -58,6 +58,16 @@ function modalController(event){
     modal.classList.toggle('hidden');
 }
 
+function commentModalController(event) {
+    Keyboard.open()
+    target = event.target.dataset.target
+    modal = document.getElementById(target)
+    modal.classList.toggle('hidden')
+    commentInput = document.getElementById('commentInput')
+    commentInput.focus()
+    commentInput.dataset.data = event.target.dataset.wasteoid
+}
+
 // Печать этикетки
 function stickerPrint() {
 
