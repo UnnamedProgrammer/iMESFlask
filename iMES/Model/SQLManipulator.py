@@ -1,11 +1,13 @@
+import imp
 import pyodbc
+from datetime import datetime
 
 class SQLManipulator():
     """
         Класс подключения к базе данных выполняющий передачу запроса в БД и 
         получения ответа
     """
-    def __init__(self) -> None:
+    def __init__(self,_app) -> None:
         # Строка подключения
         self.connection_string = """
             DRIVER={ODBC Driver 18 for SQL Server};
@@ -15,6 +17,7 @@ class SQLManipulator():
             PWD=xAlTeS3dGrh7;
             TrustServerCertificate=yes;
         """
+        self.app = _app
 
     # Метод отправляющий запрос на сервер БД
     @classmethod
@@ -37,7 +40,7 @@ class SQLManipulator():
                     cursor.close()
                     connection.close()
                     break
-            except pyodbc.ProgrammingError as Error:
-                print(Error)
+            except pyodbc.ProgrammingError as error:
+                self.app.logger.warning(f"[{datetime.now()}] {error}")
                 break
         return result

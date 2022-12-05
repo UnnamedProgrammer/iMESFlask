@@ -541,6 +541,7 @@ def UpdateMainWindowData(data):
         socketio.emit("GetMainWindowData", data=json.dumps(
             MWData, ensure_ascii=False, indent=4))
     except Exception as error:
+        app.logger.warning(f"[{datetime.now()}] {error}")
         pass
 
 

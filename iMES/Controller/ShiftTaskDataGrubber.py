@@ -6,26 +6,54 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         Класс отвечающий за хранение данных по выполняемому на данный момент
         сменному задания на определённом ТПА
     """
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self,_app) -> None:
+        BaseObjectModel.__init__(self,_app)
         self.tpa = ''
-        self.pressform = ''
-        self.production_plan = ()
+        self._pressform = None
+        self.production_plan = (0,)
         self.cycle = 0
         self.cycle_fact = 0
-        self.plan_weight = ()
-        self.average_weight = ()
+        self.plan_weight = (0,)
+        self.average_weight = (0,)
         self.shift = ''
         self.shift_task_oid = ''
-        self.product_fact = ()
+        self.product_fact = (0,)
         self.label = ''
         self.controller = 'Empty'
         self.PackingURL = ''
         self.StartDate = None
         self.EndDate = None
         self.ProductCount = 0
-        self.wastes = ()
+        self.wastes = (0,)
         self.shift_tasks_traits = ()
+        
+    @property
+    def pressform(self):
+        # Проверка прессформы
+        sql = f"""
+            SELECT TOP (1) Equipment.Name, RFIDClosureData.Date
+            FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
+            WHERE 
+            Controller = (SELECT RFIDEquipment 
+                            FROM RFIDEquipmentBinding 
+                            WHERE Equipment = '{self.tpa}') AND
+            RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
+            Equipment.Oid = RFIDEquipmentBinding.Equipment
+            ORDER BY Date DESC
+            """
+        pf = self.SQLExecute(sql)
+        if len(pf) > 0:
+            if pf[0][0] == None or pf == () or pf == []:
+                self.pressform = 'Метка не привязана к прессформе'
+            else:
+                self.pressform = pf[0][0]
+        else:
+            self.pressform = 'Не определена'
+        return self._pressform
+    
+    @pressform.setter
+    def pressform(self,value):
+        self._pressform = value
 
     # Метод получения данных из сменного задания
     def data_from_shifttask(self):
@@ -55,29 +83,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             (SELECT * FROM ProductionData WHERE ProductionData.ShiftTask = ShiftTask.Oid AND Status = 1)
         """
         data = self.SQLExecute(sql)
-        # Проверка прессформы
-        sql = f"""
-            SELECT TOP (1) Equipment.Name, RFIDClosureData.Date
-            FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
-            WHERE 
-            Controller = (SELECT RFIDEquipment 
-                            FROM RFIDEquipmentBinding 
-                            WHERE Equipment = '{self.tpa}') AND
-            RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
-            Equipment.Oid = RFIDEquipmentBinding.Equipment
-            ORDER BY Date DESC
-            """
-        pf = self.SQLExecute(sql)
-        if len(pf) > 0:
-            if pf[0][0] == None or pf == () or pf == []:
-                self.pressform = 'Метка не привязана к прессформе'
-                self.tpa_message = 'Для получения сменного задания выберите пресс-форму'
-            else:
-                self.pressform = pf[0][0]
-        else:
-            self.pressform = 'Не определена'
         #---------------------------------------------------
-
         # Простая передача из БД в поля класса
         if len(data) > 0:
             st_oid = []
@@ -127,7 +133,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                         ,[WeightFact]
                         ,[StartDate]
                         ,[EndDate]
-                    FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid}'
+                    FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid} AND Status = 1'
                 """
                 result = self.SQLExecute(production_data_sql)
                 production_data.append(result)
