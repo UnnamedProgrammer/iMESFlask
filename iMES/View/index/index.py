@@ -1,3 +1,4 @@
+from email import header
 from iMES import socketio
 from iMES import app
 from iMES import UserController
@@ -10,7 +11,8 @@ import json
 from iMES import TpaList, current_tpa, user
 import requests
 from datetime import datetime, timedelta
-
+from requests.adapters import HTTPAdapter,Retry
+import requests
 # Метод возвращающий главную страницу
 
 
@@ -40,8 +42,17 @@ def index():
                                 """
             CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
             from iMES import host, port
-            r = requests.get(
-                f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}")
+            session = requests.Session()
+            retry = Retry(connect=3,backoff_factor=0.5)
+            adapter = HTTPAdapter(max_retries=retry)
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
+            headers={
+            'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+            }
+            r = session.get(
+                f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers)
             if(r.status_code == 200):
                 login_user(user)
     # В противном случае уведомляем клиента о том что его нет в списках устройств
