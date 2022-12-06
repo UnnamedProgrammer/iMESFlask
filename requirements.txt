@@ -1,0 +1,7 @@
+'flask'
+'flask_login'
+'pyodbc'
+'progress'
+'flask_socketio'
+'requests'
+'bs4'
