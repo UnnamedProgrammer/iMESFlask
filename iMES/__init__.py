@@ -11,7 +11,7 @@ import os
 from engineio.payload import Payload
 
 # Максимальное число обрабатываемых пакетов за раз
-Payload.max_decode_packets = 16
+Payload.max_decode_packets = 50
 
 # Настройки логов
 if (not os.path.exists('log/')):
