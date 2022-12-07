@@ -128,7 +128,8 @@ class ProductionDataDaemon(BaseObjectModel):
         if len(shift_oid) > 0:
             if self.last_shift != shift_oid[0][0]:
                 self.last_shift = shift_oid[0][0]
-                self.offsetlist = {}
+                for key in self.offsetlist.keys():
+                    self.offsetlist[key] = 0
                 return shift_oid[0][0]
             else:
                 return shift_oid[0][0]

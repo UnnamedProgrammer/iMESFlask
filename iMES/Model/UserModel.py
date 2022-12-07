@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 from flask_login import UserMixin
 
 
@@ -6,12 +5,12 @@ class UserModel(UserMixin):
     """
         Класс модель для взаимодействия с авторизованным пользователем в системе
     """
-    id = NULL
-    name = NULL
-    username = NULL
-    CardNumber = NULL
+    id = None
+    name = None
+    username = None
+    CardNumber = None
     role = {}
-    interfaces = NULL
+    interfaces = None
     savedrole = False
     device_type = ''
 

@@ -95,7 +95,6 @@ class ShiftTaskLoader(BaseObjectModel):
     # чтобы небыло конфликтов и ошибок
     def CheckingRequiredValuesInTheDataBase(self, ShiftTask) -> bool:
         # Проверка основных полей на None значение
-        progressbar = IncrementalBar()
         app.logger.info(
             f"Валидация обязательных значений сменного задания № {ShiftTask.Ordinal}")
         args_cantbe_null = {"Shift": ShiftTask.Shift,
@@ -108,17 +107,13 @@ class ShiftTaskLoader(BaseObjectModel):
                             "Cycle": ShiftTask.Cycle,
                             "Weight": ShiftTask.Weight}
         keys_list = list(args_cantbe_null.keys())
-        progressbar.max = len(keys_list)
         for key in keys_list:
-            progressbar.message = f"Валидация self.{key}"
-            progressbar.next()
             if (args_cantbe_null[key] != None):
                 continue
             else:
                 error = f"Значение self.{key} в сменном задании №{ShiftTask.Ordinal} является None, что недопустимо."
                 app.logger.critical(f"Ошибка: {error}")
                 raise Exception(error)
-        progressbar.finish()
         app.logger.info("Валидация полей закончена.")
 
         # Поиск записей в базе данных от которых зависит сменное задание

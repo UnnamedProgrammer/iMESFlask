@@ -11,7 +11,7 @@ class SQLManipulator():
         # Строка подключения
         self.connection_string = """
             DRIVER={ODBC Driver 18 for SQL Server};
-            SERVER=OFC-APPSERV-13;
+            SERVER=192.168.107.43;
             DATABASE=MES_Iplast;
             UID=terminal;
             PWD=xAlTeS3dGrh7;
