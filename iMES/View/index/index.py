@@ -12,9 +12,10 @@ from iMES import TpaList, current_tpa, user
 import requests
 from datetime import datetime, timedelta
 from requests.adapters import HTTPAdapter,Retry
-import requests
+import requests, urllib3
 # Метод возвращающий главную страницу
 
+urllib3.disable_warnings()
 
 @app.route("/")
 def index():
@@ -52,7 +53,7 @@ def index():
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
             }
             r = session.get(
-                f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers)
+                f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
             if(r.status_code == 200):
                 login_user(user)
     # В противном случае уведомляем клиента о том что его нет в списках устройств
