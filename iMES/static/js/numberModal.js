@@ -15,7 +15,6 @@ let defectCount = 0
 let defectWeight = 0
 
 function numberModalControl(event){
-    console.log(event)
     numberModal.classList.toggle('hidden');
     display.textContent = '';
     let buttonID = event.target.id;
@@ -93,16 +92,19 @@ function selectProduct(event) {
     productList.classList.toggle('hidden')
     if (event.target.dataset.target == 'wasteSelect'){
         document.getElementById('addWaste').classList.toggle('hidden')
+        event.target.dataset.target = ''
     }
 
     else if (event.target.dataset.target == 'addProductWeight') {
         numberModalControl(event)
+        event.target.dataset.target = ''
     }
 
     else {
         enter.id = 'defectEnterCount'
         enter.innerHTML = 'ВВОД КОЛ.'
         numberModalControl(event)
+        event.target.dataset.target = ''
     }
 }
 

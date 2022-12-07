@@ -198,7 +198,13 @@
 
     wasteButton.addEventListener('click', () => {
         if (wasteButton.id == 'wasteEnterButton') {
-            document.getElementById('selectProductButton').dataset.target = 'wasteSelect'
+            //document.getElementById('selectProductButton').dataset.target = 'wasteSelect'
+
+            let selectProductButton = document.querySelectorAll('#selectProductButton')
+            for (let i = 0; i < selectProductButton.length; i++){
+                selectProductButton[i].dataset.target = 'wasteSelect'
+            }
+
             if (productList.dataset.productcount > 1) {
                 productList.classList.toggle('hidden')
             } else {
@@ -236,7 +242,13 @@
 
     defectButton.addEventListener('click', () => {
         if (defectButton.id == 'defectEnterButton') {
-            document.getElementById('selectProductButton').dataset.target = 'defectSelect'
+            //document.getElementById('selectProductButton').dataset.target = 'defectSelect'
+
+            let selectProductButton = document.querySelectorAll('#selectProductButton')
+            for (let i = 0; i < selectProductButton.length; i++){
+                selectProductButton[i].dataset.target = 'defectSelect'
+            }
+
             if (productList.dataset.productcount > 1) {
                 productList.classList.toggle('hidden')
             }

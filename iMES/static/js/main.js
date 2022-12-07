@@ -1,6 +1,7 @@
 let tpaOid = document.getElementById('ttpa').dataset.oid // Oid текущего ТПА 
 let pressForm = document.getElementById('tpf') // Текущая пресс-форма
 let current_user = document.getElementById('current_user').value.replace(/[^a-zа-яё\s]/gi, '').replace('User', ''); // Текущий пользователь
+let tempData = null
 
 let ttpa = document.getElementById('ttpa').innerHTML,
     tprod = document.getElementById('tprod').innerHTML,
@@ -66,6 +67,7 @@ function commentModalController(event) {
     commentInput = document.getElementById('commentInput')
     commentInput.focus()
     commentInput.dataset.data = event.target.dataset.wasteoid
+    tempData = event
 }
 
 // Печать этикетки

@@ -18,7 +18,7 @@
     <div class="view">
         <div class="view-header"> ПРОСТО И НЕПОЛАДКИ </div>
         <div class="view-body view-body_journal jsScroll">
-            <table class="table table-bordered text-center" id="table" border="1" bordercolor="black">
+            <table class="table table-bordered text-center" id="journalTable" border="1" bordercolor="black">
                 <thead class="table-dark align-middle">
                     <tr>
                         <th scope="col">+</th>
@@ -37,13 +37,13 @@
                             <input class="big-checkbox" type="checkbox">
                         </td>
                         <td class="align-middle red">Простой</td>
-                        <td class="align-middle">2022-11-23 11:10:44</td>
-                        <td class="align-middle">2022-11-23 11:18:46</td>
+                        <td class="align-middle" id="idleTime">2022-11-23 11:10:44</td>
+                        <td class="align-middle" id="idleTime">2022-11-23 11:18:46</td>
                         <td class="align-middle"></td>
                         <td class="align-middle"></td>
                         <td class="align-middle"></td>
                         <td class="nopadding table__button">
-                            <a type="button" class="btn__table" href="/adjuster/journal/idleEnter">Причина</a>
+                            <a type="button" class="btn__table">Причина</a>
                         </td>
                     </tr>
                     <tr>
@@ -51,8 +51,8 @@
                             <input class="big-checkbox" type="checkbox">
                         </td>
                         <td class="align-middle red">Простой</td>
-                        <td class="align-middle">2022-11-23 11:10:44</td>
-                        <td class="align-middle">2022-11-23 11:18:46</td>
+                        <td class="align-middle" id="idleTime">2022-11-23 13:15:44</td>
+                        <td class="align-middle" id="idleTime">2022-11-23 14:21:46</td>
                         <td class="align-middle"></td>
                         <td class="align-middle"></td>
                         <td class="align-middle"></td>
@@ -86,6 +86,19 @@
 {% endblock %}
 {% block script %}
 <script>
+
+    const tbody = document.querySelector('#journalTable tbody');
+    tbody.addEventListener('click', function (e) {
+        const cell = e.target.closest('td:last-child');
+        if (!cell) {return;}
+        const row = cell.parentElement;
+        let idleOid = row.cells[0].id // Получение ID первой ячейки (он же Oid простоя)
+        let idleStart =  row.cells[2].innerText // Дата начала простоя
+        let idleEnd =  row.cells[2].innerText // Дата конца простоя
+
+        window.location.href='/adjuster/journal/idleEnter?oid='+idleOid
+    });
+
     trCheck = document.getElementsByClassName('tr-check')
 </script>
 {% endblock %}
