@@ -232,6 +232,7 @@ def Authorization(passnumber):
         ,USR.[CardNumber]
         ,RL.Name
         ,ITF.Name
+        ,USR.[Oid]
     FROM [MES_Iplast].[dbo].[User] as USR,
         [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
         [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
@@ -311,6 +312,7 @@ def Authorization(passnumber):
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
+        user.oid = userdata[8]
         packet = {terminal: ''}
         # Отправляем в сокет сообщение о успешной авторизации
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
@@ -332,6 +334,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         ,USR.[CardNumber]
         ,RL.Name
         ,ITF.Name
+        ,USR.Oid
     FROM [MES_Iplast].[dbo].[User] as USR,
         [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
         [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
@@ -405,6 +408,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
+        user.oid = userdata[8]
         packet = {terminal: ''}
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'

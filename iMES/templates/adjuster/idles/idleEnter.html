@@ -15,45 +15,55 @@
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
 
-    {% set malfunctionCause = somedata[0] %}
-    {% set malfunctionDescription = somedata[1] %}
-    {% set takenMeasures = somedata[2] %}
-    {% set all_wastes = somedata[3] %}
+    {% set downtimeData = somedata[0] %}
+    {% set downtimeType = somedata[1] %}
+    {% set malfunctionCause = somedata[2] %}
+    {% set malfunctionDescription = somedata[3] %}
+    {% set takenMeasures = somedata[4] %}
+    {% set all_wastes = somedata[5] %}
 
+    {% if downtimeData[0][3] != None %}
+        {% set idleTime = downtimeData[0][3] - downtimeData[0][2] %}
+    {% endif %}
+    
     <div class="view">
         <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
-        <div class="view-body view-body_idleEnter">
+        <div class="view-body_idleEnter">
             <form action="" class="idle-form" id="idleEnterForm">
                 <div class="idle-form__body mt-2">
-                    <input class="input-group-text_idle idle-data" type="hidden" name="idleOid" value="">
                     <div class="row">
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Прошло времени</span>
-                            <input type="text" class="form-control form-control_idle" value="" placeholder="Время простоя" readonly>
+                            <input type="hidden" id="idleTime" data-startdate="{{ downtimeData[0][2] }}" data-enddate="{{ downtimeData[0][3] }}">
+                            {% set timeStr = idleTime | string %}
+                            <input type="text" class="form-control form-control_idle" value="{{ timeStr[:-7] }}" placeholder="Время простоя" readonly>
                         </div>
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Наладчик</span>
-                            <input class="idle-data" type="hidden" name="userOid" value="">
-                            <input type="text" class="form-control form-control_idle idle-data" value="{{ current_user }}" name="idleCreator" placeholder="Ф.И.О Наладчика" readonly>
+                            <input class="idle-data" type="hidden" data-data="{{ current_user.oid }}">
+                            <input type="text" class="form-control form-control_idle" value="{{ current_user.name }}" placeholder="Ф.И.О Наладчика" readonly>
                         </div>
                     </div>
                     <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Тип простоя</span> 
+                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleType" data-data="" value="" onclick="modalController(event)" placeholder="Выберите тип простоя..." readonly>
+                    </div>
+                    <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Причина неисправности</span> 
-                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleCause" name="idleCause" value="" onclick="modalController(event)" placeholder="Выберите причину неисправности..." readonly>
+                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleCause" data-data="" value="" onclick="modalController(event)" placeholder="Выберите причину неисправности..." readonly>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Описание неисправности</span>
-                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleDescription" name="idleDescription" value="" onclick="modalController(event)" placeholder="Выберите описание неисправности..." readonly>  
+                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleDescription" data-data="" value="" onclick="modalController(event)" placeholder="Выберите описание неисправности..." readonly>  
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Предпринятые меры</span>
-                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleTakenMeasures" name="idleTakenMeasures" value="" onclick="modalController(event)" placeholder="Выберите предпринятые меры..." readonly>
+                        <input type="text" class="form-control form-control_idle idle-data" data-target="idleTakenMeasures" data-data="" value="" onclick="modalController(event)" placeholder="Выберите предпринятые меры..." readonly>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Комментарий</span>
-                        <input type="text" class="form-control form-control_idle idle-data use-keyboard-input" name="idleNote" value="" placeholder="Введите комментарий...">
+                        <input type="text" class="form-control form-control_idle idle-data use-keyboard-input" id="idleNote" value="" placeholder="Введите комментарий...">
                     </div>
-                    <input type="hidden" class="idle-data" name="shiftTaskData" id="shiftTaskData" value="">
 
                     <div class="idle-form__body_waste mt-4">
                         <span class="input-group-text input-group-text_idle input-group-text_green input-group-text_waste mb-3">Отходы</span>
@@ -109,24 +119,50 @@
                         </div>
                     </div>
                 </div>
+                <div class="d-flex justify-content-between px-3 pb-4">
+                    <div class="col-6 row">
+                        <div class="col me-1">
+                            <button type="submit" class="btn btn__view btn__view_journal primary fs-3">
+                               Ввести простой
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-6 row">
+                        <div class="col ms-1">
+                            <button type="button" class="btn btn__view btn__view_journal secondary fs-1" onclick="location.href='/adjuster/journal'">
+                                Выход
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
-        <div class="d-flex justify-content-between px-3 pb-4">
-            <div class="col-6 row">
-                <div class="col me-1">
-                    <button type="button" class="btn btn__view btn__view_journal primary fs-3">
-                       Ввести простой
-                    </button>
+
+        <!-- Модальное (всплывающее) окно выбора типа простоя -->
+        <div class="modal hidden" id="idleType">
+            <div class="modal__list">
+                <div class="view-header">Причина неисправности</div>
+                <div class="row">
+                    <div class="search-label" for="">Поиск</div>
+                    <input class="search-input use-keyboard-input" id="idleTypeInput" type="text">
+                </div>
+                <div class="modal_content" style="height: 90%;">
+                    <div class="modal_body"> 
+                        <select class="custom-select jsScroll" id="idleType" size="15">
+                            {% for type in downtimeType %}
+                                <option value="{{ type[0] }}"> {{ type[1] }} </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal_footer">
+                        <button type="button" class="btn btn__modal btn_wide primary" id="idleTypeAccept" data-target="idleType"> Выбрать </button>
+                        <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="idleType" onClick="modalController(event)"> Отмена </button>
+                    </div>
                 </div>
             </div>
-            <div class="col-6 row">
-                <div class="col ms-1">
-                    <button type="button" class="btn btn__view btn__view_journal secondary fs-1" onclick="location.href='/adjuster'">
-                        Выход
-                    </button>
-                </div>
-            </div>
+            <div class="bg-blur"></div>
         </div>
+        <!-- ----------------------------------------------------------- -->
 
         <!-- Модальное (всплывающее) окно выбора причины неисправности -->
         <div class="modal hidden" id="idleCause">
@@ -140,7 +176,7 @@
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleCause" size="15">
                             {% for cause in malfunctionCause %}
-                                <option value="{{ cause[1] }}"> {{ cause[1] }} </option>
+                                <option value="{{ cause[0] }}"> {{ cause[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -166,7 +202,7 @@
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleDescription" size="15">
                             {% for takenMeasure in takenMeasures %}
-                                <option value="{{ takenMeasure[1] }}"> {{ takenMeasure[1] }} </option>
+                                <option value="{{ takenMeasure[0] }}"> {{ takenMeasure[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -192,7 +228,7 @@
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleTakenMeasures" size="15">
                             {% for description in malfunctionDescription %}
-                                <option value="{{ description[1] }}"> {{ description[1] }} </option>
+                                <option value="{{ description[0] }}"> {{ description[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -253,6 +289,10 @@
     <script src="/static/js/numberModal.js"></script>
     <script>
         
+        let idleInput = document.querySelectorAll('input.idle-data');
+        let idleWaste = document.querySelectorAll('#wasteSelect');
+        let wasteWeight = document.querySelectorAll('#wasteWeight')
+
         let i = 0
         let elementList = document.querySelectorAll('.waste-card')
         
@@ -261,6 +301,7 @@
                 i++
             }
         }
+
 
         // Управление модальным окном
         function modalController(event){
@@ -300,7 +341,8 @@
             let accept = document.getElementById(target+'Accept')
 
             select.addEventListener('change', (event) => {
-                dataInput.value = event.target.value.trimStart();
+                dataInput.value = event.target.options[event.target.selectedIndex].text;
+                dataInput.dataset.data = event.target.value
                 select.classList.remove('outline-red')
                 accept.onclick = function(){
                     document.getElementById(target).classList.toggle('hidden')
@@ -335,7 +377,62 @@
                 weight.value = null
             }
         }
-        
+
+        // Формирования массива данных для отправки на сервер        
+        $('#idleEnterForm').submit(function(e) {
+            e.preventDefault();
+            let inputData = []
+            let idleData = {}
+            let wasteData = {}
+            let emptySlots = 0
+            let idleEnd
+
+            let idleStart = document.getElementById('idleTime').dataset.startdate
+            if ( document.getElementById('idleTime').dataset.enddate != 'None' ) {
+                idleEnd = document.getElementById('idleTime').dataset.enddate
+            } else {
+                idleEnd = ''
+            }
+            
+
+            for (let i = 0; i < idleInput.length; i++) {
+                if(idleInput[i].id == 'idleNote') {
+                    inputData.push(idleInput[i].value)
+                } else {
+                    inputData.push(idleInput[i].dataset.data)
+                }
+
+                if (idleInput[i].dataset.data == "" && idleInput[i].id != 'idleNote'){
+                    emptySlots ++
+                    idleInput[i].classList.add("inv-input")
+                } else {
+                    idleInput[i].classList.remove("inv-input")
+                }
+            }
+
+            idleData = {
+                "creatorOid": inputData[0],
+                "idleType": inputData[1],
+                "idleCause": inputData[2],
+                "idleDescription": inputData[3],
+                "idleTakenMeasures": inputData[4],
+                "idleNote" : inputData[5],
+                "idleStart" : idleStart,
+                "idleEnd" : idleEnd
+            }
+
+            for (let i = 0; i < idleWaste.length; i++) {
+                if(idleWaste[i].selectedIndex != 0){
+                    let key = 'Waste'+i
+                    let option = idleWaste[i].options[idleWaste[i].selectedIndex]
+                    idleData[key] = option.value +','+ wasteWeight[i].value
+                }
+            }
+
+            console.log(idleData)
+        });
+        //-----------------------------------------------------------------------------
+
         let jsScroll = document.getElementsByClassName('jsScroll');
 
         if(jsScroll){

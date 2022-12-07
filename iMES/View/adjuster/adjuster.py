@@ -20,7 +20,25 @@ def adjuster():
 @app.route('/adjuster/journal')
 @login_required
 def adjusterJournal():
-    return CheckRolesForInterface('Наладчик', 'adjuster/journal.html')
+    ip_addr = request.remote_addr
+    
+    # Получение журнала простоев (не зафиксированных/системных)
+    sql_GetDowntimeJournal = f""" SELECT [Oid],[Equipment],[StartDate],[EndDate],[Status]
+                                    FROM [MES_Iplast].[dbo].[DowntimeJournal]
+                                    WHERE [Equipment] = '{current_tpa[ip_addr][0]}'
+                                    AND [Status] = 0
+                                    ORDER BY [StartDate] DESC """
+    downtimeJournal = SQLManipulator.SQLExecute(sql_GetDowntimeJournal)
+    
+    # Получение журнала зафиксированных простоев
+    sql_GetFixedDowntimeJournal = f""" SELECT [Oid],[Equipment],[StartDate],[EndDate],[DowntimeType],[MalfunctionCause],
+                                                [MalfunctionDescription],[TakenMeasures],[Note],[CreateDate],[Creator]
+                                                FROM [MES_Iplast].[dbo].[DowntimeFailure]
+                                                WHERE [Equipment] = '{current_tpa[ip_addr][0]}'
+                                                ORDER BY [StartDate] DESC"""
+    fixedDowntimeJournal = SQLManipulator.SQLExecute(sql_GetFixedDowntimeJournal)
+    
+    return CheckRolesForInterface('Наладчик', 'adjuster/journal.html', [ downtimeJournal, fixedDowntimeJournal ])
 
 # Фиксация простоя
 
@@ -28,32 +46,47 @@ def adjusterJournal():
 @app.route('/adjuster/journal/idleEnter')
 @login_required
 def adjusterIdleEnter():
+    idleOid = request.args.getlist('oid')
+        
+    # Получение данных о простое
+    sql_GetDowntimeData = f""" SELECT [Oid],[Equipment],[StartDate],[EndDate],[Status]
+                                    FROM [MES_Iplast].[dbo].[DowntimeJournal]
+                                    WHERE [Oid] = '{idleOid[0]}'
+                                    AND [Status] = 0 """
+    downtimeData = SQLManipulator.SQLExecute(sql_GetDowntimeData)
+    
+    # Получение типа простоев
+    sql_GetDowntimeType = f""" SELECT [Oid],[Name],[Status],[SyncId]
+                                FROM [MES_Iplast].[dbo].[DowntimeType]
+                                WHERE [Status] = '1' 
+                                ORDER BY [Name] """
+    downtimeType = SQLManipulator.SQLExecute(sql_GetDowntimeType)
     
     # Получение справочника причин неисправности
     sql_GetMalfunctionCause = f""" SELECT [Oid],[Name],[Status]
                                     FROM [MES_Iplast].[dbo].[MalfunctionCause]
-                                    ORDER BY Name"""
+                                    ORDER BY [Name] """
     malfunctionCause = SQLManipulator.SQLExecute(sql_GetMalfunctionCause)
 
     # Получение справочника описаний неисправности
     sql_GetMalfunctionDescription = f""" SELECT [Oid],[Name],[Status]
                                             FROM [MES_Iplast].[dbo].[MalfunctionDescription]
-                                            ORDER BY Name """
+                                            ORDER BY [Name] """
     malfunctionDescription = SQLManipulator.SQLExecute(sql_GetMalfunctionDescription)
                                             
     # Получение справочника предпринятых мер
     sql_GetTakenMeasures = f""" SELECT [Oid],[Name],[Status]
                                 FROM [MES_Iplast].[dbo].[TakenMeasures]
-                                ORDER BY Name """
+                                ORDER BY [Name] """
     takenMeasures = SQLManipulator.SQLExecute(sql_GetTakenMeasures)
 
     # Получаем данные о всех существующих отходах
     sql_GetAllWastes = f"""SELECT Oid, Name  
                             FROM Material WHERE Type = 1
-                            ORDER BY Name"""
+                            ORDER BY [Name] """
     all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
     
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [malfunctionCause, malfunctionDescription, takenMeasures, all_wastes])
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes])
 
 
 # Сырье до конца выпуска

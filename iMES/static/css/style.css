@@ -488,14 +488,13 @@ button {
     overflow: hidden; }
     .view-body_journal {
       height: 700px; }
-    .view-body_idleEnter {
-      height: 780px; }
 
 .idle-form {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 15px;
+  height: 965px;
   background-color: #fff; }
 
 .form-control_idle {
