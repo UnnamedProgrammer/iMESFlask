@@ -259,19 +259,13 @@
                     </div>
                 </div>
                 <div class="col-6">
-                    {%if current_user.is_authenticated and current_user.device_type == 'Веб'%}
-                        <a href="/menu">
-                            <div class="card height-bottom shadow">
-                                <div class="accent left-padding">{{current_tpa[2].tpa_message}}</div>
-                            </div>
-                        </a>
-                    {%else%}
-                        <a>
-                            <div class="card height-bottom shadow">
-                                <div class="accent left-padding">{{current_tpa[2].tpa_message}}</div>
-                            </div>
-                        </a>
-                    {%endif%}
+                    <a href="/menu">
+                        <div class="card height-bottom shadow">
+                            {% for error in current_tpa[2].errors %}
+                                <div class="accent left-padding">{{ error['Date'] }} {{ error['Message'] }}</div>
+                            {% endfor %}
+                        </div>
+                    </a>
                 </div>
                 <div class="col-2">
                     <div class="card height-bottom shadow">

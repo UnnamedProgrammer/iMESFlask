@@ -589,32 +589,7 @@ def UpTubsStatus(data):
     current_machine = current_tpa[ip_addr][0]
     tub_dict = {"Active":active_tpa,"CurrentTpa":current_machine}
     for tpa in TpaList[ip_addr]:
-        tpa['WorkStatus'] = Get_Tpa_Status(tpa['Oid'])
+        tpa['WorkStatus'] = tpa['Controller'].Check_Downtime(tpa['Oid'])
         if tpa['WorkStatus'] == True:
             active_tpa.append(tpa['Oid'])
     socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
-
-def Get_Tpa_Status(tpaoid):
-    if tpaoid == None or tpaoid == '':
-        return False
-    sql = f"""
-        SELECT TOP(1) [Date],Controller,[RFIDEquipmentBinding].RFIDEquipment
-        FROM [MES_Iplast].[dbo].[RFIDClosureData], Equipment, [RFIDEquipmentBinding]
-        WHERE 
-            Equipment.Oid = '{tpaoid}' AND
-            [RFIDEquipmentBinding].Equipment = Equipment.Oid AND
-            [RFIDClosureData].Controller = [RFIDEquipmentBinding].RFIDEquipment
-        ORDER BY Date DESC
-    """
-    last_closure_date = SQLManipulator.SQLExecute(sql)
-    if len(last_closure_date) > 0:
-        last_closure_date = last_closure_date[0][0]
-        current_date = datetime.now()
-        last_closure_date = last_closure_date
-        seconds = (current_date - last_closure_date).total_seconds()
-        if seconds >= 400:
-            return False
-        else:
-            return True
-    else:
-        return False

@@ -125,7 +125,7 @@ def handle_waste_note_change(data):
 @app.route('/adjuster/shiftTask')
 @login_required
 def adjusterShiftTask():
-    return CheckRolesForInterface('Наладчик', 'adjuster/shiftTask.html')
+    return CheckRolesForInterface('Наладчик', 'adjuster/ShiftTask.html')
 
 # Фиксация изменений в тех. системе
 

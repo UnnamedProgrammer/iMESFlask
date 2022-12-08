@@ -8,5 +8,6 @@ class TpaController(TpaErrorsChecker,ShiftTaskDataGrubber):
     """
     def __init__(self,_app,_TpaOid) -> None:
         ShiftTaskDataGrubber.__init__(self,_app)
+        TpaErrorsChecker.__init__(self,_app,_TpaOid)
         self.Controller = self
         self.tpa = _TpaOid

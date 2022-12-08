@@ -1,3 +1,4 @@
+cd /home/imes/inet_pub/imes_pythonflask
 if ! command -v pip
 then
     echo "pip not installing"
@@ -37,6 +38,5 @@ then
         source mesenv/bin/activate
         pip install -r requirements.txt 
         gunicorn -c gunicorn.py --worker-class eventlet -w 1 run:app
-        exit
     fi
 fi
