@@ -30,7 +30,7 @@
                             <td> {{ wastes[6] }} </td>
                             {% if wastes[7] == '' %}
                                 <td class="nopadding table__button col-2">
-                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}" data-target="wasteDefectCause" onclick="commentModalController(event)">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
+                                    <button type="button" class="btn__table" data-wasteoid="{{ wastes[8] }}" data-target="modalComment" onclick="commentModalController(event)">Указать  причину</button> <!-- В data-wasteoid должен находится Oid введенного отхода из таблицы ProductWaste -->
                                 </td>
                             {% else %}
                                 <td> {{ wastes[7] }} </td>
@@ -82,17 +82,27 @@
     
     document.addEventListener("click", function(e) {
         if (e.target.classList.contains('keyboard__key--done')) {
-            document.getElementById('modalComment').classList.toggle('hidden')
             commentInput = document.getElementById('commentInput')
             
-            let socket = io();
-            socket.emit('waste_note_change', [commentInput.dataset.data, commentInput.value]);
+            if(commentInput.dataset.data && commentInput.value != '') {
+                let socket = io();
+                socket.emit('waste_note_change', [commentInput.dataset.data, commentInput.value]);
+    
+                dataCell = document.querySelector('[data-wasteoid = "'+ commentInput.dataset.data +'"]')
+                dataCell.parentNode.innerHTML = commentInput.value
+                dataCell.remove()
 
+                commentInput.dataset.data = ''  
 
-            commentInput.dataset.data = ''
+                document.getElementById('modalComment').classList.toggle('hidden')
+            } else {
+                alert('Введите причину!')
+                commentInput.classList.add('outline-red')
+                Keyboard.open()
+                commentInput.focus()
+            }
         }
     })
-
 </script>
 {% endblock %}
 {% block navbar_footer %}

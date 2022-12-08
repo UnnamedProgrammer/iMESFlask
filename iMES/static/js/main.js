@@ -1,11 +1,9 @@
 let tpaOid = document.getElementById('ttpa').dataset.oid // Oid текущего ТПА 
 let pressForm = document.getElementById('tpf') // Текущая пресс-форма
 let current_user = document.getElementById('current_user').value.replace(/[^a-zа-яё\s]/gi, '').replace('User', ''); // Текущий пользователь
+let tempData = null
 
 let ttpa = document.getElementById('ttpa').innerHTML,
-    tprod = document.getElementById('tprod').innerHTML,
-    smena = document.getElementById('smena').innerHTML,
-    nvplan = document.getElementById('nvplan').innerHTML,
     operator = document.getElementById('operator').innerHTML,
     clock = document.getElementById('clock').innerHTML
 
@@ -14,9 +12,6 @@ let showMoreButton = document.querySelectorAll('.show-more')
 
 setTimeout(function(){
     ttpa = document.getElementById('ttpa').innerHTML,
-    tprod = document.getElementById('tprod').innerHTML,
-    smena = document.getElementById('smena').innerHTML,
-    nvplan = document.getElementById('nvplan').innerHTML,
     operator = document.getElementById('operator').innerHTML,
     clock = document.getElementById('clock').innerHTML;
 },500);
@@ -66,45 +61,79 @@ function commentModalController(event) {
     commentInput = document.getElementById('commentInput')
     commentInput.focus()
     commentInput.dataset.data = event.target.dataset.wasteoid
+    tempData = event
 }
 
 // Печать этикетки
 function stickerPrint() {
 
     mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+    
+    socket.emit('GetStickerInfo', { data: '' })
 
-    let clock = document.getElementById('clock').innerHTML,
-        html ="";
+    socket.on('SendStickerInfo',function(data)
+    {
+        arr = JSON.parse(data)
+        if (address == Object.keys(arr))
+        {
+            let smena = document.querySelector('#smena').innerHTML,
+                clock = document.querySelector('#clock').innerHTML,
+                html = ''
 
-    html += '<div>----------------------------------</div>'
-    +'<b>Артикул</b> '+tprod+'<br>'
-    +'<b>Дата</b> '+ clock +' <br>'
-    +'<b>Смена</b> '+ smena +'<br>'
-    +'<b>Количество</b> '+ nvplan +'<br>'
-    +'<b>Упаковщик</b> '+ operator +'<br>';
-    var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-
-    printStickerWindow(div, mywindow);
+            html += '<div>----------------------------------</div>'
+            +'<b>Артикул</b> '+ arr[address]['Product'] +'<br>'
+            +'<b>Дата</b> '+ clock +' <br>'
+            +'<b>Смена</b> '+ smena +'<br>'
+            +'<b>Количество</b> '+ arr[address]['Count'] +'<br>'
+            +'<b>Упаковщик</b> '+ operator +'<br>';
+            let div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+        
+            printStickerWindow(div, mywindow);
+        }
+    })
 }
+
 
 // Печать итогов за смену
 function stickerPrintTotal() {
 
     mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
 
-    let clock = document.getElementById('clock').innerHTML,
-        html ="";
+    let all_products = document.querySelectorAll('.swiper-slide#tprod'),
+        all_prodPlan = document.querySelectorAll('.swiper-slide#nplan'),
+        all_prodFact = document.querySelectorAll('.swiper-slide#nvplan'),
+        all_weightPlan = document.querySelectorAll('.swiper-slide#planweight'),
+        all_weightFact = document.querySelectorAll('.swiper-slide#average_weigth'),
+        cyclePlan = document.querySelector('#pointTC').innerHTML,
+        cycleFact = document.querySelector('#pointVCS').innerHTML,
+        smena = document.querySelector('#smena').innerHTML,
+        operator = document.querySelector('#operator').innerHTML,
+        adjuster = document.querySelector('#adjuster').innerHTML
+
+    let html = ''
+    let resultData = ''
+
+    for ( let i = 0; i < all_products.length; i++) {
+         resultData += i+1+'.'+ all_products[i].innerHTML + ' :<br>'
+        + '- план по прод.: ' + all_prodPlan[i].innerHTML + ' шт.<br>'
+        + '- кол. прод.: ' + all_prodFact[i].innerHTML + ' шт.<br>'
+        + '- план. цикл: ' + cyclePlan + ' сек.<br>'
+        + '- ср. время цикла: ' + cycleFact + ' сек.<br>'
+        + '- план. вес: ' + all_weightPlan[i].innerHTML + ' кг.<br>'
+        + '- ср. вес: ' + all_weightFact[i].innerHTML + ' кг.<br>'; 
+    }
     
     html += '<div>----------------------------------</div>'
-    +smena+'<br>'
-    +ttpa+ '<br>'
+    + smena +'<br>'
+    + ttpa + '<br>'
     +'План на смену: <br>'
-    +'Оператор: '+'<br>'
-    +'Наладчик: '+'<br>'
+    + resultData
+    +'Оператор: '+ operator +'<br>'
+    +'Наладчик: '+ adjuster +'<br>'
     +'Простои: '+'<br>'
     let div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>'; 
 
-    printStickerWindow(div, mywindow);
+    printStickerWindow(div, mywindow); 
 }
 
 // Окно печати

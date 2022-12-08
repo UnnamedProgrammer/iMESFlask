@@ -232,6 +232,7 @@ def Authorization(passnumber):
         ,USR.[CardNumber]
         ,RL.Name
         ,ITF.Name
+        ,USR.[Oid]
     FROM [MES_Iplast].[dbo].[User] as USR,
         [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
         [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
@@ -311,6 +312,7 @@ def Authorization(passnumber):
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
+        user.oid = userdata[8]
         packet = {terminal: ''}
         # Отправляем в сокет сообщение о успешной авторизации
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
@@ -332,6 +334,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         ,USR.[CardNumber]
         ,RL.Name
         ,ITF.Name
+        ,USR.Oid
     FROM [MES_Iplast].[dbo].[User] as USR,
         [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
         [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
@@ -405,6 +408,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
+        user.oid = userdata[8]
         packet = {terminal: ''}
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
@@ -592,4 +596,48 @@ def UpTubsStatus(data):
         tpa['WorkStatus'] = tpa['Controller'].Check_Downtime(tpa['Oid'])
         if tpa['WorkStatus'] == True:
             active_tpa.append(tpa['Oid'])
+<<<<<<< HEAD
     socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
+=======
+    socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
+
+def Get_Tpa_Status(tpaoid):
+    if tpaoid == None or tpaoid == '':
+        return False
+    sql = f"""
+        SELECT TOP(1) [Date],Controller,[RFIDEquipmentBinding].RFIDEquipment
+        FROM [MES_Iplast].[dbo].[RFIDClosureData], Equipment, [RFIDEquipmentBinding]
+        WHERE 
+            Equipment.Oid = '{tpaoid}' AND
+            [RFIDEquipmentBinding].Equipment = Equipment.Oid AND
+            [RFIDClosureData].Controller = [RFIDEquipmentBinding].RFIDEquipment
+        ORDER BY Date DESC
+    """
+    last_closure_date = SQLManipulator.SQLExecute(sql)
+    if len(last_closure_date) > 0:
+        last_closure_date = last_closure_date[0][0]
+        current_date = datetime.now()
+        last_closure_date = last_closure_date
+        seconds = (current_date - last_closure_date).total_seconds()
+        if seconds >= 400:
+            return False
+        else:
+            return True
+    else:
+        return False
+    
+@socketio.on(message='GetStickerInfo')
+def GetStickerInfo(data):
+    ip_addr = request.remote_addr
+
+    sql_GetStickerInfo = f""" SELECT [Prod].[Name], [SInfo].[StickerCount]
+                                FROM [MES_Iplast].[dbo].[StickerInfo] AS [SInfo]
+                                LEFT JOIN [MES_Iplast].[dbo].[Product] AS [Prod] ON [Prod].[Oid] = [SInfo].[Product]
+                                WHERE [Equipment] = '{current_tpa[ip_addr][0]}' """
+                                
+    stickerData = SQLManipulator.SQLExecute(sql_GetStickerInfo)
+    
+    data = {'Product': stickerData[0][0], 'Count': stickerData[0][1]}
+    socketio.emit("SendStickerInfo", json.dumps(
+        {ip_addr: data}, ensure_ascii=False, indent=4))
+>>>>>>> 2455ad0e21eebb640010511bd80c318b307f46ea

@@ -5,6 +5,7 @@ class UserModel(UserMixin):
     """
         Класс модель для взаимодействия с авторизованным пользователем в системе
     """
+    oid = None
     id = None
     name = None
     username = None

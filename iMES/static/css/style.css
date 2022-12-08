@@ -237,7 +237,7 @@ button {
   position: absolute;
   z-index: 2000;
   padding: 20px;
-  top: 600px;
+  top: 650px;
   left: 125px;
   width: 1085px;
   height: 270px;
@@ -355,7 +355,7 @@ button {
     position: absolute;
     width: 1085px;
     z-index: 5;
-    top: 510px;
+    top: 565px;
     left: 125px; }
   .modal_header {
     height: 52px;
@@ -488,14 +488,13 @@ button {
     overflow: hidden; }
     .view-body_journal {
       height: 700px; }
-    .view-body_idleEnter {
-      height: 780px; }
 
 .idle-form {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 15px;
+  height: 965px;
   background-color: #fff; }
 
 .form-control_idle {
