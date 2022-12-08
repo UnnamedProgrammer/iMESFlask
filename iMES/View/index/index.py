@@ -622,3 +622,18 @@ def Get_Tpa_Status(tpaoid):
             return True
     else:
         return False
+    
+@socketio.on(message='GetStickerInfo')
+def GetStickerInfo(data):
+    ip_addr = request.remote_addr
+
+    sql_GetStickerInfo = f""" SELECT [Prod].[Name], [SInfo].[StickerCount]
+                                FROM [MES_Iplast].[dbo].[StickerInfo] AS [SInfo]
+                                LEFT JOIN [MES_Iplast].[dbo].[Product] AS [Prod] ON [Prod].[Oid] = [SInfo].[Product]
+                                WHERE [Equipment] = '{current_tpa[ip_addr][0]}' """
+                                
+    stickerData = SQLManipulator.SQLExecute(sql_GetStickerInfo)
+    
+    data = {'Product': stickerData[0][0], 'Count': stickerData[0][1]}
+    socketio.emit("SendStickerInfo", json.dumps(
+        {ip_addr: data}, ensure_ascii=False, indent=4))
