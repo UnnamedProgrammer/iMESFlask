@@ -28,7 +28,6 @@ function numberModalControl(event){
     // Строка в которую будут вносится введенные данные должна иметь ID кнопки отрытия окна +Data, вида: exmapleData (например, wasteData)
     enter.onclick = function(){
         data = document.getElementById(buttonID+'Data');
-        // clock = document.getElementById('clock').innerHTML
 
         if(display.textContent != "")
         {
@@ -51,7 +50,7 @@ function numberModalControl(event){
             {
                 defectWeight = display.textContent;
                 enter.id = 'defectEnterCount';
-                var socket = io();
+                let socket = io();
                 socket.emit('product_defect', [productData[0], defectWeight, defectCount]);
                 $(table).find('tbody').append('<tr> <td id="defectProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="red"> Брак </td> <td id="defectCount">'+ defectCount +'</td> <td id="defectWeight">'+ defectWeight +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
@@ -59,7 +58,8 @@ function numberModalControl(event){
             else if (enter.id == 'productWeight') {
                 productWeight = display.textContent;
                 let entered_weight = document.getElementById('inputWeight').textContent;
-                var socket = io();
+                let socket = io();
+                clock = document.getElementById('clock').innerHTML
                 socket.emit('product_weight_entering', [entered_weight, productData[0]]);
                 $(table).find('tbody').append('<tr> <td id="weightProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
             }

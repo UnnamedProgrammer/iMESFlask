@@ -6,6 +6,7 @@ from iMES.Model.SQLManipulator import SQLManipulator
 from iMES import current_tpa
 from flask_login import current_user
 from flask import request
+import json
 
 
 # Отображение окна оператора
@@ -20,18 +21,26 @@ def operator():
 @login_required
 def tableWeight():
     ip_addr = request.remote_addr
-
     # Получаем данные о введенных за смену весов изделия
-    sql_GetProductWeight = f"""SELECT Product.Name, ProductWeight.Weight, ProductWeight.CreateDate, Employee.LastName, Employee.FirstName, Employee.MiddleName
-                                FROM ShiftTask INNER JOIN 
-                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN 
-                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask INNER JOIN
-                                ProductWeight ON ProductWeight.ProductionData = ProductionData.Oid INNER JOIN
-								[User] ON ProductWeight.Creator = [User].Oid INNER JOIN
-								Employee ON [User].Employee = Employee.Oid
-                                ORDER BY CreateDate"""
+    sql_GetProductWeight = f""" SELECT	[Product].[Oid],
+                                		[Product].[Name],
+                                		[ProductWeight].[Weight],
+                                		[ProductWeight].[CreateDate],
+                                		[Employee].[LastName],
+                                		[Employee].[FirstName],
+                                		[Employee].[MiddleName]
+                                FROM [ShiftTask]
+                                INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
+                                	AND [Shift].[StartDate] <= GETDATE()
+                                	AND [Shift].[EndDate] >= GETDATE()
+                                INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
+                                	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
+                                INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
+                                INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
+                                INNER JOIN [ProductWeight] ON [ProductWeight].[ProductionData] = [ProductionData].[Oid]
+                                INNER JOIN [User] ON [ProductWeight].[Creator] = [User].[Oid]
+                                INNER JOIN [Employee] ON [User].[Employee] = [Employee].[Oid]
+                                ORDER BY [CreateDate] """
     product_weight = SQLManipulator.SQLExecute(sql_GetProductWeight)
 
     # Проверяем был ли введен вес изделий в текущую смену
@@ -39,9 +48,9 @@ def tableWeight():
     if product_weight:
         table_info = list()
         for product_weight_quantity in range(len(product_weight)):
-            table_info.append([product_weight[product_weight_quantity][0], f'{product_weight[product_weight_quantity][1]:.3f}', str(
-                                product_weight[product_weight_quantity][2].strftime('%d.%m.%Y %H:%M:%S')), 
-                                f'{product_weight[product_weight_quantity][3]} {product_weight[product_weight_quantity][4]} {product_weight[product_weight_quantity][5]}'])
+            table_info.append([product_weight[product_weight_quantity][0],product_weight[product_weight_quantity][1], f'{product_weight[product_weight_quantity][2]:.3f}', str(
+                                product_weight[product_weight_quantity][3].strftime('%d.%m.%Y %H:%M:%S')), 
+                                f'{product_weight[product_weight_quantity][4]} {product_weight[product_weight_quantity][5]} {product_weight[product_weight_quantity][6]}'])
     # Если за смену вес никто не вводил, то формируем пустой массив
     else:
         table_info = list()
@@ -57,7 +66,6 @@ def tableWeight():
 
     return CheckRolesForInterface('Оператор', 'operator/tableWeight.html', [table_info, current_tpa[ip_addr], current_product])
 
-
 # Кнопка ввода веса изделия во всплывающей клавиатуре была нажата
 @socketio.on('product_weight_entering')
 def handle_entered_product_weight(data):
@@ -72,6 +80,43 @@ def handle_entered_product_weight(data):
                                 VALUES (NEWID(), '{production_data}', {entered_weight}, GETDATE(), '{current_User[0][0]}');"""
     SQLManipulator.SQLExecute(sql_PostProductWeight)
 
+@socketio.on(message='GetWeightSticker')
+def GetWeightSticker(data):
+    ip_addr = request.remote_addr
+
+    sql_GetGetWeightSticker = f""" SELECT	[Product].[Oid],
+                                    		[Product].[Name],
+                                    		[ProductWeight].[Weight],
+                                    		[ProductWeight].[CreateDate]
+                                    FROM [ShiftTask]
+                                    INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
+                                    	AND [Shift].[StartDate] <= GETDATE()
+                                    	AND [Shift].[EndDate] >= GETDATE()
+                                    INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
+                                    	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
+                                    INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
+                                    INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
+                                    INNER JOIN [ProductWeight] ON [ProductWeight].[ProductionData] = [ProductionData].[Oid]
+                                    ORDER BY [CreateDate] """
+                                
+    weightStickerData = SQLManipulator.SQLExecute(sql_GetGetWeightSticker)
+
+    data = {}
+    keys = []
+    for weight in weightStickerData:
+        if not weight[1] in keys:
+            keys.append(weight[1])
+            data[weight[1]] = []
+               
+    for key in keys:
+        for weight in weightStickerData:
+            if weight[1] == key:
+                data[key].append([float(weight[2]),weight[3].strftime('%H:%M:%S')])
+
+    print(data)
+    
+    socketio.emit("SendWeightSticker", json.dumps(
+        {ip_addr: data}, ensure_ascii=False, indent=4))
 
 # Окно отходов и брака
 @login_required
