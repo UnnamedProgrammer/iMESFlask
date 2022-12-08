@@ -596,9 +596,6 @@ def UpTubsStatus(data):
         tpa['WorkStatus'] = tpa['Controller'].Check_Downtime(tpa['Oid'])
         if tpa['WorkStatus'] == True:
             active_tpa.append(tpa['Oid'])
-<<<<<<< HEAD
-    socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
-=======
     socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
 
 def Get_Tpa_Status(tpaoid):
@@ -640,4 +637,3 @@ def GetStickerInfo(data):
     data = {'Product': stickerData[0][0], 'Count': stickerData[0][1]}
     socketio.emit("SendStickerInfo", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
->>>>>>> 2455ad0e21eebb640010511bd80c318b307f46ea
