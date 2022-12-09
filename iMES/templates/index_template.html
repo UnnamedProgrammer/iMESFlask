@@ -262,7 +262,7 @@
                     <a href="/menu">
                         <div class="card height-bottom shadow">
                             {% for error in current_tpa[2].errors %}
-                                <div class="accent left-padding">{{ error['Date'] }} {{ error['Message'] }}</div>
+                                <div class="accent left-padding">[{{ error['Date'] }}] {{ error['Message'] }}</div>
                             {% endfor %}
                         </div>
                     </a>
