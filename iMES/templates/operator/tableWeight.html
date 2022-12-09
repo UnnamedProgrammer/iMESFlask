@@ -164,62 +164,32 @@
             arr = JSON.parse(data)
             if (address == Object.keys(arr))
             {
-                console.log(arr[address])
+                if (Object.keys(arr[address]).length != 0) {
+                    for (let key of Object.keys(arr[address])) {
+                        weightHTML += '<br>' + key
+                        for ( let i = 0; i < arr[address][key].length; i++) {
+                            weightHTML += '<br>' + arr[address][key][i][0] + ' кг. ' + arr[address][key][i][1];
+                        }
+                    }
+                    
+                    let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+
+                    let html ="";
+
+                    html += '<div>----------------------------------</div>'
+                    +clock+'<br>'
+                    +ttpa
+                    +weightHTML
+                    var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+
+                    printStickerWindow(div, mywindow);
+
+                    weightHTML = ''
+                } else {
+                    alert('Введите вес изделия!')
+                }
             }
         })
-
-        /*
-        socket.on('SendStickerInfo',function(data)
-        {
-            arr = JSON.parse(data)
-            if (address == Object.keys(arr))
-            {
-                let smena = document.querySelector('#smena').innerHTML,
-                    clock = document.querySelector('#clock').innerHTML,
-                    html = ''
-    
-                html += '<div>----------------------------------</div>'
-                +'<b>Артикул</b> '+ arr[address]['Product'] +'<br>'
-                +'<b>Дата</b> '+ clock +' <br>'
-                +'<b>Смена</b> '+ smena +'<br>'
-                +'<b>Количество</b> '+ arr[address]['Count'] +'<br>'
-                +'<b>Упаковщик</b> '+ operator +'<br>';
-                let div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-            
-                printStickerWindow(div, mywindow);
-            }
-        }) */
-
-        /*
-        for ( let i = 0; i < productWeightRows.length; i++) {
-            if( weightArr[productWeightRows[i].cells[0].innerHTML.trim()] === undefined){
-                weightArr[productWeightRows[i].cells[0].innerHTML.trim()] = [productWeightRows[i].cells[1].innerHTML.trim(), productWeightRows[i].cells[2].innerHTML.trim().substr(11, 8)] 
-            } else {
-                weightArr[productWeightRows[i].cells[0].innerHTML.trim()].push(productWeightRows[i].cells[1].innerHTML.trim(), productWeightRows[i].cells[2].innerHTML.trim().substr(11, 8))
-            }
-            
-        }
-
-        for ( let key of Object.keys(weightArr) ){
-            weightHTML += key + ': <br>'
-            console.log(weightArr[key].length)
-            
-            for ( let i = 0; i < weightArr[key].length; i++) {
-                weightArr += weightArr[key][i]+'кг. '+weightArr[key][i]
-            }
-        } */
-
-        let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
-
-        let html ="";
-
-        html += '<div>----------------------------------</div>'
-        +clock+'<br>'
-        +ttpa+'<br>'
-        +weightHTML
-        var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-
-        printStickerWindow(div, mywindow);
     }
 </script>
 {% endblock %}
