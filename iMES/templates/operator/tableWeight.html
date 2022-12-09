@@ -19,18 +19,18 @@
             </thead>
             <tbody>
                 {% for tableWeight_row in table_weight %}
-                    <tr>
+                    <tr id="{{ tableWeight_row[0] }}">
                         <td>
-                            {{ tableWeight_row[0] }}
-                        </td>
-                        <td class="green">
                             {{ tableWeight_row[1] }}
                         </td>
-                        <td>
+                        <td class="green">
                             {{ tableWeight_row[2] }}
                         </td>
                         <td>
                             {{ tableWeight_row[3] }}
+                        </td>
+                        <td>
+                            {{ tableWeight_row[4] }}
                         </td>
                     </tr>
                 {% endfor %}
@@ -40,7 +40,7 @@
     <div class="d-flex justify-content-between px-3">
         <div class="col-6 row">
             <div class="col nopadding me-1">
-                <button type="button" class="btn btn__view primary fs-4" onClick="productList.classList.toggle('hidden')">
+                <button type="button" class="btn btn__view primary fs-4" onClick="addWeight()">
                     Ввод веса<br>изделия
                 </button>
             </div>
@@ -96,7 +96,10 @@
     </div>
     
     <!-- Модальное (всплывающее) окно выбора продукта(артикула) -->
-    <div class="modal hidden" id="currentProductList">
+    <div class="modal hidden" id="currentProductList" data-productcount="{{product_data|length}}">
+        {% if product_data|length == 1%}
+            <input type="hidden" id="oneProductData" data-proddataoid="{{ product_data[0][1] }}" data-prodname="{{ product_data[0][0] }}">
+        {% endif %}
         <div class="modal__list">
             <div class="modal_header">
                 <h5 class="modal_title">Список продуктов</h5>
@@ -139,15 +142,72 @@
     let productWeightRows = document.querySelector('#table tbody').rows; // Получение тела таблицы с весом продукта
     let enteredWeight = document.querySelectorAll('#table'); // Получение значений введного веса
 
+    function addWeight() {
+        productList = document.querySelector('#currentProductList')
+        if (productList.dataset.productcount > 1) {
+            productList.classList.toggle('hidden')
+        } else {
+            productData = [document.querySelector('#oneProductData').dataset.proddataoid, document.querySelector('#oneProductData').dataset.prodname]
+            numberModalControl(event)
+        }
+    }
+
     // Печать веса продукта
     function weightPrint() {
         
         let weightHTML = ''
         let clock = document.getElementById('clock').innerHTML
 
+        socket.emit('GetWeightSticker', { data: '' })
+
+        socket.on('SendWeightSticker',function(data) {
+            arr = JSON.parse(data)
+            if (address == Object.keys(arr))
+            {
+                console.log(arr[address])
+            }
+        })
+
+        /*
+        socket.on('SendStickerInfo',function(data)
+        {
+            arr = JSON.parse(data)
+            if (address == Object.keys(arr))
+            {
+                let smena = document.querySelector('#smena').innerHTML,
+                    clock = document.querySelector('#clock').innerHTML,
+                    html = ''
+    
+                html += '<div>----------------------------------</div>'
+                +'<b>Артикул</b> '+ arr[address]['Product'] +'<br>'
+                +'<b>Дата</b> '+ clock +' <br>'
+                +'<b>Смена</b> '+ smena +'<br>'
+                +'<b>Количество</b> '+ arr[address]['Count'] +'<br>'
+                +'<b>Упаковщик</b> '+ operator +'<br>';
+                let div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+            
+                printStickerWindow(div, mywindow);
+            }
+        }) */
+
+        /*
         for ( let i = 0; i < productWeightRows.length; i++) {
-            weightHTML += productWeightRows[i].cells[1].innerHTML+' кг. '+ productWeightRows[i].cells[2].innerHTML.trim().substr(11, 8) +'<br>';
+            if( weightArr[productWeightRows[i].cells[0].innerHTML.trim()] === undefined){
+                weightArr[productWeightRows[i].cells[0].innerHTML.trim()] = [productWeightRows[i].cells[1].innerHTML.trim(), productWeightRows[i].cells[2].innerHTML.trim().substr(11, 8)] 
+            } else {
+                weightArr[productWeightRows[i].cells[0].innerHTML.trim()].push(productWeightRows[i].cells[1].innerHTML.trim(), productWeightRows[i].cells[2].innerHTML.trim().substr(11, 8))
+            }
+            
         }
+
+        for ( let key of Object.keys(weightArr) ){
+            weightHTML += key + ': <br>'
+            console.log(weightArr[key].length)
+            
+            for ( let i = 0; i < weightArr[key].length; i++) {
+                weightArr += weightArr[key][i]+'кг. '+weightArr[key][i]
+            }
+        } */
 
         let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
 
