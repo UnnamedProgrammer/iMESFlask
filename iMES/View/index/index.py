@@ -8,11 +8,13 @@ from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES.Controller.TpaController import TpaController
 import json
-from iMES import TpaList, current_tpa, user
+from iMES import TpaList, current_tpa, user, user_dict
 import requests
 from datetime import datetime, timedelta
 from requests.adapters import HTTPAdapter,Retry
 import requests, urllib3
+
+from iMES.Model.UserModel import UserModel
 # Метод возвращающий главную страницу
 
 urllib3.disable_warnings()
@@ -21,6 +23,7 @@ urllib3.disable_warnings()
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     current_tpa[ip_addr][2].data_from_shifttask()
+    print(user_dict)
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
@@ -31,10 +34,10 @@ def index():
                             WHERE Device.DeviceId = '{ip_addr}' AND
                                     Device.DeviceType = DeviceType.Oid
                             """
-        user.device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
+        device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
         # Если устройство является веб то находим пользователя привязаннаго за устройством
         # И автоматически авторизуем его по его номеру карты
-        if(user.device_type == 'Веб' and current_user.is_authenticated == False):
+        if device_type == "Веб":
             sql_GetCardNumber = f"""
                                     SELECT [User].CardNumber
                                     FROM [User],Device WHERE 
@@ -54,11 +57,9 @@ def index():
             }
             r = session.get(
                 f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
-            if(r.status_code == 200):
-                login_user(user)
-    # В противном случае уведомляем клиента о том что его нет в списках устройств
-    else:
-        return "Ваше устройство не находиться в списке допущенных, нет доступа."
+            if r.status_code == 200:
+                print(user_dict)
+                login_user(user_dict[str(user.id)])
     # Рендерим страницу
     return render_template("index.html",
                            device_tpa=device_tpa,
@@ -314,6 +315,7 @@ def Authorization(passnumber):
         user.interfaces = userdata[7]
         user.oid = userdata[8]
         packet = {terminal: ''}
+        user_dict[str(user.id)] = user
         # Отправляем в сокет сообщение о успешной авторизации
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
@@ -410,6 +412,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         user.interfaces = userdata[7]
         user.oid = userdata[8]
         packet = {terminal: ''}
+        user_dict[str(user.id)] = user
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
 
@@ -417,8 +420,21 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
 
 
 @login_manager.user_loader
-def load_user(id):
-    return user
+def load_user(_id):
+    print(_id)
+    if str(_id) in user_dict:
+        ret_user = UserModel()
+        ret_user.id = user_dict[str(_id)].id
+        ret_user.oid = user_dict[str(_id)].oid
+        ret_user.name = user_dict[str(_id)].name
+        ret_user.username = user_dict[str(_id)].username
+        ret_user.CardNumber = user_dict[str(_id)].CardNumber
+        ret_user.savedrole = user_dict[str(_id)].savedrole
+        ret_user.device_type = user_dict[str(_id)].device_type
+        ret_user.role = user_dict[str(_id)].role
+        ret_user.interface = user_dict[str(_id)].interface
+        return ret_user
+    return UserModel() 
 
 # Метод аутентификации пользователя и редирект на страницы в зависимости от роли
 
@@ -428,8 +444,6 @@ def Auth():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     device_tpa = TpaList[ip_addr]
     terminal = request.remote_addr
-    login_user(user)
-    packet = {terminal: current_user.role}
 
     if (current_user.role == 'Оператор'):
         return redirect('/operator')
@@ -471,6 +485,7 @@ def logout():
             DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
     """
     SQLManipulator.SQLExecute(sqlRemoveSaveUser)
+    user_dict.pop(str(current_user.id))
     logout_user()
     return redirect('/')
 

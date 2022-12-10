@@ -3,6 +3,7 @@ from iMES import socketio
 from flask_login import login_required
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 from iMES.Model.SQLManipulator import SQLManipulator
+from iMES import user_dict
 from iMES import current_tpa
 from flask_login import current_user
 from flask import request
@@ -13,6 +14,7 @@ import json
 @app.route('/operator')
 @login_required
 def operator():
+    user_dict[str(current_user.id)].interface = "Оператор"
     return CheckRolesForInterface('Оператор', 'operator/operator.html')
 
 
