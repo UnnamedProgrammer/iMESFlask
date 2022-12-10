@@ -111,7 +111,21 @@ def adjusterIdleEnter():
                                         WHERE [ProductWaste].[Type] = 0 """
     existing_wastes = SQLManipulator.SQLExecute(sql_GetExistingWastes)
     
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes, existing_wastes, current_product])
+    # Получаем уже введенный брак
+    sql_GetExistingDefect = f""" SELECT [ProductWaste].[Oid], [ProductWaste].[Weight], [ProductWaste].[Count], [ProductWaste].[CreateDate]
+                                        FROM [ShiftTask]
+                                        INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
+                                            AND [Shift].[StartDate] <= GETDATE()
+                                            AND [Shift].[EndDate] >= GETDATE()
+                                        INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
+                                            AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
+                                        INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
+                                        INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
+                                        INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
+                                        WHERE [ProductWaste].[Type] = 1 """
+    existing_defect = SQLManipulator.SQLExecute(sql_GetExistingDefect)
+    
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes, existing_wastes, current_product, existing_defect])
 
 
 # Сырье до конца выпуска

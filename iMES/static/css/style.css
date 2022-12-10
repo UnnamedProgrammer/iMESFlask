@@ -225,9 +225,6 @@ button {
   border-radius: 4px; }
   .btn_waste:hover {
     background-color: #192b44; }
-  .btn_waste-create {
-    margin-right: 16px;
-    width: 49%; }
   .btn_waste-add {
     margin-right: 5px;
     width: 110px; }
@@ -241,8 +238,6 @@ button {
   border-radius: 4px; }
   .btn_defect:hover {
     background-color: #c0313f; }
-  .btn_defect-create {
-    width: 49%; }
   .btn_defect-add {
     width: 110px; }
 
