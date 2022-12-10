@@ -213,3 +213,12 @@ function closeMore(event) {
         }
     }
 }
+
+function showError(text) {
+    let errorObject = document.querySelector('.notice-error')
+    errorObject.innerHTML = text
+    errorObject.style.display = 'block'
+    setTimeout(function(){
+        errorObject.style.display = 'none'
+    },3000);
+}

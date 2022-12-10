@@ -96,7 +96,7 @@
 
                 document.getElementById('modalComment').classList.toggle('hidden')
             } else {
-                alert('Введите причину!')
+                showError('Введите причину!')
                 commentInput.classList.add('outline-red')
                 Keyboard.open()
                 commentInput.focus()

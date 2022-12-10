@@ -77,7 +77,7 @@ function numberModalControl(event){
             numberModal.classList.toggle('hidden');
             display.textContent = '';
         } else {
-            alert('Введите значение!')
+            showError('Введите значение!')
             display.classList.add('outline-red')
         }
     }
@@ -98,6 +98,10 @@ function selectProduct(event) {
     else if (event.target.dataset.target == 'addProductWeight') {
         numberModalControl(event)
         event.target.dataset.target = ''
+    }
+
+    else if (event.target.dataset.target == 'addIdleWaste'){
+        wasteDefectController(event)
     }
 
     else {

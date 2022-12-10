@@ -289,9 +289,7 @@ def GetDefectSticker(data):
                 data[key] = [totalWeight, totalCount]
         totalWeight = 0
         totalCount = 0
-    
-    print(data)
-    
+
     socketio.emit("SendDefectSticker", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
 
