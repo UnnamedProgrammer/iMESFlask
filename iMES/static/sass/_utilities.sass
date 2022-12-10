@@ -7,9 +7,27 @@
     background: rgba(0,0,0,.5)
     z-index: 3
 
+.notice
+    position: absolute
+    align-self: center
+    top: 70px
+    left: 265px
+    width: 750px
+    height: 60px
+    font-size: 16pt
+    text-align: center
+    line-height: 55px
+    border-radius: 5px
+    opacity: 0.9
+    z-index: 1500
+    &-error
+        color: #842029
+        background-color: #f8d7da
+        border: 1px solid #f5c2c7
+
 select.clip 
   white-space: nowrap // Запрещаем перенос строк
-  overflow: hidden // Обрезаем все, что не помещается в область 
+  overflow: hidden // Обрезаем все, что не помещается в область
 
 .custom-select
     padding: 15px

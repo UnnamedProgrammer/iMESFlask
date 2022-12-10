@@ -21,11 +21,16 @@
     {% set malfunctionDescription = somedata[3] %}
     {% set takenMeasures = somedata[4] %}
     {% set all_wastes = somedata[5] %}
+    {% set existing_wastes = somedata[6] %}
+    {% set current_product = somedata[7] %}
 
     {% if downtimeData[0][3] != None %}
         {% set idleTime = downtimeData[0][3] - downtimeData[0][2] %}
     {% endif %}
     
+    <div class="notice notice-error" style="display: none;">
+        Ошибка!
+    </div>
     <div class="view">
         <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
         <div class="view-body_idleEnter">
@@ -35,8 +40,7 @@
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Прошло времени</span>
                             <input type="hidden" id="idleTime" data-startdate="{{ downtimeData[0][2] }}" data-enddate="{{ downtimeData[0][3] }}">
-                            {% set timeStr = idleTime | string %}
-                            <input type="text" class="form-control form-control_idle" value="{{ timeStr[:-7] }}" placeholder="Время простоя" readonly>
+                            <input type="text" class="form-control form-control_idle" value="{{ idleTime }}" placeholder="Время простоя" readonly>
                         </div>
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Наладчик</span>
@@ -66,56 +70,9 @@
                     </div>
 
                     <div class="idle-form__body_waste mt-4">
-                        <span class="input-group-text input-group-text_idle input-group-text_green input-group-text_waste mb-3">Отходы</span>
-                        <div class="waste-card mb-2 row">
-                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
-                                <option>Выберите отход</option>
-                                {% for waste in all_wastes %}
-                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" value="" aria-describedby="" readonly>
-                                <span class="input-group-text">КГ</span>
-                            </div>
-                            <div class="btn_add-waste align-middle" onClick="addWaste()">Добавить</div>
-                            <div class="btn_delete-waste" onClick="deleteWaste()">Удалить</div>
-                        </div>
-                        <div class="waste-card mb-2 row hidden">
-                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
-                                <option selected>Выберите отход</option>
-                                {% for waste in all_wastes %}
-                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
-                                <span class="input-group-text">КГ</span>
-                            </div>
-                        </div>
-                        <div class="waste-card mb-2 row hidden">
-                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
-                                <option selected>Выберите отход</option>
-                                {% for waste in all_wastes %}
-                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
-                                <span class="input-group-text">КГ</span>
-                            </div>
-                        </div>
-                        <div class="waste-card mb-2 row hidden">
-                            <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
-                                <option selected>Выберите отход</option>
-                                {% for waste in all_wastes %}
-                                    <option value="{{ waste[0] }}">{{ waste[1] }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="weight-input input-group">
-                                <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
-                                <span class="input-group-text">КГ</span>
-                            </div>
+                        <div class="row px-3">
+                            <div class="btn_waste btn_waste-create shadow" id="addWaste" data-target="optionSelect" onclick="modalOption(event)">Добавить отход</div>
+                            <div class="btn_defect btn_defect-create shadow" id="addDefect" data-target="optionSelect" onclick="modalOption(event)">Добавить брак</div>
                         </div>
                     </div>
                 </div>
@@ -242,45 +199,210 @@
         </div>
         <!-- ----------------------------------------------------------- -->
 
-        <!--Всплывающее окно ввода числовых значений-->
-        <div class="modal hidden" id="numberModal">
-            <div class="modal__number">
-                <div class="modal_header">Количество</div>
-                <div class="modal-window__body">
-                    <div class="row">
-                        <div class="btn modal__input-number"></div>
-                        <button type="button" class="btn modal__enter-button secondary">ВВОД</button>
-                    </div>
-                    <div class="number-keyboard">
-                        <div class="keyboard__keys">
-                            <div class="col">
-                                <button type="button" class="keyboard__key">7</button>
-                                <button type="button" class="keyboard__key">8</button>
-                                <button type="button" class="keyboard__key">9</button>
-                            </div>
-                            <div class="col">
-                                <button type="button" class="keyboard__key">4</button>
-                                <button type="button" class="keyboard__key">5</button>
-                                <button type="button" class="keyboard__key">6</button>
-                            </div>
-                            <div class="col">
-                                <button type="button" class="keyboard__key">1</button>
-                                <button type="button" class="keyboard__key">2</button>
-                                <button type="button" class="keyboard__key">3</button>
-                            </div>
-                            <div class="col">
-                                <button type="button" class="keyboard__key">.</button>
-                                <button type="button" class="keyboard__key">0</button>
-                                <button type="button" class="keyboard__key keyboard__key_del">DEL</button>
-                            </div>
-                        </div>
-                    </div>
+         <!-- Модальное (всплывающее) окно выбора продукта -->
+        <div class="modal hidden" id="currentProductList" data-productcount="{{current_product|length}}">
+            {% if current_product|length == 1%}
+                <input type="hidden" id="oneProductData" data-proddataoid="{{ current_product[0][0] }}" data-prodname="{{ current_product[0][1] }}">
+            {% endif %}
+            <div class="modal__list">
+                <div class="modal_header">
+                    <h5 class="modal_title">Список продуктов</h5>
                 </div>
-                <div class="modal_footer">
-                    <button type="button" class="btn btn__modal btn_wide secondary" onClick="numberModalControl(event)"> Закрыть </button>
+                <div class="modal_content">
+                    <div class="modal_body jsScroll">
+                        <table class="table table-bordered text-center" border="1" bordercolor="black">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">Добавить</th>
+                                    <th scope="col">Продукт</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for products in current_product %}
+                                    <tr>
+                                        <td class="nopadding table__button col-3">
+                                            <button type="button" class="btn__table" id="selectProductButton" data-target="" data-modal="" data-proddataoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
+                                        </td>
+                                        <td> {{ products[1] }} </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal_footer">
+                        <button type="button" class="btn btn__modal btn_wide secondary" data-toggle="modalClose" data-target="currentProductList" onClick="modalController(event)"> Закрыть </button>
+                    </div>
                 </div>
             </div>
             <div class="bg-blur"></div>
+        </div>
+        <!-- ----------------------------------------------------------- -->
+
+        <!-- Модальное (всплывающее) окно выбора добавления нового или привязки существующего -->
+        <div class="modal hidden" id="optionSelect">
+            <div class="modal__option">
+                <button type="button" class="btn-close position-absolute" aria-label="Закрыть" data-toggle="modalClose" data-target="optionSelect" onClick="modalOption(event)"></button>
+                <div class="modal_content justify-content-center">
+                    <div class="d-flex flex-row justify-content-around">
+                        <div class="btn btn__option primary fs-3 me-3" data-target="" id="addNew" onClick="selectIdleProduct(event)">Добавить новый</div>
+                        <div class="btn btn__option primary fs-3" data-target="" data-modal="" id="addExisting" onClick="wasteDefectController(event)">Привязать существующий</div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+
+        <!-- Модальное (всплывающее) окно добавления отходов -->
+        <div class="modal hidden" id="addNewWaste">
+            <div class="modal__addWasteDefect">
+                <div class="modal_content justify-content-start mt-3">
+                    <div class="waste-card mb-2 row">
+                        <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                            <option>Выберите отход</option>
+                            {% for waste in all_wastes %}
+                                <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="weight-input input-group">
+                            <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" value="" aria-describedby="" readonly>
+                            <span class="input-group-text">КГ</span>
+                        </div>
+                        <div class="btn_waste btn_waste-add align-middle" onClick="addWaste()">Добавить</div>
+                        <div class="btn_defect btn_defect-add" onClick="deleteWaste()">Удалить</div>
+                    </div>
+                    <div class="waste-card mb-2 row hidden">
+                        <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                            <option selected>Выберите отход</option>
+                            {% for waste in all_wastes %}
+                                <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="weight-input input-group">
+                            <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
+                            <span class="input-group-text">КГ</span>
+                        </div>
+                    </div>
+                    <div class="waste-card mb-2 row hidden">
+                        <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                            <option selected>Выберите отход</option>
+                            {% for waste in all_wastes %}
+                                <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="weight-input input-group">
+                            <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
+                            <span class="input-group-text">КГ</span>
+                        </div>
+                    </div>
+                    <div class="waste-card mb-2 row hidden">
+                        <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                            <option selected>Выберите отход</option>
+                            {% for waste in all_wastes %}
+                                <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="weight-input input-group">
+                            <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
+                            <span class="input-group-text">КГ</span>
+                        </div>
+                    </div>
+                    <div class="waste-card mb-2 row hidden">
+                        <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                            <option selected>Выберите отход</option>
+                            {% for waste in all_wastes %}
+                                <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="weight-input input-group">
+                            <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
+                            <span class="input-group-text">КГ</span>
+                        </div>
+                    </div>
+                    <div class="waste-card mb-2 row hidden">
+                        <select class="form-select custom-select custom-select_waste ms-4" name="idleWasteData" id="wasteSelect">
+                            <option selected>Выберите отход</option>
+                            {% for waste in all_wastes %}
+                                <option value="{{ waste[0] }}">{{ waste[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="weight-input input-group">
+                            <input type="text" class="form-control" id="wasteWeight" name="idleWasteWeight" onClick="numberModalControl(event)" placeholder="Вес" aria-describedby="" readonly>
+                            <span class="input-group-text">КГ</span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-row justify-content-around" style="margin-top: auto; margin-bottom: 25px;">
+                        <div class="btn btn__option primary fs-3 me-3" data-target="">Сохранить</div>
+                        <div class="btn btn__option primary fs-3" data-toggle="modalClose" data-modal="addNewWaste" onClick="wasteDefectController(event)">Отмена</div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+
+        <!-- Модальное (всплывающее) привязки существующих отходов -->
+        <div class="modal hidden" id="addExistingWaste" data-wastescount="{{existing_wastes|length}}">
+            <div class="modal__addWasteDefect">
+                <div class="modal_content justify-content-start p-3">
+                    {% for waste in existing_wastes %}
+                        <div class="waste-card mb-2 row" data-wasteoid = '{{ waste[0] }}'>
+                            <input class="form-control form-control-lg" style="width: 62%;" type="text" value="{{ waste[1] }}"  disabled readonly>
+                            <div class="input-group" style="width: 14%;">
+                                {% set weight = waste[2] | string() %}
+                                <input type="text" class="form-control" id="existingWasteWeight" value="{{ weight[:-3] }}" disabled readonly>
+                                <span class="input-group-text">КГ</span>
+                            </div>
+                            <input class="form-control form-control-lg me-3" style="width: 11%;" type="text" value="{{ waste[3].strftime('%H:%M:%S') }}"  disabled readonly>
+                            <div class="btn_waste btn_waste-add align-middle" onClick="addWaste()">Выбрать</div>
+                        </div>
+                    {% endfor %}
+                    <div class="d-flex flex-row justify-content-around" style="margin-top: auto; margin-bottom: -5px;">
+                        <div class="btn btn__option primary fs-3 me-3" data-target="">Сохранить</div>
+                        <div class="btn btn__option primary fs-3" data-toggle="modalClose" data-modal="addExistingWaste" onClick="wasteDefectController(event)">Отмена</div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+
+        <!--Всплывающее окно ввода числовых значений-->
+        <div class="modal hidden" id="numberModal">
+                    <div class="modal__number">
+                        <div class="modal_header">Количество</div>
+                        <div class="modal-window__body">
+                            <div class="row">
+                                <div class="btn modal__input-number"></div>
+                                <button type="button" class="btn modal__enter-button secondary">ВВОД</button>
+                            </div>
+                            <div class="number-keyboard">
+                                <div class="keyboard__keys">
+                                    <div class="col">
+                                        <button type="button" class="keyboard__key">7</button>
+                                        <button type="button" class="keyboard__key">8</button>
+                                        <button type="button" class="keyboard__key">9</button>
+                                    </div>
+                                    <div class="col">
+                                        <button type="button" class="keyboard__key">4</button>
+                                        <button type="button" class="keyboard__key">5</button>
+                                        <button type="button" class="keyboard__key">6</button>
+                                    </div>
+                                    <div class="col">
+                                        <button type="button" class="keyboard__key">1</button>
+                                        <button type="button" class="keyboard__key">2</button>
+                                        <button type="button" class="keyboard__key">3</button>
+                                    </div>
+                                    <div class="col">
+                                        <button type="button" class="keyboard__key">.</button>
+                                        <button type="button" class="keyboard__key">0</button>
+                                        <button type="button" class="keyboard__key keyboard__key_del">DEL</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal_footer">
+                            <button type="button" class="btn btn__modal btn_wide secondary" onClick="numberModalControl(event)"> Закрыть </button>
+                        </div>
+                    </div>
+                    <div class="bg-blur"></div>
         </div>
         <!-- ----------------------------------------------------------- -->
 
@@ -350,6 +472,62 @@
             });
         }
 
+        function modalOption(event) {
+            toggler = event.target.dataset.toggle // Кнопка открытия/закрытия модального окна
+            target = event.target.dataset.target // ID модального окна ( атрибут data-target )
+            modal = document.getElementById(target) // Получение нужного модальног окна по ID
+            
+            let addNewButton = document.querySelector('#addNew') // Кнопка добавления нового
+            let addExistingButton = document.querySelector('#addExisting') // Кнопка привязки существующих
+            
+            if( event.target.id == 'addWaste' ) {
+                addNewButton.dataset.modal = 'addNewWaste'
+                addExistingButton.dataset.modal = 'addExistingWaste'
+            } else {
+                addNewButton.dataset.modal = 'addNewDefect'
+                addExistingButton.dataset.modal = 'addExistingDefect'
+            }
+            // Открытие/закрытие модального окна
+            modal.classList.toggle('hidden');
+        }
+
+        function selectIdleProduct(event) {
+            productList = document.querySelector('#currentProductList')
+            if (productList.dataset.productcount == 1) {
+                let oneProductData = document.querySelector('#oneProductData')
+                productData = [oneProductData.dataset.proddataoid, oneProductData.dataset.prodname]
+                wasteDefectController(event)
+            } else {
+                document.querySelector('#optionSelect').classList.add('hidden')
+
+                let selectProductButton = document.querySelectorAll('#selectProductButton')
+                for (let i = 0; i < selectProductButton.length; i++){
+                    selectProductButton[i].dataset.target = 'addIdleWaste'
+                    selectProductButton[i].dataset.modal = 'addNewWaste'
+                }
+
+                productList.classList.toggle('hidden')
+            }
+        }
+
+        function wasteDefectController(event) {
+            toggler = event.target.dataset.toggle // Кнопка открытия/закрытия модального окна
+            target = event.target.dataset.modal // ID модального окна ( атрибут data-target )
+            modal = document.getElementById(target) // Получение нужного модальног окна по ID
+
+            if (target == 'addExistingWaste' && modal.dataset.wastescount == 0) {
+                showError('Отсутсвуют введенные отходы!')
+            }
+            else if (target == 'addExistingDefect' && modal.dataset.wastescount == 0) {
+                showError('Отсутсвуют введенные отходы!')
+            }
+            else {
+                document.querySelector('#optionSelect').classList.add('hidden')
+                // Открытие/закрытие модального окна
+                modal.classList.toggle('hidden');
+            }
+        }
+        
         function addWaste() {
             if(i < elementList.length){
                 if(elementList[i].classList.contains('hidden')){
@@ -376,7 +554,7 @@
                 select.selectedIndex = 0
                 weight.value = null
             }
-        }
+        } 
 
         // Формирования массива данных для отправки на сервер        
         $('#idleEnterForm').submit(function(e) {
@@ -458,6 +636,14 @@
             });
         }
 
+        function showError(text) {
+            let errorObject = document.querySelector('.notice-error')
+            errorObject.innerHTML = text
+            errorObject.style.display = 'block'
+            setTimeout(function(){
+                errorObject.style.display = 'none'
+            },3000);
+        }
     </script>
 </body>
 </html>

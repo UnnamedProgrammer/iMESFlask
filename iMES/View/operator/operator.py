@@ -82,14 +82,14 @@ def handle_entered_product_weight(data):
                                 VALUES (NEWID(), '{production_data}', {entered_weight}, GETDATE(), '{current_User[0][0]}');"""
     SQLManipulator.SQLExecute(sql_PostProductWeight)
 
+# Получение данных о введенном весе для печати
 @socketio.on(message='GetWeightSticker')
 def GetWeightSticker(data):
     ip_addr = request.remote_addr
 
-    sql_GetGetWeightSticker = f""" SELECT	[Product].[Oid],
-                                    		[Product].[Name],
-                                    		[ProductWeight].[Weight],
-                                    		[ProductWeight].[CreateDate]
+    sql_GetWeightSticker = f""" SELECT  [Product].[Name],
+                                    	[ProductWeight].[Weight],
+                                    	[ProductWeight].[CreateDate]
                                     FROM [ShiftTask]
                                     INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
                                     	AND [Shift].[StartDate] <= GETDATE()
@@ -101,21 +101,19 @@ def GetWeightSticker(data):
                                     INNER JOIN [ProductWeight] ON [ProductWeight].[ProductionData] = [ProductionData].[Oid]
                                     ORDER BY [CreateDate] """
                                 
-    weightStickerData = SQLManipulator.SQLExecute(sql_GetGetWeightSticker)
+    weightStickerData = SQLManipulator.SQLExecute(sql_GetWeightSticker)
 
     data = {}
     keys = []
     for weight in weightStickerData:
-        if not weight[1] in keys:
-            keys.append(weight[1])
-            data[weight[1]] = []
+        if not weight[0] in keys:
+            keys.append(weight[0])
+            data[weight[0]] = []
                
     for key in keys:
         for weight in weightStickerData:
-            if weight[1] == key:
-                data[key].append([float(weight[2]),weight[3].strftime('%H:%M:%S')])
-
-    print(data)
+            if weight[0] == key:
+                data[key].append([float(weight[1]),weight[2].strftime('%H:%M:%S')])
     
     socketio.emit("SendWeightSticker", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
@@ -127,16 +125,22 @@ def tableWasteDefect():
     ip_addr = request.remote_addr
 
     # Получаем данные о текущих отходах и браке
-    sql_GetCurrentProductWaste = f"""SELECT ProductWaste.Material, Product.Name, ProductWaste.Type, ProductWaste.Count, ProductWaste.Weight,
-                                        ProductWaste.Note, ProductWaste.CreateDate, Employee.LastName, Employee.FirstName, Employee.MiddleName
-                                        FROM ShiftTask INNER JOIN
-                                        Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-                                        Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
-                                        Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                        ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask INNER JOIN
-                                        ProductWaste ON ProductionData.Oid = ProductWaste.ProductionData INNER JOIN
-                                        [User] ON ProductWaste.Creator = [User].Oid INNER JOIN
-                                        Employee ON [User].Employee = Employee.Oid"""
+    sql_GetCurrentProductWaste = f"""   SELECT   [ProductWaste].[Material], [Product].[Name],
+                                                [ProductWaste].[Type], [ProductWaste].[Count],
+                                                [ProductWaste].[Weight],[ProductWaste].[Note],
+                                                [ProductWaste].[CreateDate], [Employee].[LastName],
+                                                [Employee].[FirstName], [Employee].[MiddleName]
+                                        FROM [ShiftTask]
+                                        INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
+                                            AND [Shift].[StartDate] <= GETDATE()
+                                            AND [Shift].[EndDate] >= GETDATE()
+                                        INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
+                                            AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
+                                        INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
+                                        INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
+                                        INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
+                                        INNER JOIN [User] ON [ProductWaste].[Creator] = [User].[Oid]
+                                        INNER JOIN [Employee] ON [User].[Employee] = [Employee].[Oid] """
     current_product_waste = SQLManipulator.SQLExecute(sql_GetCurrentProductWaste)
 
     # Проверяем были ли введены отходы и/или брак в текущую смену
@@ -212,49 +216,84 @@ def handle_entered_product_wastes(data):
                                 VALUES (NEWID(), '{production_data}', 1, {entered_defect_weight}, {entered_defect_count}, GETDATE(), '{current_User[0][0]}');"""
     SQLManipulator.SQLExecute(sql_PostProductWaste)
 
+# Получение данных о введенных отходах для печати
+@socketio.on(message='GetWasteSticker')
+def GetWasteSticker(data):
+    ip_addr = request.remote_addr
 
-# Окно ввода отходов
-# @login_required
-# @app.route('/operator/tableWasteDefect/wastes')
-# def wastes():
-#     ip_addr = request.remote_addr
+    sql_GetWasteSticker = f""" SELECT [Product].[Name], [ProductWaste].[Weight]
+                                FROM [ShiftTask]
+                                INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
+                                	AND [Shift].[StartDate] <= GETDATE()
+                                	AND [Shift].[EndDate] >= GETDATE()
+                                INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
+                                	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
+                                INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
+                                INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
+                                INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
+                                WHERE [ProductWaste].[Type] = 0
+                                ORDER BY Name """
+                                
+    wasteStickerData = SQLManipulator.SQLExecute(sql_GetWasteSticker)
 
-#     predefined_waste = ''
+    data = {}
+    keys = []
+    total = 0
+    for waste in wasteStickerData:
+        if not waste[0] in keys:
+            keys.append(waste[0])
+            data[waste[0]] = []
+               
+    for key in keys:
+        for waste in wasteStickerData:
+            if waste[0] == key:
+                total += float(waste[1])
+                data[key] = [total]
+        total = 0
+    
+    socketio.emit("SendWasteSticker", json.dumps(
+        {ip_addr: data}, ensure_ascii=False, indent=4))
+    
+# Получение данных о введенном браке для печати
+@socketio.on(message='GetDefectSticker')
+def GetDefectSticker(data):
+    ip_addr = request.remote_addr
 
-#     # Получаем данные о текущей ProductionData
-#     sql_GetProductionData = f"""SELECT ProductionData.Oid
-#                                 FROM ShiftTask INNER JOIN
-#                                 Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-#                                 Equipment ON Equipment.Oid = ShiftTask.Equipment AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
-#                                 ProductionData ON ProductionData.ShiftTask = ShiftTask.Oid"""
+    sql_GetDefectSticker = f""" SELECT [Product].[Name], [ProductWaste].[Weight], [ProductWaste].[Count]
+                                FROM [ShiftTask]
+                                INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
+                                	AND [Shift].[StartDate] <= GETDATE()
+                                	AND [Shift].[EndDate] >= GETDATE()
+                                INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
+                                	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
+                                INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
+                                INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
+                                INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
+                                WHERE [ProductWaste].[Type] = 1
+                                ORDER BY Name """
+                                
+    defectStickerData = SQLManipulator.SQLExecute(sql_GetDefectSticker)
 
-#     production_data = SQLManipulator.SQLExecute(sql_GetProductionData)
+    data = {}
+    keys = []
+    totalWeight = 0
+    totalCount = 0
+    for defect in defectStickerData:
+        if not defect[0] in keys:
+            keys.append(defect[0])
+            data[defect[0]] = []
+               
+    for key in keys:
+        for defect in defectStickerData:
+            if defect[0] == key:
+                totalWeight += float(defect[1])
+                totalCount += float(defect[2])
+                data[key] = [totalWeight, totalCount]
+        totalWeight = 0
+        totalCount = 0
 
-#     # current_type = '''Получаем тип отхода: 0 - отход, 1 - брак'''
-
-#     # Создаем запись введенного отхода в таблице ProductWaste
-#     sql_PostProductWeight = f"""INSERT INTO ProductWaste (Oid, ProductionData, Material, Type, Weight, Count, Downtime, Note, CreateDate, Creator)
-#                                 VALUES (NEWID(), '', '', '', '{current_type}', '', '', '', '', GETDATE(), '{current_user[0][0]}');"""
-#     SQLManipulator.SQLExecute(sql_PostProductWeight)
-
-#     # Получаем данные о всех существующих отходах
-#     sql_GetAllWastes = f"""SELECT Oid, Name  
-#     FROM Material WHERE Type = 1
-#     ORDER BY Name"""
-#     all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
-
-#     # Получаем данные о текущем продукте
-#     sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name, ProductionData.Oid
-#                                 FROM ShiftTask INNER JOIN
-#                                 Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-#                                 Product ON ShiftTask.Product = Product.Oid INNER JOIN
-#                                 Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
-#                                 ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
-#     current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
-#     print(current_product)
-
-#     return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/wastes.html', [predefined_waste, all_wastes, current_product])
-
+    socketio.emit("SendDefectSticker", json.dumps(
+        {ip_addr: data}, ensure_ascii=False, indent=4))
 
 # Отображение окна сменного задания
 @app.route('/operator/ShiftTask')

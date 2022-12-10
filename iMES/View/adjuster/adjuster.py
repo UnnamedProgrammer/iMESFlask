@@ -49,6 +49,7 @@ def adjusterJournal():
 @login_required
 def adjusterIdleEnter():
     idleOid = request.args.getlist('oid')
+    ip_addr = request.remote_addr
         
     # Получение данных о простое
     sql_GetDowntimeData = f""" SELECT [Oid],[Equipment],[StartDate],[EndDate],[Status]
@@ -81,6 +82,15 @@ def adjusterIdleEnter():
                                 FROM [MES_Iplast].[dbo].[TakenMeasures]
                                 ORDER BY [Name] """
     takenMeasures = SQLManipulator.SQLExecute(sql_GetTakenMeasures)
+    
+    # Получаем данные о текущем продукте и производственных данных
+    sql_GetCurrentProduct = f"""SELECT DISTINCT ProductionData.Oid, Product.Name 
+                                FROM ShiftTask INNER JOIN
+                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
+                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
+                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
+                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
+    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
 
     # Получаем данные о всех существующих отходах
     sql_GetAllWastes = f"""SELECT Oid, Name  
@@ -88,7 +98,22 @@ def adjusterIdleEnter():
                             ORDER BY [Name] """
     all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
     
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes])
+    # Получаем уже введенные отходы
+    sql_GetExistingWastes = f""" SELECT [ProductWaste].[Oid], [Material].[Name], [ProductWaste].[Weight], [ProductWaste].[CreateDate]
+                                        FROM [ShiftTask]
+                                        INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
+                                            AND [Shift].[StartDate] <= GETDATE()
+                                            AND [Shift].[EndDate] >= GETDATE()
+                                        INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
+                                            AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
+                                        INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
+                                        INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
+                                        INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
+                                        INNER JOIN [Material] ON [ProductWaste].[Material] = [Material].[Oid]
+                                        WHERE [ProductWaste].[Type] = 0 """
+    existing_wastes = SQLManipulator.SQLExecute(sql_GetExistingWastes)
+    
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes, existing_wastes, current_product])
 
 
 # Сырье до конца выпуска

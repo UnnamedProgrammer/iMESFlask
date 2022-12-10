@@ -216,27 +216,40 @@
             let clock = document.getElementById('clock').innerHTML
             let shift = document.getElementById('smena').innerHTML
 
-            for ( let i = 0; i < wasteDefectRows.length; i++) {
-                if(wasteDefectRows[i].id == 'wasteRow')
+            socket.emit('GetWasteSticker', { data: '' })
+
+            socket.on('SendWasteSticker',function(data) {
+                arr = JSON.parse(data)
+                let wasteWeight = 0
+                if (address == Object.keys(arr))
                 {
-                    wastesHTML +='<b>Артикул: </b>'+ wasteDefectRows[i].cells[0].innerHTML +'<br> <b>Вес: </b>'+ wasteDefectRows[i].cells[3].innerHTML+' кг. <br>';
+                    if (Object.keys(arr[address]).length != 0) {
+                        for (let key of Object.keys(arr[address])) {
+                            wastesHTML += '<b>Артикул: </b>' + key + '<br> <b>Вес(чистый): </b>' + arr[address][key] + ' кг.<br>'
+                        }
+                    
+                        let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+                                    
+                        let html ="";
+                        
+                        html += '<div>----------------------------------</div>'
+                        +'<b>Оборудование</b> '+ ttpa +'<br>'
+                        +'<b>Дата</b> '+ clock +'<br>'
+                        +'<b>Смена</b> '+ shift +'<br>'
+                        +'<b>Вес тары</b>_____ кг.<br>'
+                        + wastesHTML
+                        +'<b>Ф.И.О: </b>'+ current_user +'<br>'
+                        var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+                        
+                        printStickerWindow(div, mywindow);
+
+                        wastesHTML = ''
+
+                    } else {
+                        showError('Отсутствуют отходы!')
+                    }
                 }
-            }
-    
-            let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
-    
-            let html ="";
-    
-            html += '<div>----------------------------------</div>'
-            +'<b>Оборудование</b> '+ ttpa +'<br>'
-            +'<b>Дата</b> '+ clock +'<br>'
-            +'<b>Смена</b> '+ shift +'<br>'
-            +'<b>Вес тары</b> <br>'
-            + wastesHTML
-            +'<b>Ф.И.О: </b>'+ current_user +'<br>'
-            var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-    
-            printStickerWindow(div, mywindow);
+            })
         }
     })
 
@@ -264,27 +277,41 @@
             let clock = document.getElementById('clock').innerHTML
             let shift = document.getElementById('smena').innerHTML
 
-            for ( let i = 0; i < wasteDefectRows.length; i++) {
-                if(wasteDefectRows[i].id == 'defectRow')
+            socket.emit('GetDefectSticker', { data: '' })
+
+            socket.on('SendDefectSticker',function(data) {
+                arr = JSON.parse(data)
+                let wasteWeight = 0
+                if (address == Object.keys(arr))
                 {
-                    defectHTML +='<b>Артикул: </b>'+ wasteDefectRows[i].cells[0].innerHTML +'<br> <b>Количество: </b>'+ wasteDefectRows[i].cells[2].innerHTML +' <b>Вес: </b>'+ wasteDefectRows[i].cells[3].innerHTML+' кг. <br>';
+                    if (Object.keys(arr[address]).length != 0) {
+                        for (let key of Object.keys(arr[address])) {
+                            defectHTML += '<b>Артикул: </b>' + key + '<br> <b>Количество: </b>' + arr[address][key][0] + ' шт.<br>' + '<b>Вес: </b>' + arr[address][key][1] + '<br>'
+                        }
+                        
+
+                        let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+                                    
+                        let html ="";
+                        
+                        html += '<div>----------------------------------</div>'
+                        +'<b>Оборудование</b> '+ ttpa +'<br>'
+                        +'<b>Дата</b> '+ clock +'<br>'
+                        +'<b>Смена</b> '+ shift +'<br>'
+                        +'<b>Вес тары</b>_____ кг.<br>'
+                        + defectHTML
+                        +'<b>Ф.И.О: </b>'+ current_user +'<br>'
+                        var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
+                        
+                        printStickerWindow(div, mywindow);
+
+                        defectHTML = ''
+
+                    } else {
+                        showError('Отсутствует брак!')
+                    }
                 }
-            }
-    
-            let mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
-    
-            let html ="";
-    
-            html += '<div>----------------------------------</div>'
-            +'<b>Оборудование</b> '+ ttpa +'<br>'
-            +'<b>Дата</b> '+ clock +'<br>'
-            +'<b>Смена</b> '+ shift +'<br>'
-            +'<b>Вес тары</b> <br>'
-            + defectHTML
-            +'<b>Ф.И.О: </b>'+ current_user +'<br>'
-            var div = '<div class="my_print">'+html+'<div>----------------------------------</div></div>';
-    
-            printStickerWindow(div, mywindow);
+            })
         }
     })
 

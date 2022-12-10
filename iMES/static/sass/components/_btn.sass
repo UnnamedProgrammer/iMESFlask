@@ -21,6 +21,10 @@
         &_height160
             height: 160px
 
+    &__option
+        width: 450px
+        height: 110px
+
     &__navbar-footer
         margin-left: 5px
         width: 100%
@@ -130,22 +134,34 @@
     &_left
         left: -20px
         background: url('close-more_left.png') no-repeat
-
-.btn_add-waste
+        
+.btn_waste
     text-align: center
-    margin-right: 16px
-    width: 10%
     height: 53px
     line-height: 53px
     color: white
     background-color: $color-blue-dark
     border-radius: 4px
+    &:hover
+        background-color: #192b44
+    &-create
+        margin-right: 16px
+        width: 49%
+    &-add
+        margin-right: 5px
+        width: 110px
 
-.btn_delete-waste
+
+.btn_defect
     text-align: center
-    width: 10%
     height: 53px
     line-height: 53px
     color: white
     background-color: $color-red-dark
     border-radius: 4px
+    &:hover
+        background-color: #c0313f
+    &-create
+        width: 49%
+    &-add
+        width: 110px
