@@ -8,7 +8,7 @@ from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES.Controller.TpaController import TpaController
 import json
-from iMES import TpaList, current_tpa, user, user_dict
+from iMES import TpaList, current_tpa, user_dict
 import requests
 from datetime import datetime, timedelta
 from requests.adapters import HTTPAdapter,Retry
@@ -23,7 +23,6 @@ urllib3.disable_warnings()
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     current_tpa[ip_addr][2].data_from_shifttask()
-    print(user_dict)
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
@@ -39,27 +38,33 @@ def index():
         # И автоматически авторизуем его по его номеру карты
         if device_type == "Веб":
             sql_GetCardNumber = f"""
-                                    SELECT [User].CardNumber
-                                    FROM [User],Device WHERE 
-                                    Device.DeviceId = '{ip_addr}' AND
-                                    Device.[Name] = [User].UserName
-                                """
+                        SELECT [User].CardNumber
+                        FROM [User],Device WHERE 
+                        Device.DeviceId = '{ip_addr}' AND
+                        Device.[Name] = [User].UserName
+                    """
             CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
-            from iMES import host, port
-            session = requests.Session()
-            retry = Retry(connect=3,backoff_factor=0.5)
-            adapter = HTTPAdapter(max_retries=retry)
-            session.mount('http://', adapter)
-            session.mount('https://', adapter)
-            headers={
-            'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-            }
-            r = session.get(
-                f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
-            if r.status_code == 200:
-                print(user_dict)
-                login_user(user_dict[str(user.id)])
+            is_authorized = False
+            for key in user_dict.keys():
+                if user_dict[key].CardNumber == CardNumber:
+                    is_authorized = True
+            if not is_authorized:
+                from iMES import host, port
+                session = requests.Session()
+                retry = Retry(connect=3,backoff_factor=0.5)
+                adapter = HTTPAdapter(max_retries=retry)
+                session.mount('http://', adapter)
+                session.mount('https://', adapter)
+                headers={
+                'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+                }
+                r = session.get(
+                    f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
+                if r.status_code == 200:
+                    for key in list(user_dict.keys()):
+                        if user_dict[key].CardNumber == CardNumber:
+                            login_user(user_dict[key])        
     # Рендерим страницу
     return render_template("index.html",
                            device_tpa=device_tpa,
@@ -221,6 +226,7 @@ def GetPlan(data):
 
 @app.route("/Auth/PassNumber=<string:passnumber>")
 def Authorization(passnumber):
+    user = UserModel()
     # Определяем адресс клиента
     terminal = request.remote_addr
     # Запрос на информацию о клиенте по его номеру карты
@@ -315,6 +321,9 @@ def Authorization(passnumber):
         user.interfaces = userdata[7]
         user.oid = userdata[8]
         packet = {terminal: ''}
+        for key in user_dict.keys():
+            if user_dict[key].CardNumber == user.CardNumber:
+                return 'Already authorized'
         user_dict[str(user.id)] = user
         # Отправляем в сокет сообщение о успешной авторизации
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
@@ -326,6 +335,7 @@ def Authorization(passnumber):
 
 @app.route("/Auth/PassNumber=<string:passnumber>/IP=<string:ipaddress>")
 def AuthorizationWhithoutPass(passnumber, ipaddress):
+    user = UserModel()
     terminal = ipaddress
     sql = f"""
     SELECT
@@ -412,7 +422,10 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         user.interfaces = userdata[7]
         user.oid = userdata[8]
         packet = {terminal: ''}
-        user_dict[str(user.id)] = user
+        for key in list(user_dict.keys()):
+            if user_dict[key].CardNumber == user.CardNumber:
+                return 'Already authorized'
+        user_dict[str(user.id)] = user    
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
 
@@ -421,9 +434,8 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
 
 @login_manager.user_loader
 def load_user(_id):
-    print(_id)
+    ret_user = UserModel()
     if str(_id) in user_dict:
-        ret_user = UserModel()
         ret_user.id = user_dict[str(_id)].id
         ret_user.oid = user_dict[str(_id)].oid
         ret_user.name = user_dict[str(_id)].name
@@ -433,13 +445,13 @@ def load_user(_id):
         ret_user.device_type = user_dict[str(_id)].device_type
         ret_user.role = user_dict[str(_id)].role
         ret_user.interface = user_dict[str(_id)].interface
-        return ret_user
-    return UserModel() 
+    return ret_user
 
 # Метод аутентификации пользователя и редирект на страницы в зависимости от роли
 
 
 @app.route('/Auth')
+@login_required
 def Auth():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     device_tpa = TpaList[ip_addr]
@@ -485,9 +497,13 @@ def logout():
             DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
     """
     SQLManipulator.SQLExecute(sqlRemoveSaveUser)
-    user_dict.pop(str(current_user.id))
-    logout_user()
-    return redirect('/')
+    if current_user.id != None:
+        user_dict.pop(str(current_user.id))
+        logout_user()
+        return redirect('/')
+    else:
+        error = """Попытка выхода из сесии пользователя из другой вкладки что запрещено."""
+        return render_template('Show_error.html', error=error, ret='/menu',current_tpa=current_tpa[terminal])
 
 # Метод выхода из аккаунта без открепления от терминала
 
@@ -495,6 +511,8 @@ def logout():
 @app.route('/logoutWithoutDeleteRoles')
 @login_required
 def logoutWithoutDeleteRoles():
+    if current_user.id != None:
+        user_dict.pop(str(current_user.id))  
     logout_user()
     return redirect('/')
 

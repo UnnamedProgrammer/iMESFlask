@@ -14,7 +14,8 @@ import json
 @app.route('/operator')
 @login_required
 def operator():
-    user_dict[str(current_user.id)].interface = "Оператор"
+    if current_user.id != None:
+        user_dict[str(current_user.id)].interface = "Оператор"
     return CheckRolesForInterface('Оператор', 'operator/operator.html')
 
 

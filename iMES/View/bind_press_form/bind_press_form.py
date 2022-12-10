@@ -7,8 +7,8 @@ from flask_login import login_required
 import datetime
 
 
-@login_required
 @app.route("/bindPressForms")
+@login_required
 def bindPressForms():
     ip_addr = request.remote_addr
     device_tpa = TpaList[ip_addr]

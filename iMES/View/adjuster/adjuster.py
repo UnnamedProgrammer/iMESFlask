@@ -13,7 +13,8 @@ from iMES import user_dict
 @app.route('/adjuster')
 @login_required
 def adjuster():
-    user_dict[str(current_user.id)].interface = "Наладчик"
+    if current_user.id != None:
+        user_dict[str(current_user.id)].interface = "Наладчик"
     return CheckRolesForInterface('Наладчик', 'adjuster/adjuster.html')
 
 # Простои, неполадки и чеклисты

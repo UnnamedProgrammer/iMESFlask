@@ -90,6 +90,10 @@ def ExitWithSave():
         SQLManipulator.SQLExecute(sql)
     else:
         return render_template('Show_error.html', error="Недостаточно прав для данного интерфейса", ret='/menu',current_tpa=current_tpa[ip_addr])
-    user_dict.pop(str(current_user.id))    
-    logout_user()
-    return redirect('/')
+    if current_user.id != None:
+        user_dict.pop(str(current_user.id))      
+        logout_user()
+        return redirect('/')
+    else:
+        error = """Попытка выхода из сесии пользователя из другой вкладки что запрещено."""
+        return render_template('Show_error.html', error=error, ret='/menu',current_tpa=current_tpa[ip_addr])
