@@ -11,9 +11,12 @@ class UserModel(UserMixin):
     username = None
     CardNumber = None
     role = {}
-    interfaces = None
+    interface = None
     savedrole = False
     device_type = ''
 
     def __repr__(self):
         return '<User %r>' % self.name
+    
+    def get_id(self):
+        return self.id

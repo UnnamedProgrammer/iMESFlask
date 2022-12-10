@@ -2,9 +2,10 @@ from iMES import app
 from flask import request
 from iMES import current_tpa
 from iMES import socketio
-from flask_login import login_required
+from flask_login import login_required, current_user
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 from iMES.Model.SQLManipulator import SQLManipulator
+from iMES import user_dict
 
 # Метод возвращает окно наладчика
 
@@ -12,6 +13,7 @@ from iMES.Model.SQLManipulator import SQLManipulator
 @app.route('/adjuster')
 @login_required
 def adjuster():
+    user_dict[str(current_user.id)].interface = "Наладчик"
     return CheckRolesForInterface('Наладчик', 'adjuster/adjuster.html')
 
 # Простои, неполадки и чеклисты

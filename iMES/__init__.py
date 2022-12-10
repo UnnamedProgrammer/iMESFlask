@@ -40,6 +40,7 @@ login_manager.login_view = "login"
 login_manager.login_message_category = "info"
 login_manager.init_app(app=app)
 user = UserModel()
+user_dict = {}
 UserController = UserCountController()
 
 # Переменные текущего ТПА и всех ТПА

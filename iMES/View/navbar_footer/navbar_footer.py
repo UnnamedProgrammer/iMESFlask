@@ -2,7 +2,7 @@ from iMES import app
 from flask import request, redirect, render_template
 from flask_login import login_required, current_user, logout_user
 from iMES.Model.SQLManipulator import SQLManipulator
-
+from iMES import current_tpa, user_dict
 # Процедура кнопки "Выход с сохранением"
 # Закрепляет пользователя за выбранной ролью
 
@@ -10,6 +10,8 @@ from iMES.Model.SQLManipulator import SQLManipulator
 @app.route('/exitwithsave')
 @login_required
 def ExitWithSave():
+    ip_addr = request.remote_addr  # Получение IP-адресса пользователя
+    current_tpa[ip_addr][2].data_from_shifttask()
     sql = f"""
     SELECT Interface.[Name]
     FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role],Interface,Relation_RoleInterface
@@ -25,7 +27,8 @@ def ExitWithSave():
     Interfaces = []
     for Interface in sqlUserInterfaces:
         Interfaces.append(Interface[0])
-    if current_user.role in Interfaces:
+    
+    if current_user.interface in Interfaces:
         sql = f"""
                 DECLARE @newrole uniqueidentifier
                 DECLARE @oldrole uniqueidentifier
@@ -35,7 +38,7 @@ def ExitWithSave():
                 DECLARE @olduser uniqueidentifier
                 DECLARE @newsavedrole uniqueidentifier
                 /* Новая роль пользователя */
-                SET @newrole = (SELECT Role.Oid FROM Role WHERE Role.Name = '{current_user.role}')
+                SET @newrole = (SELECT Role.Oid FROM Role WHERE Role.Name = '{current_user.interface}')
                 /* Сам пользователь */
                 SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{current_user.username}')
                 /* Устройство на котором работает пользователь */
@@ -86,6 +89,7 @@ def ExitWithSave():
             """
         SQLManipulator.SQLExecute(sql)
     else:
-        return render_template('Show_error.html', error="Недостаточно прав для данного интерфейса", ret='/menu')
+        return render_template('Show_error.html', error="Недостаточно прав для данного интерфейса", ret='/menu',current_tpa=current_tpa[ip_addr])
+    user_dict.pop(str(current_user.id))    
     logout_user()
     return redirect('/')
