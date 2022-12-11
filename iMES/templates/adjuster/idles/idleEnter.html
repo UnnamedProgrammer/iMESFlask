@@ -28,7 +28,7 @@
     {% if downtimeData[0][3] != None %}
         {% set idleTime = downtimeData[0][3] - downtimeData[0][2] %}
     {% endif %}
-    
+
     <div class="notice notice-error" style="display: none;">
         Ошибка!
     </div>
@@ -80,29 +80,7 @@
                             </div>
                         </div> 
                         
-                        <div class="enteredData px-3 mt-1">
-                            <div class="waste-card mb-2 row" data-wasteoid = ''>
-                                <div class="input-group p-0 me-2" style="width: 74.3%;">
-                                    <span class="input-group-text text-bg-primary fs-5">Отход</span>
-                                    <input type="text" class="form-control fs-5" id="existingWasteWeight" value="Деталь контейнера фиксатор трубы 14.925.91.R" disabled readonly>
-                                </div>
-                                <div class="input-group" style="width: 14%;">
-                                    <input type="text" class="form-control fs-5" id="existingWasteWeight" value="6" disabled readonly>
-                                    <span class="input-group-text">КГ</span>
-                                </div>
-                                <input class="form-control form-control-lg" style="width: 11%;" type="text" value="12:30"  disabled readonly>
-                            </div>
-                            <div class="waste-card mb-2 row" data-wasteoid = ''>
-                                <div class="input-group p-0 me-2" style="width: 74.3%;">
-                                    <span class="input-group-text text-bg-danger fs-5">Брак</span>
-                                    <input type="text" class="form-control fs-5" id="existingWasteWeight" value="Деталь контейнера фиксатор трубы 14.925.91.R" disabled readonly>
-                                </div>
-                                <div class="input-group" style="width: 14%;">
-                                    <input type="text" class="form-control fs-5" id="existingWasteWeight" value="6" disabled readonly>
-                                    <span class="input-group-text">КГ</span>
-                                </div>
-                                <input class="form-control form-control-lg" style="width: 11%;" type="text" value="12:30"  disabled readonly>
-                            </div>    
+                        <div class="enteredData px-3 mt-1">  
                         </div> 
                     </div>
                 </div>
@@ -331,12 +309,52 @@
                                 <span class="input-group-text">КГ</span>
                             </div>
                             <input class="form-control form-control-lg me-3" style="width: 11%;" type="text" value="{{ waste[3].strftime('%H:%M:%S') }}"  disabled readonly>
-                            <div class="btn_waste btn_waste-add align-middle">Выбрать</div>
+                            <div class="btn_waste btn_waste-add align-middle"
+                                data-wasteoid="{{ waste[0] }}" data-wastename="{{ waste[1] }}"
+                                data-wasteweight="{{ waste[2] }}" data-wastetime="{{ waste[3].strftime('%H:%M:%S') }}"
+                                onClick="addEnteredData(event, 'existingWaste')">
+                                Выбрать
+                            </div>
                         </div>
                     {% endfor %}
                     <div class="d-flex flex-row justify-content-around" style="margin-top: auto; margin-bottom: -5px;">
                         <div class="btn btn__option primary fs-3 me-3" data-target="">Сохранить</div>
                         <div class="btn btn__option primary fs-3" data-toggle="modalClose" data-modal="addExistingWaste" onClick="wasteDefectController(event)">Отмена</div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blur"></div>
+        </div>
+
+        <!-- Модальное (всплывающее) привязки существующего брака -->
+        <div class="modal hidden" id="addExistingDefect" data-defectcount="{{existing_defect|length}}">
+            <div class="modal__addWasteDefect">
+                <div class="modal_content justify-content-start p-3">
+                    {% for defect in existing_defect %}
+                        <div class="waste-card mb-2 row" data-defectoid = '{{ defect[0] }}'>
+                            <input class="form-control form-control-lg" style="width: 48%;" type="text" value="{{ defect[1] }}"  disabled readonly>
+                            <div class="input-group" style="width: 14%;">
+                                {% set weight = defect[2] | string() %}
+                                <input type="text" class="form-control" value="{{ weight[:-3] }}" disabled readonly>
+                                <span class="input-group-text">КГ</span>
+                            </div>
+                            <div class="input-group" style="width: 14%;">
+                                {% set count = defect[3] | string() %}
+                                <input type="text" class="form-control" value="{{ weight[:-3] }}" disabled readonly>
+                                <span class="input-group-text">ШТ</span>
+                            </div>
+                            <input class="form-control form-control-lg me-3" style="width: 11%;" type="text" value="{{ defect[4].strftime('%H:%M:%S') }}"  disabled readonly>
+                            <div class="btn_waste btn_waste-add align-middle"
+                                data-defectoid="{{ defect[0] }}" data-defectproduct="{{ defect[1] }}" data-defectweight="{{ defect[2] }}"
+                                data-defectcount="{{ defect[3] }}" data-defecttime="{{ defect[4].strftime('%H:%M:%S') }}"
+                                onClick="addEnteredData(event, 'existingDefect')">
+                                Выбрать
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="d-flex flex-row justify-content-around" style="margin-top: auto; margin-bottom: -5px;">
+                        <div class="btn btn__option primary fs-3 me-3" data-target="">Сохранить</div>
+                        <div class="btn btn__option primary fs-3" data-toggle="modalClose" data-target="addExistingDefect" onClick="modalController(event)">Отмена</div>
                     </div>
                 </div>
             </div>
@@ -546,8 +564,61 @@
             }
         } 
 
-        function addEnteredData(type) {
+        function addEnteredData(data,type) {
+            let parentElement = document.querySelector('.enteredData')
+            let dataBlock = ''
             
+            if (type == 'waste') {
+                dataBlock = `
+                <div class="waste-card mb-2 row" id="newWasteEnter" data-wasteoid = "`+ data[1][0] +`">
+                    <input type="hidden" data-producoid="`+ data[0][0] +`" value="`+ data[0][1] +`">
+                    <div class="input-group p-0 me-2" style="width: 74.3%;">
+                        <span class="input-group-text text-bg-primary fs-5" style="width: 90px;">Отход</span>
+                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value='`+ data[1][1] +`' disabled readonly>
+                    </div>
+                    <div class="input-group" style="width: 14%;">
+                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ data[2] +`" disabled readonly>
+                        <span class="input-group-text" >КГ</span>
+                    </div>
+                </div> `
+                $('.enteredData').append(dataBlock)
+            }
+            else if (type == 'existingWaste') {
+                data = [event.target.dataset.wasteoid, event.target.dataset.wastename, event.target.dataset.wasteweight, event.target.dataset.wastetime]
+                dataBlock = `
+                <div class="waste-card mb-2 row" data="existingWasteEnter" data-wasteoid = "`+ data[0] +`">
+                    <div class="input-group p-0 me-2" style="width: 74.3%;">
+                        <span class="input-group-text text-bg-primary fs-5" style="width: 90px;">Отход</span>
+                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value='`+ data[1] +`' disabled readonly>
+                    </div>
+                    <div class="input-group" style="width: 14%;">
+                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
+                        <span class="input-group-text" >КГ</span>
+                    </div>
+                    <input class="form-control form-control-lg" style="width: 11%;" type="text" value="`+ data[3] +`"  disabled readonly>
+                </div> `
+                $('.enteredData').append(dataBlock)
+            }
+            else if (type == 'existingDefect') {
+                data = [event.target.dataset.defectoid, event.target.dataset.defectproduct, event.target.dataset.defectweight, event.target.dataset.defectcount, event.target.dataset.defecttime]
+                dataBlock = `
+                <div class="waste-card mb-2 row" data="existingWasteEnter" data-wasteoid = "`+ data[0] +`">
+                    <div class="input-group p-0 me-2" style="width: 60.3%;">
+                        <span class="input-group-text text-bg-danger fs-5" style="width: 90px;">Брак</span>
+                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value='`+ data[1] +`' disabled readonly>
+                    </div>
+                    <div class="input-group" style="width: 14%;">
+                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
+                        <span class="input-group-text" >КГ</span>
+                    </div>
+                    <div class="input-group" style="width: 14%;">
+                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ parseFloat(data[3]) +`" disabled readonly>
+                        <span class="input-group-text" >ШТ</span>
+                    </div>
+                    <input class="form-control form-control-lg" style="width: 11%;" type="text" value="`+ data[4] +`"  disabled readonly>
+                </div> `
+                $('.enteredData').append(dataBlock)
+            }
         }
 
         // Формирования массива данных для отправки на сервер        
