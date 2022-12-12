@@ -64,6 +64,13 @@ function numberModalControl(event){
                 $(table).find('tbody').append('<tr> <td id="weightProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
             }
 
+            else if (enter.id = 'addIdleWasteWeight') {
+                let enteredWasteWeight = document.getElementById('inputDefect').textContent;
+                let data = [productData, wasteData, enteredWasteWeight]
+                addEnteredData(data,'waste')
+
+            }
+
             else if(event.target.tagName == 'INPUT')
             {
                 event.target.value = display.textContent;
@@ -101,7 +108,7 @@ function selectProduct(event) {
     }
 
     else if (event.target.dataset.target == 'addIdleWaste'){
-        wasteDefectController(event)
+        document.getElementById('addWaste').classList.toggle('hidden')
     }
 
     else {

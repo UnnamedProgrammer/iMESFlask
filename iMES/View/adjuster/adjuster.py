@@ -115,7 +115,7 @@ def adjusterIdleEnter():
     existing_wastes = SQLManipulator.SQLExecute(sql_GetExistingWastes)
     
     # Получаем уже введенный брак
-    sql_GetExistingDefect = f""" SELECT [ProductWaste].[Oid], [ProductWaste].[Weight], [ProductWaste].[Count], [ProductWaste].[CreateDate]
+    sql_GetExistingDefect = f""" SELECT [ProductWaste].[Oid], [Product].[Name], [ProductWaste].[Weight], [ProductWaste].[Count], [ProductWaste].[CreateDate]
                                         FROM [ShiftTask]
                                         INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
                                             AND [Shift].[StartDate] <= GETDATE()
