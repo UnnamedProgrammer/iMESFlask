@@ -318,7 +318,6 @@
                         </div>
                     {% endfor %}
                     <div class="d-flex flex-row justify-content-around" style="margin-top: auto; margin-bottom: -5px;">
-                        <div class="btn btn__option primary fs-3 me-3" data-target="">Сохранить</div>
                         <div class="btn btn__option primary fs-3" data-toggle="modalClose" data-modal="addExistingWaste" onClick="wasteDefectController(event)">Отмена</div>
                     </div>
                 </div>
@@ -353,7 +352,6 @@
                         </div>
                     {% endfor %}
                     <div class="d-flex flex-row justify-content-around" style="margin-top: auto; margin-bottom: -5px;">
-                        <div class="btn btn__option primary fs-3 me-3" data-target="">Сохранить</div>
                         <div class="btn btn__option primary fs-3" data-toggle="modalClose" data-target="addExistingDefect" onClick="modalController(event)">Отмена</div>
                     </div>
                 </div>
@@ -497,13 +495,19 @@
                 document.getElementById('addWaste').classList.toggle('hidden')
             } else {
                 document.querySelector('#optionSelect').classList.add('hidden')
-
                 let selectProductButton = document.querySelectorAll('#selectProductButton')
-                for (let i = 0; i < selectProductButton.length; i++){
-                    selectProductButton[i].dataset.target = 'addIdleWaste'
-                    selectProductButton[i].dataset.modal = 'addNewWaste'
+                
+                if(event.target.dataset.modal == 'addNewWaste') {
+                    for (let i = 0; i < selectProductButton.length; i++){
+                        selectProductButton[i].dataset.target = 'addIdleWaste'
+                        selectProductButton[i].dataset.modal = 'addNewWaste'
+                    }
+                } else {
+                    for (let i = 0; i < selectProductButton.length; i++){
+                        selectProductButton[i].dataset.target = 'addIdleDefect'
+                        selectProductButton[i].dataset.modal = 'addNewDefect'
+                    }
                 }
-
                 productList.classList.toggle('hidden')
             }
         }
@@ -526,8 +530,8 @@
             if (target == 'addExistingWaste' && modal.dataset.wastescount == 0) {
                 showError('Отсутсвуют введенные отходы!')
             }
-            else if (target == 'addExistingDefect' && modal.dataset.wastescount == 0) {
-                showError('Отсутсвуют введенные отходы!')
+            else if (target == 'addExistingDefect' && modal.dataset.defectcount == 0) {
+                showError('Отсутсвует введенный брак!')
             }
             else {
                 document.querySelector('#optionSelect').classList.add('hidden')
@@ -580,6 +584,7 @@
                         <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ data[2] +`" disabled readonly>
                         <span class="input-group-text" >КГ</span>
                     </div>
+                    <input class="form-control form-control-lg" style="width: 11%;" type="text" value="Новый"  disabled readonly>
                 </div> `
                 $('.enteredData').append(dataBlock)
             }
@@ -598,24 +603,46 @@
                     <input class="form-control form-control-lg" style="width: 11%;" type="text" value="`+ data[3] +`"  disabled readonly>
                 </div> `
                 $('.enteredData').append(dataBlock)
+                document.querySelector('#addExistingWaste').classList.toggle('hidden')
             }
             else if (type == 'existingDefect') {
                 data = [event.target.dataset.defectoid, event.target.dataset.defectproduct, event.target.dataset.defectweight, event.target.dataset.defectcount, event.target.dataset.defecttime]
                 dataBlock = `
-                <div class="waste-card mb-2 row" data="existingWasteEnter" data-wasteoid = "`+ data[0] +`">
+                <div class="waste-card mb-2 row" data="existingDefectEnter" data-defectoid = "`+ data[0] +`">
                     <div class="input-group p-0 me-2" style="width: 60.3%;">
                         <span class="input-group-text text-bg-danger fs-5" style="width: 90px;">Брак</span>
-                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value='`+ data[1] +`' disabled readonly>
+                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value='`+ data[1] +`' disabled readonly>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
                         <span class="input-group-text" >КГ</span>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ parseFloat(data[3]) +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[3]) +`" disabled readonly>
                         <span class="input-group-text" >ШТ</span>
                     </div>
                     <input class="form-control form-control-lg" style="width: 11%;" type="text" value="`+ data[4] +`"  disabled readonly>
+                </div> `
+                $('.enteredData').append(dataBlock)
+                document.querySelector('#addExistingDefect').classList.toggle('hidden')
+            }
+            else if (type == 'defect') {
+                dataBlock = `
+                <div class="waste-card mb-2 row" data="newDefectEnter">
+                    <div class="input-group p-0 me-2" style="width: 60.3%;">
+                        <span class="input-group-text text-bg-danger fs-5" style="width: 90px;">Брак</span>
+                        <input type="hidden" data-producoid="`+ data[0][0] +`" value="`+ data[0][1] +`">
+                        <input type="text" class="form-control fs-5" id="newDefectWeight" value='`+ data[0][1] +`' disabled readonly>
+                    </div>
+                    <div class="input-group" style="width: 14%;">
+                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[1]) +`" disabled readonly>
+                        <span class="input-group-text" >ШТ</span>
+                    </div>
+                    <div class="input-group" style="width: 14%;">
+                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
+                        <span class="input-group-text" >КГ</span>
+                    </div>
+                    <input class="form-control form-control-lg" style="width: 11%;" type="text" value="Новый"  disabled readonly>
                 </div> `
                 $('.enteredData').append(dataBlock)
             }
