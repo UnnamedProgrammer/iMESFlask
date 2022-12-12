@@ -64,7 +64,7 @@ def index():
                 if r.status_code == 200:
                     for key in list(user_dict.keys()):
                         if user_dict[key].CardNumber == CardNumber:
-                            login_user(user_dict[key])        
+                            login_user(user_dict[key])  
     # Рендерим страницу
     return render_template("index.html",
                            device_tpa=device_tpa,
@@ -320,10 +320,10 @@ def Authorization(passnumber):
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
         user.oid = userdata[8]
-        packet = {terminal: ''}
+        packet = {terminal: f'{user.CardNumber}'}
         for key in user_dict.keys():
             if user_dict[key].CardNumber == user.CardNumber:
-                return 'Already authorized'
+                user_dict.pop(key)
         user_dict[str(user.id)] = user
         # Отправляем в сокет сообщение о успешной авторизации
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
@@ -421,10 +421,10 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
         user.oid = userdata[8]
-        packet = {terminal: ''}
+        packet = {terminal: f'{user.CardNumber}'}
         for key in list(user_dict.keys()):
             if user_dict[key].CardNumber == user.CardNumber:
-                return 'Already authorized'
+                user_dict.pop(key)
         user_dict[str(user.id)] = user    
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
@@ -450,23 +450,31 @@ def load_user(_id):
 # Метод аутентификации пользователя и редирект на страницы в зависимости от роли
 
 
-@app.route('/Auth')
-@login_required
-def Auth():
+@app.route('/Auth/GetPass/PassNumber=<string:passnumber>')
+def Auth(passnumber):
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
-    device_tpa = TpaList[ip_addr]
-    terminal = request.remote_addr
-
-    if (current_user.role == 'Оператор'):
-        return redirect('/operator')
-    elif (current_user.role == 'Наладчик'):
-        return redirect('/adjuster')
-    elif (current_user.role == {0: 'Наладчик'}):
-        return redirect('/adjuster')
-    elif (current_user.role == {0: 'Оператор'}):
-        return redirect('/operator')
+    sql_GetDeviceType = f"""SELECT DeviceType.[Name]
+                    FROM Device, DeviceType
+                    WHERE Device.DeviceId = '{ip_addr}' AND
+                            Device.DeviceType = DeviceType.Oid
+                    """
+    device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
+    if device_type == "Терминал":
+        for key in list(user_dict.keys()):
+            if user_dict[key].CardNumber == passnumber:
+                login_user(user_dict[key])  
+        if (current_user.role == 'Оператор'):
+            return redirect('/operator')
+        elif (current_user.role == 'Наладчик'):
+            return redirect('/adjuster')
+        elif (current_user.role == {0: 'Наладчик'}):
+            return redirect('/adjuster')
+        elif (current_user.role == {0: 'Оператор'}):
+            return redirect('/operator')
+        else:
+            return redirect('/menu')
     else:
-        return redirect('/menu')
+        redirect('/')
 
 # Метод вызываемый при переходе на роутинг требующий авторизации будучи не авторизованным
 

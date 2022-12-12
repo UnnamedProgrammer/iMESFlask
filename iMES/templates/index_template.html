@@ -325,7 +325,8 @@
     socket.on('Auth',function(data) {
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0]) {
-            window.location.href = '/Auth'
+            console.log(arr[address])
+            window.location.href = `/Auth/GetPass/PassNumber=${arr[address]}`
         }
     })
 
