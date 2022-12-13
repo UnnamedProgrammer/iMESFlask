@@ -642,6 +642,10 @@ select.clip {
   .name-label_lg {
     width: 100%; }
 
+.idle_enteredData {
+  height: 300px;
+  overflow: hidden; }
+
 table .green {
   background-color: #BEF7C7; }
 

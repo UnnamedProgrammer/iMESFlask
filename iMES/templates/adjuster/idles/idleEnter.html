@@ -80,7 +80,7 @@
                             </div>
                         </div> 
                         
-                        <div class="enteredData px-3 mt-1">  
+                        <div class="idle_enteredData px-3 mt-1 jsScroll">  
                         </div> 
                     </div>
                 </div>
@@ -407,18 +407,7 @@
     <script>
         
         let idleInput = document.querySelectorAll('input.idle-data');
-        let idleWaste = document.querySelectorAll('#wasteSelect');
-        let wasteWeight = document.querySelectorAll('#wasteWeight')
-
-        let i = 0
-        let elementList = document.querySelectorAll('.waste-card')
-        
-        for(let element of elementList){
-            if(!elementList[i].classList.contains('hidden')){
-                i++
-            }
-        }
-
+        let enteredData = null
 
         // Управление модальным окном
         function modalController(event){
@@ -549,122 +538,96 @@
             }
         }
         
-        function addWaste() {
-            if(i < elementList.length){
-                if(elementList[i].classList.contains('hidden')){
-                    elementList[i].classList.remove('hidden')
-                    i++
-                }
-            }
-        }
-        
-        function deleteWaste() {
-            if(i != 1){
-                if( !elementList[i-1].classList.contains('hidden')){
-                    elementList[i-1].classList.add('hidden')
-                    let select = elementList[i-1].querySelector('#wasteSelect')
-                    let weight = elementList[i-1].querySelector('#wasteWeight')
-                    select.selectedIndex = 0
-                    weight.value = null
-                    i--
-                }
-            }
-            else if(i == 1) {
-                let select = elementList[i-1].querySelector('#wasteSelect')
-                let weight = elementList[i-1].querySelector('#wasteWeight')
-                select.selectedIndex = 0
-                weight.value = null
-            }
-        } 
-
         function addEnteredData(data,type) {
-            let parentElement = document.querySelector('.enteredData')
             let dataBlock = ''
             
             if (type == 'waste') {
                 dataBlock = `
-                <div class="waste-card mb-2 row" id="newWasteEnter" data-wasteoid = "`+ data[1][0] +`">
-                    <input type="hidden" data-producoid="`+ data[0][0] +`" value="`+ data[0][1] +`">
+                <div class="enteredData waste-card mb-2 row" id="newWasteEnter" data-proddataoid="`+ data[0][0] +`" data-materialoid = "`+ data[1][0] +`" data-wasteWeight = "`+ data[2] +`">
                     <div class="input-group p-0 me-2" style="width: 74.3%;">
                         <span class="input-group-text text-bg-primary fs-5" style="width: 90px;">Отход</span>
-                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value='`+ data[1][1] +`' disabled readonly>
+                        <input type="text" class="form-control fs-5" value='`+ data[1][1] +`' disabled readonly>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ data[2] +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" value="`+ data[2] +`" disabled readonly>
                         <span class="input-group-text" >КГ</span>
                     </div>
                     <input class="form-control form-control-lg" style="width: 11%;" type="text" value="Новый"  disabled readonly>
                 </div> `
-                $('.enteredData').append(dataBlock)
+                $('.idle_enteredData').append(dataBlock)
             }
             else if (type == 'existingWaste') {
                 data = [event.target.dataset.wasteoid, event.target.dataset.wastename, event.target.dataset.wasteweight, event.target.dataset.wastetime]
                 dataBlock = `
-                <div class="waste-card mb-2 row" data="existingWasteEnter" data-wasteoid = "`+ data[0] +`">
+                <div class="enteredData waste-card mb-2 row" id="existingWasteEnter" data-wasteoid = "`+ data[0] +`">
                     <div class="input-group p-0 me-2" style="width: 74.3%;">
                         <span class="input-group-text text-bg-primary fs-5" style="width: 90px;">Отход</span>
-                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value='`+ data[1] +`' disabled readonly>
+                        <input type="text" class="form-control fs-5" value='`+ data[1] +`' disabled readonly>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingWasteWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" value="`+ parseFloat(data[2]) +`" disabled readonly>
                         <span class="input-group-text" >КГ</span>
                     </div>
                     <input class="form-control form-control-lg" style="width: 11%;" type="text" value="`+ data[3] +`"  disabled readonly>
                 </div> `
-                $('.enteredData').append(dataBlock)
+                $('.idle_enteredData').append(dataBlock)
                 document.querySelector('#addExistingWaste').classList.toggle('hidden')
             }
             else if (type == 'existingDefect') {
                 data = [event.target.dataset.defectoid, event.target.dataset.defectproduct, event.target.dataset.defectweight, event.target.dataset.defectcount, event.target.dataset.defecttime]
                 dataBlock = `
-                <div class="waste-card mb-2 row" data="existingDefectEnter" data-defectoid = "`+ data[0] +`">
+                <div class="enteredData waste-card mb-2 row" id="existingDefectEnter" data-defectoid = "`+ data[0] +`">
                     <div class="input-group p-0 me-2" style="width: 60.3%;">
                         <span class="input-group-text text-bg-danger fs-5" style="width: 90px;">Брак</span>
-                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value='`+ data[1] +`' disabled readonly>
+                        <input type="text" class="form-control fs-5" value='`+ data[1] +`' disabled readonly>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" value="`+ parseFloat(data[2]) +`" disabled readonly>
                         <span class="input-group-text" >КГ</span>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[3]) +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" value="`+ parseFloat(data[3]) +`" disabled readonly>
                         <span class="input-group-text" >ШТ</span>
                     </div>
                     <input class="form-control form-control-lg" style="width: 11%;" type="text" value="`+ data[4] +`"  disabled readonly>
                 </div> `
-                $('.enteredData').append(dataBlock)
+                $('.idle_enteredData').append(dataBlock)
                 document.querySelector('#addExistingDefect').classList.toggle('hidden')
             }
             else if (type == 'defect') {
                 dataBlock = `
-                <div class="waste-card mb-2 row" data="newDefectEnter">
+                <div class="enteredData waste-card mb-2 row" id="newDefectEnter" data-proddataoid="`+ data[0][0] +`" data-defectcount="`+ parseFloat(data[1]) +`" data-defectweight="`+ parseFloat(data[2]) +`">
                     <div class="input-group p-0 me-2" style="width: 60.3%;">
                         <span class="input-group-text text-bg-danger fs-5" style="width: 90px;">Брак</span>
-                        <input type="hidden" data-producoid="`+ data[0][0] +`" value="`+ data[0][1] +`">
-                        <input type="text" class="form-control fs-5" id="newDefectWeight" value='`+ data[0][1] +`' disabled readonly>
+                        <input type="text" class="form-control fs-5" value='`+ data[0][1] +`' disabled readonly>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[1]) +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" value="`+ parseFloat(data[1]) +`" disabled readonly>
                         <span class="input-group-text" >ШТ</span>
                     </div>
                     <div class="input-group" style="width: 14%;">
-                        <input type="text" class="form-control fs-5" id="existingDefectWeight" value="`+ parseFloat(data[2]) +`" disabled readonly>
+                        <input type="text" class="form-control fs-5" value="`+ parseFloat(data[2]) +`" disabled readonly>
                         <span class="input-group-text" >КГ</span>
                     </div>
                     <input class="form-control form-control-lg" style="width: 11%;" type="text" value="Новый"  disabled readonly>
                 </div> `
-                $('.enteredData').append(dataBlock)
+                $('.idle_enteredData').append(dataBlock)
             }
         }
 
         // Формирования массива данных для отправки на сервер        
         $('#idleEnterForm').submit(function(e) {
             e.preventDefault();
-            let inputData = []
-            let idleData = {}
-            let wasteData = {}
-            let emptySlots = 0
-            let idleEnd
+            let inputData = [],
+            idleData = {},
+            wasteData = [],
+            existingWasteData = [],
+            defectData = [],
+            existingDefectData = [],
+            emptySlots = 0,
+            idleEnd
+
+            enteredData = document.getElementsByClassName('enteredData')
 
             let idleStart = document.getElementById('idleTime').dataset.startdate
             if ( document.getElementById('idleTime').dataset.enddate != 'None' ) {
@@ -700,15 +663,39 @@
                 "idleEnd" : idleEnd
             }
 
-            for (let i = 0; i < idleWaste.length; i++) {
-                if(idleWaste[i].selectedIndex != 0){
-                    let key = 'Waste'+i
-                    let option = idleWaste[i].options[idleWaste[i].selectedIndex]
-                    idleData[key] = option.value +','+ wasteWeight[i].value
+            for (let i = 0; i < enteredData.length; i++) {
+                if (enteredData[i].id == 'newWasteEnter') {
+                    let data = enteredData[i].dataset
+                    wasteData.push([data.proddataoid+','+data.materialoid+','+data.wasteweight])
+                }
+                else if (enteredData[i].id == 'existingWasteEnter') {
+                    let data = enteredData[i].dataset
+                    existingWasteData.push(data.wasteoid)
+                }
+                else if (enteredData[i].id == 'newDefectEnter') {
+                    let data = enteredData[i].dataset
+                    defectData.push(data.proddataoid+','+data.defectcount+','+data.defectweight)
+                }
+                else {
+                    let data = enteredData[i].dataset
+                    existingDefectData.push(data.defectoid)
                 }
             }
-
+            console.log(wasteData.length)
+            if (wasteData.length != 0) {
+                idleData['newWaste'] = wasteData
+            }           
+            if (existingWasteData.length != 0) {
+                idleData['existingWaste'] = existingWasteData
+            }
+            if (defectData.length != 0) {
+                idleData['newDefect'] = defectData
+            }
+            if (existingDefectData.length != 0) {
+                idleData['existingDefect'] = existingDefectData
+            }
             console.log(idleData)
+
         });
         //-----------------------------------------------------------------------------
 
