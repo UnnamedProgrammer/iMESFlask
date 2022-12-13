@@ -492,7 +492,16 @@
                 let oneProductData = document.querySelector('#oneProductData')
                 productData = [oneProductData.dataset.proddataoid, oneProductData.dataset.prodname]
                 document.querySelector('#optionSelect').classList.add('hidden')
-                document.getElementById('addWaste').classList.toggle('hidden')
+                
+                if(event.target.dataset.modal == 'addNewWaste') {
+                    document.getElementById('addWaste').classList.toggle('hidden')
+                } else {
+                    enter.innerHTML = 'ВВОД КОЛ.'
+                    enter.id = 'defectIdleEnterCount'
+                
+                    numberModalControl(event)
+                }
+                
             } else {
                 document.querySelector('#optionSelect').classList.add('hidden')
                 let selectProductButton = document.querySelectorAll('#selectProductButton')
