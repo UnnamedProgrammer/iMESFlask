@@ -25,7 +25,8 @@
     {% set current_product = somedata[7] %}
     {% set existing_defect = somedata[8] %}
 
-    {% if downtimeData[0][3] != None %}
+
+    {% if downtimeData[3] != None %}
         {% set idleTime = downtimeData[0][3] - downtimeData[0][2] %}
     {% endif %}
 
@@ -37,6 +38,7 @@
         <div class="view-body_idleEnter">
             <form action="" class="idle-form" id="idleEnterForm">
                 <div class="idle-form__body mt-2">
+                    <input type="hidden" id="idleOid" value="{{downtimeData[0][0]}}">
                     <div class="row">
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Прошло времени</span>
@@ -166,8 +168,8 @@
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleDescription" size="15">
-                            {% for takenMeasure in takenMeasures %}
-                                <option value="{{ takenMeasure[0] }}"> {{ takenMeasure[1] }} </option>
+                            {% for description in malfunctionDescription %}
+                                <option value="{{ description[0] }}"> {{ description[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -192,8 +194,8 @@
                 <div class="modal_content" style="height: 90%;">
                     <div class="modal_body"> 
                         <select class="custom-select jsScroll" id="idleTakenMeasures" size="15">
-                            {% for description in malfunctionDescription %}
-                                <option value="{{ description[0] }}"> {{ description[1] }} </option>
+                            {% for takenMeasure in takenMeasures %}
+                                <option value="{{ takenMeasure[0] }}"> {{ takenMeasure[1] }} </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -229,7 +231,7 @@
                                 {% for products in current_product %}
                                     <tr>
                                         <td class="nopadding table__button col-3">
-                                            <button type="button" class="btn__table" id="selectProductButton" data-target="" data-modal="" data-proddataoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
+                                            <button type="button" class="btn__table btn__table_dark" id="selectProductButton" data-target="" data-modal="" data-proddataoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
                                         </td>
                                         <td> {{ products[1] }} </td>
                                     </tr>
@@ -279,7 +281,7 @@
                                 {% for i in range(all_wastes|length) %}
                                     <tr>
                                         <td class="nopadding table__button col-3">
-                                            <button type="button" class="btn__table" id="addWaste" data-wasteoid="{{ all_wastes[i][0] }}" data-wastename="{{ all_wastes[i][1] }}" onClick="selectIdleWaste(event)">Выбрать</button>
+                                            <button type="button" class="btn__table btn__table_dark" id="addWaste" data-wasteoid="{{ all_wastes[i][0] }}" data-wastename="{{ all_wastes[i][1] }}" onClick="selectIdleWaste(event)">Выбрать</button>
                                         </td>
                                         <td>{{ all_wastes[i][1] }}</td>
                                     </tr>
@@ -618,6 +620,8 @@
         // Формирования массива данных для отправки на сервер        
         $('#idleEnterForm').submit(function(e) {
             e.preventDefault();
+            let idleOid = document.querySelector('#idleOid').value
+
             let inputData = [],
             idleData = {},
             wasteData = [],
@@ -653,6 +657,7 @@
             }
 
             idleData = {
+                "idleOid": idleOid,
                 "creatorOid": inputData[0],
                 "idleType": inputData[1],
                 "idleCause": inputData[2],
@@ -681,7 +686,7 @@
                     existingDefectData.push(data.defectoid)
                 }
             }
-            console.log(wasteData.length)
+
             if (wasteData.length != 0) {
                 idleData['newWaste'] = wasteData
             }           
@@ -694,7 +699,13 @@
             if (existingDefectData.length != 0) {
                 idleData['existingDefect'] = existingDefectData
             }
-            console.log(idleData)
+
+            console.log(emptySlots)
+
+            if(emptySlots == 0) {
+                let socket = io();
+                socket.emit('idleEnterFixing', idleData);
+            }
 
         });
         //-----------------------------------------------------------------------------
