@@ -25,23 +25,26 @@ def adjuster():
 def adjusterJournal():
     ip_addr = request.remote_addr
     
-    # Получение журнала простоев (не зафиксированных/системных)
-    sql_GetDowntimeJournal = f""" SELECT [Oid],[Equipment],[StartDate],[EndDate],[Status]
-                                    FROM [MES_Iplast].[dbo].[DowntimeJournal]
-                                    WHERE [Equipment] = '{current_tpa[ip_addr][0]}'
-                                    AND [Status] = 0
+    # Получение журнала простоев
+    sql_GetDowntimeJournal = f""" SELECT [DF].[Oid],[DF].[Equipment],
+                                        [DF].[StartDate],
+                                        [DF].[EndDate],
+                                    	[MCause].[Name] AS [Cause],
+                                        [MDesc].[Name] AS [Description],
+                                        [TM].[Name] AS [TakenMeasures],
+                                    	[DF].[Note],[DF].[CreateDate],
+                                        [UserName].[LastName],[UserName].[FirstName],[UserName].[MiddleName]
+                                    FROM [MES_Iplast].[dbo].[DowntimeFailure] AS [DF]
+                                    LEFT JOIN [MES_Iplast].[dbo].[MalfunctionCause] AS [MCause] ON [DF].[MalfunctionCause] = [MCause].[Oid]
+                                    LEFT JOIN [MES_Iplast].[dbo].[MalfunctionDescription] AS [MDesc] ON [DF].[MalfunctionDescription] = [MDesc].[Oid]
+                                    LEFT JOIN [MES_Iplast].[dbo].[TakenMeasures] AS [TM] ON [DF].[TakenMeasures] = [TM].[Oid]
+                                    LEFT JOIN [MES_Iplast].[dbo].[User] AS [User] ON [DF].[Creator] = [User].[Oid]
+                                    LEFT JOIN [MES_Iplast].[dbo].[Employee] AS [UserName] ON [User].[Employee] = [UserName].[Oid]
+                                    WHERE [DF].[Equipment] = '{current_tpa[ip_addr][0]}'
                                     ORDER BY [StartDate] DESC """
     downtimeJournal = SQLManipulator.SQLExecute(sql_GetDowntimeJournal)
     
-    # Получение журнала зафиксированных простоев
-    sql_GetFixedDowntimeJournal = f""" SELECT [Oid],[Equipment],[StartDate],[EndDate],[DowntimeType],[MalfunctionCause],
-                                                [MalfunctionDescription],[TakenMeasures],[Note],[CreateDate],[Creator]
-                                                FROM [MES_Iplast].[dbo].[DowntimeFailure]
-                                                WHERE [Equipment] = '{current_tpa[ip_addr][0]}'
-                                                ORDER BY [StartDate] DESC"""
-    fixedDowntimeJournal = SQLManipulator.SQLExecute(sql_GetFixedDowntimeJournal)
-    
-    return CheckRolesForInterface('Наладчик', 'adjuster/journal.html', [ downtimeJournal, fixedDowntimeJournal ])
+    return CheckRolesForInterface('Наладчик', 'adjuster/journal.html', downtimeJournal)
 
 # Фиксация простоя
 
@@ -53,10 +56,12 @@ def adjusterIdleEnter():
     ip_addr = request.remote_addr
         
     # Получение данных о простое
-    sql_GetDowntimeData = f""" SELECT [Oid],[Equipment],[StartDate],[EndDate],[Status]
-                                    FROM [MES_Iplast].[dbo].[DowntimeJournal]
+    sql_GetDowntimeData = f"""  SELECT [Oid],[Equipment],[StartDate],[EndDate],[DowntimeType],
+                                        [MalfunctionCause],[MalfunctionDescription],[TakenMeasures],
+                                        [Note],[CreateDate],[Creator]
+                                    FROM [MES_Iplast].[dbo].[DowntimeFailure]
                                     WHERE [Oid] = '{idleOid[0]}'
-                                    AND [Status] = 0 """
+                                    ORDER BY [StartDate] DESC """
     downtimeData = SQLManipulator.SQLExecute(sql_GetDowntimeData)
     
     # Получение типа простоев
@@ -129,6 +134,62 @@ def adjusterIdleEnter():
     existing_defect = SQLManipulator.SQLExecute(sql_GetExistingDefect)
     
     return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes, existing_wastes, current_product, existing_defect])
+
+
+# Ввод данных о фиксации простоя в БД
+@socketio.on('idleEnterFixing')
+def idleEnterFixing(data):
+    
+    # Добавление новой записи в DowntimeFailure (зафиксированный простой)
+    SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
+                                    SET [DowntimeType] = '{data['idleType']}',
+                                        [MalfunctionCause] = '{data['idleCause']}',
+                                        [MalfunctionDescription] = '{data['idleDescription']}',
+                                        [TakenMeasures] = '{data['idleTakenMeasures']}',
+                                        [Note] = '{data['idleNote']}',
+                                        [CreateDate] = GETDATE(),
+                                        [Creator] = '{data['creatorOid']}'
+                                    WHERE [Oid] = '{data['idleOid']}' """)
+    
+    # Добавление нового отхода и привязки к простою
+    if len(data['newWaste']) != 0:  
+        for i in range(len(data['newWaste'])):
+            newWaste = data['newWaste'][i][0].split(',')
+            print(newWaste)
+            SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
+                                                ([ProductionData],[Material],[Type],[Weight],
+                                                [Downtime],[CreateDate],[Creator])
+                                            VALUES 
+                                                ('{newWaste[0]}', '{newWaste[1]}', 0, '{newWaste[2]}',
+                                                '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
+    
+    # Добавление нового брака и привязки к простою        
+    if len(data['newDefect']) != 0:  
+         for i in range(len(data['newDefect'])):
+            newDefect = data['newDefect'][i].split(',')
+            print(newDefect)
+            SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
+                                                ([ProductionData],[Type],[Weight],[Count],
+                                                [Downtime],[CreateDate],[Creator])
+                                            VALUES 
+                                                ('{newDefect[0]}', 1, '{newDefect[1]}', '{newDefect[2]}',
+                                                '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
+
+    # Привязку существующего отхода к простою
+    if len(data['existingWaste']) != 0:
+        for i in range(len(data['existingWaste'])):
+            print(data['existingWaste'][i])
+            SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]   
+                                            SET [Downtime] = '{data['idleOid']}',
+                                            WHERE [Oid] = '{data['existingWaste'][i]}' """)
+    
+    # Привязку существующего брака к простою
+    if len(data['existingDefect']) != 0:
+        for i in range(len(data['existingDefect'])):
+            print(data['existingDefect'][i])
+            SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]
+                                            SET [Downtime] = '{data['idleOid']}',
+                                            WHERE [Oid] = '{data['existingDefect'][i]}' """)
 
 
 # Сырье до конца выпуска

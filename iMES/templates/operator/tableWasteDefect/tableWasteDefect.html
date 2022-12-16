@@ -135,7 +135,7 @@
                             {% for products in current_product %}
                                 <tr>
                                     <td class="nopadding table__button col-3">
-                                        <button type="button" class="btn__table" id="selectProductButton" data-target="" data-proddataoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
+                                        <button type="button" class="btn__table btn__table_dark" id="selectProductButton" data-target="" data-proddataoid="{{ products[0] }}" data-prodname="{{ products[1] }}" onClick="selectProduct(event)">Выбрать</button>
                                     </td>
                                     <td> {{ products[1] }} </td>
                                 </tr>
@@ -153,7 +153,7 @@
     <!-- ----------------------------------------------------------- -->
 
     <!-- Модальное (всплывающее) окно выбора отхода -->
-    <div class="modal hidden" id="addWaste">
+     <div class="modal hidden" id="addWaste">
         <div class="modal__list">
             <div class="modal_header">
                 <h5 class="modal_title">Список отходов</h5>
@@ -171,7 +171,7 @@
                             {% for i in range(all_wastes|length) %}
                                 <tr>
                                     <td class="nopadding table__button col-3">
-                                        <button type="button" class="btn__table" id="addWaste" data-wasteoid="{{ all_wastes[i][0] }}" data-wastename="{{ all_wastes[i][1] }}" onClick="selectWaste(event)">Выбрать</button>
+                                        <button type="button" class="btn__table btn__table_dark" id="addWaste" data-wasteoid="{{ all_wastes[i][0] }}" data-wastename="{{ all_wastes[i][1] }}" onClick="selectWaste(event)">Выбрать</button>
                                     </td>
                                     <td>{{ all_wastes[i][1] }}</td>
                                 </tr>
@@ -185,7 +185,7 @@
             </div>
         </div>
         <div class="bg-blur"></div>
-    </div>
+    </div> 
     <!-- ----------------------------------------------------------- -->
 
 </div>

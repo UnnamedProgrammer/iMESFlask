@@ -55,7 +55,8 @@ function numberModalControl(event){
                 $(table).find('tbody').append('<tr> <td id="defectProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="red"> Брак </td> <td id="defectCount">'+ defectCount +'</td> <td id="defectWeight">'+ defectWeight +'<td></td> <td>'+ clock +'</td> <td>'+ current_user +'</td> </tr>'); // Добавление новой строки в таблицу
             }
 
-            else if (enter.id == 'productWeight') {
+            else if (enter.id == 'productWeight')
+            {
                 productWeight = display.textContent;
                 let entered_weight = document.getElementById('inputWeight').textContent;
                 let socket = io();
@@ -64,12 +65,28 @@ function numberModalControl(event){
                 $(table).find('tbody').append('<tr> <td id="weightProductData" data-proddataoid="'+ productData[0] +'">'+ productData[1] +'</td> <td class="green" id="productWeightData">'+ productWeight +'</td> <td>'+clock+'</td> <td>'+ current_user +'</td> </tr>');
             }
 
-            else if (enter.id = 'addIdleWasteWeight') {
+            else if(enter.id == 'defectIdleEnterCount')
+            {
+                defectCount = display.textContent;
+                enter.innerHTML = 'ВВОД КГ.'
+                enter.id = 'defectIdleEnterWeight';
+                numberModalControl(event);
+            }
+
+            else if(enter.id == 'defectIdleEnterWeight')
+            {
+                defectWeight = display.textContent;
+                enter.id = 'defectEnterCount';
+                data = [productData, defectWeight, defectCount]
+                addEnteredData(data, 'defect')
+            }
+
+            else if (enter.id = 'addIdleWasteWeight')
+            {
                 let enteredWasteWeight = document.getElementById('inputDefect').textContent;
                 let data = [productData, wasteData, enteredWasteWeight]
                 addEnteredData(data,'waste')
-
-            }
+            } 
 
             else if(event.target.tagName == 'INPUT')
             {
@@ -109,6 +126,13 @@ function selectProduct(event) {
 
     else if (event.target.dataset.target == 'addIdleWaste'){
         document.getElementById('addWaste').classList.toggle('hidden')
+    }
+    
+    else if (event.target.dataset.target == 'addIdleDefect'){
+        enter.id = 'defectIdleEnterCount'
+        enter.innerHTML = 'ВВОД КОЛ.'
+        numberModalControl(event)
+        event.target.dataset.target = ''
     }
 
     else {
