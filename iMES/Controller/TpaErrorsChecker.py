@@ -8,18 +8,25 @@ class TpaErrorsChecker(BaseObjectModel):
     """
     def __init__(self, _app,_tpaoid) -> None:
         BaseObjectModel.__init__(self,_app)
+        self.app_link = _app
         self.errors: list = []
         self.block_downtime: bool = False
         self.tpaoid: str = _tpaoid
         self.current_downtime_oids: list = []
-
+        self.system_user = self.SQLExecute("""
+            SELECT [Oid] FROM [User] WHERE UserName = 'mes.system'
+        """)
+        if len(self.system_user) > 0:
+            self.system_user = self.system_user[0][0]
+        else:
+            self.system_user = None
         self.error_string_const = "УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ."
     
     def _update_downtime_list(self):
         fail_list = self.SQLExecute(f"""
             SELECT [Oid], StartDate 
-            FROM [MES_Iplast].[dbo].[DowntimeJournal]
-            WHERE Status = 0 AND Equipment = '{self.tpaoid}'
+            FROM [MES_Iplast].[dbo].[DowntimeFailure]
+            WHERE Creator = '{self.system_user}' AND Equipment = '{self.tpaoid}'
         """)
         if len(fail_list) > 0:
             self.current_downtime_oids.clear()
@@ -49,7 +56,7 @@ class TpaErrorsChecker(BaseObjectModel):
         time = date.strftime('%Y-%m-%dT%H:%M:%S')
         sql = self.SQLExecute(f"""
             SELECT [Oid],Equipment
-            FROM [MES_Iplast].[dbo].[DowntimeJournal]
+            FROM [MES_Iplast].[dbo].[DowntimeFailure]
             WHERE StartDate = '{time}'
             """
         )
@@ -61,10 +68,42 @@ class TpaErrorsChecker(BaseObjectModel):
 
     def _create_downtime(self,date) -> None:
         time = date.strftime('%Y-%m-%dT%H:%M:%S')
-        self.SQLExecute(f"""
-        INSERT INTO [DowntimeJournal](Oid, Equipment, StartDate, EndDate, Status) 
-        VALUES (NEWID(), '{self.tpaoid}','{time}',NULL,0)
-        """)
+        if len(self.system_user) > 0:
+            dowtime_type = self.SQLExecute("""
+                SELECT [Oid] FROM DowntimeType WHERE Name = 'Не задан'
+            """)
+            if len(dowtime_type) > 0:
+                dowtime_type = dowtime_type[0][0]
+                self.SQLExecute(f"""
+                    INSERT INTO DowntimeFailure (Oid,
+                                    Equipment,
+                                    StartDate,
+                                    EndDate,
+                                    DowntimeType,
+                                    MalfunctionCause,
+                                    MalfunctionDescription,
+                                    TakenMeasures,
+                                    Note,
+                                    CreateDate,
+                                    Creator)
+                    VALUES (NEWID(),
+                            '{self.tpaoid}',
+                            '{time}',
+                            NULL,
+                            '{dowtime_type}',
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            '{time}',
+                            '{self.system_user}')
+                """)
+                return True
+            else:
+                self.app.logger.warning(f"[{datetime.now()}] Тип простоя 'Не задан' отсутсвует, операция отменена.")
+        else:
+            self.app.logger.warning(f"[{datetime.now()}] Отсутсвует системный пользователь, операция отменена.")
+        return False
 
     def Check_Downtime(self,tpaoid) -> bool:
         if tpaoid == None or tpaoid == '':
@@ -86,14 +125,14 @@ class TpaErrorsChecker(BaseObjectModel):
             seconds = (current_date - last_closure_date).total_seconds()
             if seconds >= 400:
                 if not self._is_downtime_created(last_closure_date):
-                    self._create_downtime(last_closure_date)
-                    if not self._is_message_in_errors(error=self.error_string_const):
-                        self._add_error_message(self.error_string_const,last_closure_date) 
+                    if self._create_downtime(last_closure_date):
+                        if not self._is_message_in_errors(error=self.error_string_const):
+                            self._add_error_message(self.error_string_const,last_closure_date) 
                 return False
             else:
                 if len(self.current_downtime_oids) > 0:
                     self.SQLExecute(f"""
-                        UPDATE [DowntimeJournal]
+                        UPDATE [DowntimeFailure]
                         SET EndDate = '{datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}'
                         WHERE Oid = '{self.current_downtime_oids[0]}'
                     """)

@@ -26,6 +26,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.ProductCount = 0
         self.wastes = (0,)
         self.shift_tasks_traits = ()
+        self.specifications = []
         
     @property
     def pressform(self):
@@ -91,6 +92,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             production_plan = []
             plan_weight = []
             traits = []
+            specs = []
             for shift_task in data:
                 st_oid.append(shift_task[0])
                 product_list.append(shift_task[4])
@@ -99,7 +101,9 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 plan_weight.append(f"{float(shift_task[13]):.{2}f}")
                 self.shift = shift_task[1]
                 self.PackingURL = shift_task[15]
+                specs.append(shift_task[5])
 
+            self.specifications = specs            
             self.shift_task_oid = st_oid
             self.product = tuple(product_list)
             self.production_plan = tuple(production_plan)

@@ -1,4 +1,3 @@
-from email import header
 from iMES import socketio
 from iMES import app
 from iMES import UserController
@@ -321,7 +320,7 @@ def Authorization(passnumber):
         user.interfaces = userdata[7]
         user.oid = userdata[8]
         packet = {terminal: f'{user.CardNumber}'}
-        for key in user_dict.keys():
+        for key in list(user_dict.keys()):
             if user_dict[key].CardNumber == user.CardNumber:
                 user_dict.pop(key)
         user_dict[str(user.id)] = user
