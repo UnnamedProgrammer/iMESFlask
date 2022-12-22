@@ -196,6 +196,9 @@ def idleEnterFixing(data):
 @app.route('/adjuster/RawMaterials')
 @login_required
 def adjusterRawMaterials():
+    ip_addr = request.remote_addr
+    # current_tpa[ip_addr][2].specifications
+    print(current_tpa[ip_addr][2].specifications)
     return CheckRolesForInterface('Наладчик', 'adjuster/rawMaterials.html')
 
 
@@ -233,11 +236,15 @@ def adjusterWasteDefectFix():
                 current_material = [['']]
 
 
-            waste_defect_info.append([current_product_waste[product_waste_quantity][1], current_product_waste[product_waste_quantity][2],
-                                current_material[0][0], f'{current_product_waste[product_waste_quantity][3]:.0f}' if current_product_waste[product_waste_quantity][3] else '', 
-                                f'{current_product_waste[product_waste_quantity][4]:.3f}', str(current_product_waste[product_waste_quantity][6].strftime('%d.%m.%Y %H:%M:%S')), 
-                                f'{current_product_waste[product_waste_quantity][7]} {current_product_waste[product_waste_quantity][8]} {current_product_waste[product_waste_quantity][9]}',
-                                current_product_waste[product_waste_quantity][5] if current_product_waste[product_waste_quantity][5] else '', current_product_waste[product_waste_quantity][10]])
+            waste_defect_info.append([current_product_waste[product_waste_quantity][1], 
+                                        current_product_waste[product_waste_quantity][2],
+                                        current_material[0][0], 
+                                        f'{current_product_waste[product_waste_quantity][3]:.0f}' if current_product_waste[product_waste_quantity][3] else '', 
+                                        f'{current_product_waste[product_waste_quantity][4]:.3f}', 
+                                        str(current_product_waste[product_waste_quantity][6].strftime('%d.%m.%Y %H:%M:%S')), 
+                                        f'{current_product_waste[product_waste_quantity][7]} {current_product_waste[product_waste_quantity][8]} {current_product_waste[product_waste_quantity][9]}',
+                                        current_product_waste[product_waste_quantity][5] if current_product_waste[product_waste_quantity][5] else '', 
+                                        current_product_waste[product_waste_quantity][10]])
     # Если за смену вес никто не вводил, то формируем пустой массив
     else:
         waste_defect_info = list()

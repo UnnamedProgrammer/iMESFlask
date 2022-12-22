@@ -101,7 +101,13 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 plan_weight.append(f"{float(shift_task[13]):.{2}f}")
                 self.shift = shift_task[1]
                 self.PackingURL = shift_task[15]
-                specs.append(shift_task[5])
+                spec_code = self.SQLExecute(f"""
+                    SELECT [Code]
+                        FROM [MES_Iplast].[dbo].[ProductSpecification]
+                        WHERE Oid = '{shift_task[5]}'
+                """)
+                if len(spec_code) > 0:
+                    specs.append((spec_code[0][0])[2:])
 
             self.specifications = specs            
             self.shift_task_oid = st_oid
