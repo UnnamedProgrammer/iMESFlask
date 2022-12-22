@@ -6,6 +6,7 @@ from flask_login import login_required, current_user
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES import user_dict
+import json
 
 # Метод возвращает окно наладчика
 
@@ -139,7 +140,7 @@ def adjusterIdleEnter():
 # Ввод данных о фиксации простоя в БД
 @socketio.on('idleEnterFixing')
 def idleEnterFixing(data):
-    
+    ip_addr = request.remote_addr
     # Добавление новой записи в DowntimeFailure (зафиксированный простой)
     SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
                                     SET [DowntimeType] = '{data['idleType']}',
@@ -152,44 +153,51 @@ def idleEnterFixing(data):
                                     WHERE [Oid] = '{data['idleOid']}' """)
     
     # Добавление нового отхода и привязки к простою
-    if len(data['newWaste']) != 0:  
-        for i in range(len(data['newWaste'])):
-            newWaste = data['newWaste'][i][0].split(',')
-            print(newWaste)
-            SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
-                                                ([ProductionData],[Material],[Type],[Weight],
-                                                [Downtime],[CreateDate],[Creator])
-                                            VALUES 
-                                                ('{newWaste[0]}', '{newWaste[1]}', 0, '{newWaste[2]}',
-                                                '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
+    idle_key_list = list(data.keys())
+    if 'newWaste' in idle_key_list:
+        if len(data['newWaste']) != 0:  
+            for i in range(len(data['newWaste'])):
+                newWaste = data['newWaste'][i][0].split(',')
+                print(newWaste)
+                SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
+                                                    ([ProductionData],[Material],[Type],[Weight],
+                                                    [Downtime],[CreateDate],[Creator])
+                                                VALUES 
+                                                    ('{newWaste[0]}', '{newWaste[1]}', 0, '{newWaste[2]}',
+                                                    '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
     
-    # Добавление нового брака и привязки к простою        
-    if len(data['newDefect']) != 0:  
-         for i in range(len(data['newDefect'])):
-            newDefect = data['newDefect'][i].split(',')
-            print(newDefect)
-            SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
-                                                ([ProductionData],[Type],[Weight],[Count],
-                                                [Downtime],[CreateDate],[Creator])
-                                            VALUES 
-                                                ('{newDefect[0]}', 1, '{newDefect[1]}', '{newDefect[2]}',
-                                                '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
+    # Добавление нового брака и привязки к простою
+    if 'newDefect' in idle_key_list:        
+        if len(data['newDefect']) != 0:  
+            for i in range(len(data['newDefect'])):
+                newDefect = data['newDefect'][i].split(',')
+                print(newDefect)
+                SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
+                                                    ([ProductionData],[Type],[Weight],[Count],
+                                                    [Downtime],[CreateDate],[Creator])
+                                                VALUES 
+                                                    ('{newDefect[0]}', 1, '{newDefect[1]}', '{newDefect[2]}',
+                                                    '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
 
     # Привязку существующего отхода к простою
-    if len(data['existingWaste']) != 0:
-        for i in range(len(data['existingWaste'])):
-            print(data['existingWaste'][i])
-            SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]   
-                                            SET [Downtime] = '{data['idleOid']}',
-                                            WHERE [Oid] = '{data['existingWaste'][i]}' """)
-    
+    if 'existingWaste' in idle_key_list:
+        if len(data['existingWaste']) != 0:
+            for i in range(len(data['existingWaste'])):
+                print(data['existingWaste'][i])
+                SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]   
+                                                SET [Downtime] = '{data['idleOid']}',
+                                                WHERE [Oid] = '{data['existingWaste'][i]}' """)
+        
     # Привязку существующего брака к простою
-    if len(data['existingDefect']) != 0:
-        for i in range(len(data['existingDefect'])):
-            print(data['existingDefect'][i])
-            SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]
-                                            SET [Downtime] = '{data['idleOid']}',
-                                            WHERE [Oid] = '{data['existingDefect'][i]}' """)
+    if 'existingDefect' in idle_key_list:
+        if len(data['existingDefect']) != 0:
+            for i in range(len(data['existingDefect'])):
+                print(data['existingDefect'][i])
+                SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]
+                                                SET [Downtime] = '{data['idleOid']}',
+                                                WHERE [Oid] = '{data['existingDefect'][i]}' """)
+    
+    socketio.emit("IdleEntered", data=json.dumps({ip_addr: ''}),ensure_ascii=False, indent=4)
 
 
 # Сырье до конца выпуска

@@ -26,7 +26,7 @@
     {% set existing_defect = somedata[8] %}
 
 
-    {% if downtimeData[3] != None %}
+    {% if downtimeData[0][3] != None %}
         {% set idleTime = downtimeData[0][3] - downtimeData[0][2] %}
     {% endif %}
 
@@ -704,7 +704,14 @@
 
             if(emptySlots == 0) {
                 let socket = io();
+                let address = "{{request.remote_addr}}";
                 socket.emit('idleEnterFixing', idleData);
+                socket.on('IdleEntered', function (data) {
+                    arr = JSON.parse(data)
+                    if (address == Object.keys(arr)[0]) {
+                        window.location.href = '/adjuster/journal'
+                    }
+                });
             }
 
         });
