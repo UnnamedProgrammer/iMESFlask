@@ -3,7 +3,6 @@
 import requests
 import json
 from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
-from progress.bar import IncrementalBar
 from iMES.Model.BaseObjectModel import BaseObjectModel
 import datetime
 from iMES import app

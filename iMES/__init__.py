@@ -32,7 +32,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 from iMES.Model.BaseObjectModel import BaseObjectModel
 Initiator = BaseObjectModel(app)
-socketio = SocketIO(app)
+socketio = SocketIO(app,async_handlers=True)
 
 # Подключение менеджера авторизации
 login_manager = LoginManager()

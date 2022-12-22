@@ -7,3 +7,4 @@ Directum/
 *.log
 log/
 config.cfg
+requirements.txt
