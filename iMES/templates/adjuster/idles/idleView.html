@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/preload.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/icons.css') }}">
+    <title>TERMINAL IPLAST</title>
+</head>
+<body ondragstart="event.preventDefault()" ondrop="event.preventDefault()">
+    <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
+    <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
+    
+    {% set downtimeData = somedata %}
+    
+    {% if downtimeData[0][2] != None %}
+        {% set idleTime = downtimeData[0][2] - downtimeData[0][1] %}
+    {% endif %}
+
+    <div class="notice notice-error" style="display: none;">
+        Ошибка!
+    </div>
+    <div class="view">
+        <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
+        <div class="view-body_idleEnter">
+            <form action="" class="idle-form" id="idleEnterForm">
+                <div class="idle-form__body mt-2">
+                    <div class="row">
+                        <div class="input-group mb-2 input-group_double">
+                            <span class="input-group-text input-group-text_idle input-group-text_green">Прошло времени</span>
+                            <input type="text" class="form-control form-control_idle" value="" placeholder="Время простоя" readonly>
+                        </div>
+                        <div class="input-group mb-2 input-group_double">
+                            <span class="input-group-text input-group-text_idle input-group-text_green">Наладчик</span>
+                            <input type="text" class="form-control form-control_idle" value="{{ downtimeData[0][9] }} {{ downtimeData[0][8] }} {{ downtimeData[0][10] }}" placeholder="Ф.И.О Наладчика" readonly>
+                        </div>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Тип простоя</span> 
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][3] }}" readonly>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Причина неисправности</span> 
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][4] }}" readonly>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Описание неисправности</span>
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][5] }}" readonly>  
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Предпринятые меры</span>
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][6] }}" readonly>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Комментарий</span>
+                        <input type="text" class="form-control form-control_idle idle-data use-keyboard-input" value="{{ downtimeData[0][7] }}" readonly>
+                    </div>
+
+                    <div class="idle-form__body_waste mt-4">
+                        <div class="idle_enteredData px-3 mt-1 jsScroll">  
+                        </div> 
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between px-3 pb-4">
+                    <button type="button" class="btn btn__view btn__view_journal secondary fs-1" onclick="location.href='/adjuster/journal'">
+                        Выход
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/static/js/keyboard.js"></script>
+    <script src="/static/js/numberModal.js"></script>
+    <script>
+        
+        //-----------------------------------------------------------------------------
+
+        let jsScroll = document.getElementsByClassName('jsScroll');
+
+        if(jsScroll){
+            [].forEach.call(jsScroll, function(item) {
+                let startX, startY;
+                let listener = function(e) {
+                    startX = this.scrollLeft + e.pageX;
+                    startY = this.scrollTop + e.pageY;
+                    item.addEventListener('mousemove', endListener);
+                };
+            
+                let endListener = function(e) {
+                    this.scrollLeft = startX - e.pageX;
+                    this.scrollTop = startY - e.pageY;
+                    return false;
+                };
+            
+                item.addEventListener('mousedown', listener);
+            
+                window.addEventListener("mouseup", function(){ 
+                    item.removeEventListener('mousemove', endListener);
+                });
+            });
+        }
+
+        function showError(text) {
+            let errorObject = document.querySelector('.notice-error')
+            errorObject.innerHTML = text
+            errorObject.style.display = 'block'
+            setTimeout(function(){
+                errorObject.style.display = 'none'
+            },3000);
+        }
+    </script>
+</body>
+</html>

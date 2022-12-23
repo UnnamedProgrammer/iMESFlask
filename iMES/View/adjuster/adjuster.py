@@ -199,6 +199,25 @@ def idleEnterFixing(data):
     
     socketio.emit("IdleEntered", data=json.dumps({ip_addr: ''}),ensure_ascii=False, indent=4)
 
+@app.route('/adjuster/journal/idleView')
+@login_required
+def adjusterIdleView():
+    idleOid = request.args.getlist('oid')
+    
+    sql_GetIdleData = f""" SELECT   [DF].[Oid],[DF].[StartDate], [DF].[EndDate], [Type].[Name],
+                                    [Cause].[Name] AS [Cause], [Desc].[Name] AS [Desc], [TakenMeasures].[Name], [Note],                             
+                                    [Employee].[FirstName],[Employee].[LastName],[Employee].[MiddleName]
+                            FROM [MES_Iplast].[dbo].[DowntimeFailure] AS [DF]
+                            LEFT JOIN [MES_Iplast].[dbo].[DowntimeType] AS [Type] ON [DF].[DowntimeType] = [Type].[Oid]
+                            LEFT JOIN [MES_Iplast].[dbo].[MalfunctionCause] AS [Cause] ON [DF].[MalfunctionCause] = [Cause].[Oid]
+                            LEFT JOIN [MES_Iplast].[dbo].[MalfunctionDescription] AS [Desc] ON [DF].[MalfunctionDescription] = [Desc].[Oid]
+                            LEFT JOIN [MES_Iplast].[dbo].[TakenMeasures] AS [TakenMeasures] ON [DF].[TakenMeasures] = [TakenMeasures].[Oid]
+                            LEFT JOIN [MES_Iplast].[dbo].[User] AS [User] ON [DF].[Creator] = [User].[Oid]
+                            LEFT JOIN [MES_Iplast].[dbo].[Employee] AS [Employee] ON [User].[Employee] = [Employee].[Oid]
+                            WHERE [DF].[Oid] = '{idleOid[0]}' """
+    idleData = SQLManipulator.SQLExecute(sql_GetIdleData)
+    
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleView.html', idleData)
 
 # Сырье до конца выпуска
 @app.route('/adjuster/RawMaterials')
