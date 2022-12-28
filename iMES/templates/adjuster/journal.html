@@ -37,7 +37,7 @@
                     {% for downtime in downtimeJournal %}
                         {% if downtime[9] != None%}
                             <tr>
-                                <td class="align-middle" id="{{ downtime[0] }}">
+                                <td class="align-middle idle-entered" id="{{ downtime[0] }}">
                                     <input class="big-checkbox" type="checkbox">
                                 </td>
                                 <td class="align-middle red">Простой</td>
@@ -108,10 +108,13 @@
         if (!cell) {return;}
         const row = cell.parentElement;
         let idleOid = row.cells[0].id // Получение ID первой ячейки (он же Oid простоя)
-        let idleStart =  row.cells[2].innerText // Дата начала простоя
-        let idleEnd =  row.cells[2].innerText // Дата конца простоя
-
-        window.location.href='/adjuster/journal/idleEnter?oid='+idleOid
+        console.log(row.cells[0].classList.contains('idle-entered'))
+        if (!row.cells[0].classList.contains('idle-entered')) {
+            window.location.href='/adjuster/journal/idleEnter?oid='+idleOid
+        } else {
+            window.location.href='/adjuster/journal/idleView?oid='+idleOid
+        }
+        
     });
 
     trCheck = document.getElementsByClassName('tr-check')
