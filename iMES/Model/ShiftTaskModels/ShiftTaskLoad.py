@@ -507,7 +507,7 @@ class ShiftTaskLoader(BaseObjectModel):
                                 WHERE EquipmentPerformance = '{finded_ep[0][0]}' AND
                                 Product = '{product_oid}' AND 
                                 SocketCount = {int(ep['SocketCount'])} AND
-                                Cycle = {int(ep['Cycle'])} 
+                                Cycle = {float(ep['Cycle'].replace(',','.'))} 
                             """
                             relation_product_ep = self.SQLExecute(check_relation_product_ep_sql)
                             if (len(relation_product_ep) > 0):
@@ -515,7 +515,7 @@ class ShiftTaskLoader(BaseObjectModel):
                             else:
                                 insert_rel_ep_sql = f"""
                                     INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
-                                    VALUES ('{finded_ep[0][0]}','{product_oid}',{int(ep['SocketCount'])},{int(ep['Cycle'])})
+                                    VALUES ('{finded_ep[0][0]}','{product_oid}',{int(ep['SocketCount'])},{float(ep['Cycle'].replace(',','.'))})
                                 """
                                 self.SQLExecute(insert_rel_ep_sql)
                         else:
@@ -550,7 +550,7 @@ class ShiftTaskLoader(BaseObjectModel):
                                 WHERE EquipmentPerformance = '{ep_oid}' AND
                                 Product = '{product_oid}' AND 
                                 SocketCount = {int(ep['SocketCount'])} AND
-                                Cycle = {int(ep['Cycle'])} 
+                                Cycle = {float(ep['Cycle'].replace(',','.'))} 
                             """
                             relation_product_ep = self.SQLExecute(check_relation_product_ep_sql)
                             if (len(relation_product_ep) > 0):
@@ -558,7 +558,7 @@ class ShiftTaskLoader(BaseObjectModel):
                             else:
                                 insert_rel_ep_sql = f"""
                                     INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
-                                    VALUES ('{ep_oid}','{product_oid}',{int(ep['SocketCount'])},{int(ep['Cycle'])})
+                                    VALUES ('{ep_oid}','{product_oid}',{int(ep['SocketCount'])},{float(ep['Cycle'].replace(',','.'))})
                                 """
                                 self.SQLExecute(insert_rel_ep_sql)
         
