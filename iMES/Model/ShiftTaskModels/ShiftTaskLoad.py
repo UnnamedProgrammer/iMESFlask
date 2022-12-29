@@ -6,7 +6,7 @@ from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
 from iMES.Model.BaseObjectModel import BaseObjectModel
 import datetime
 from iMES import app
-import sys
+import sys, pyodbc
 
 class ShiftTaskLoader(BaseObjectModel):
     """
@@ -513,11 +513,17 @@ class ShiftTaskLoader(BaseObjectModel):
                             if (len(relation_product_ep) > 0):
                                 continue
                             else:
-                                insert_rel_ep_sql = f"""
-                                    INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
-                                    VALUES ('{finded_ep[0][0]}','{product_oid}',{int(ep['SocketCount'])},{float(ep['Cycle'].replace(',','.'))})
-                                """
-                                self.SQLExecute(insert_rel_ep_sql)
+                                try:
+                                    insert_rel_ep_sql = f"""
+                                        INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
+                                        VALUES ('{finded_ep[0][0]}','{product_oid}',{int(ep['SocketCount'])},{float(ep['Cycle'].replace(',','.'))})
+                                    """
+                                    self.SQLExecute(insert_rel_ep_sql)
+                                except pyodbc.Error as error:
+                                    sqlstate = error.args[0]
+                                    if sqlstate == '23000':
+                                        app.logger.error(error.args[1])
+                                    continue
                         else:
                             get_product = f"""
                                 SELECT [Oid]

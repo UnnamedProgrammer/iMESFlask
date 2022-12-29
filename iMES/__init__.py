@@ -17,7 +17,7 @@ Payload.max_decode_packets = 50
 if (not os.path.exists('log/')):
     os.mkdir('log/')
 file_log = logging.FileHandler(
-    "log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log")
+    "log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log",encoding='cp1251')
 console_out = logging.StreamHandler()
 logging.basicConfig(handlers=(file_log,), level=logging.NOTSET)
 

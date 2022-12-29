@@ -6,5 +6,5 @@ Directum/
 *.json
 *.log
 log/
-config.cfg
+*.cfg
 requirements.txt

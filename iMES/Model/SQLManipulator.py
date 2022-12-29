@@ -1,4 +1,3 @@
-import imp
 import pyodbc
 from datetime import datetime
 
