@@ -224,9 +224,38 @@ def adjusterIdleView():
 @login_required
 def adjusterRawMaterials():
     ip_addr = request.remote_addr
-    # current_tpa[ip_addr][2].specifications
-    print(current_tpa[ip_addr][2].specifications)
-    return CheckRolesForInterface('Наладчик', 'adjuster/rawMaterials.html')
+
+    with open('st.json', 'r', encoding='utf-8-sig') as f:
+        text = json.load(f)
+    
+    product_residues = 0
+
+    for i in range(len(current_tpa[ip_addr][2].specifications)):
+        product_residues += current_tpa[ip_addr][2].production_plan[i] - current_tpa[ip_addr][2].product_fact[i]
+
+    raw_materials = []
+    total_weight = 0
+    product_names = []
+
+    for product in text[0]['Spec']:
+        extra_characteristic = []
+
+        if product['SpecCode'] in current_tpa[ip_addr][2].specifications:
+            for product_component in product['ExtraCharacteristic']:
+                mass_quantity = (float(product_component['Count'].replace(',', '.')) * product_residues) / int(product['UseFactor'].replace("\xa0", ""))
+                total_weight += mass_quantity
+                
+                extra_characteristic.append({'ProductName': product_component['Name'], 'ProductMass': round(mass_quantity, 2)})
+                
+            raw_materials.append(extra_characteristic)
+
+    for product in raw_materials:
+        for product_component in product:
+            mass_percent = (product_component['ProductMass'] * 100) / total_weight
+            product_component['ProductPercent'] = round(mass_percent, 2)
+    
+
+    return CheckRolesForInterface('Наладчик', 'adjuster/rawMaterials.html', [product_residues, raw_materials])
 
 
 # Фиксация отхода и брака
