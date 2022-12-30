@@ -23,9 +23,9 @@ class SQLManipulator():
     def SQLExecute(self,sqlcode):
         result = []
         while True:
-            connection = pyodbc.connect(self.connection_string)
-            cursor = connection.cursor()
             try:
+                connection = pyodbc.connect(self.connection_string)
+                cursor = connection.cursor()
                 cursor.execute(sqlcode)
                 try:
                     result = cursor.fetchall()

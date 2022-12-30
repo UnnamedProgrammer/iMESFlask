@@ -89,6 +89,7 @@ class ProductionDataDaemon(BaseObjectModel):
         pressform = self.GetTpaPressFrom(tpaoid)
         # Получаем справочник производительности по связке ТПА + ПФ
         equipment_performance = self.GetEquipmentPerformance(tpaoid,pressform)
+        shift = self.GetCurrentShift()
         if equipment_performance != None:
             # Задаём кол-во продукции за смыкание из производительности
             total_socket_count = equipment_performance[4]
@@ -99,9 +100,8 @@ class ProductionDataDaemon(BaseObjectModel):
             # Перебираем продукты, смотрим сокетность в сменном задании, и заполняем
             # сокеты продукцией чтобы в сумме их количество совпало с количеством
             # выпускаемой продукции за одно смыкание
+            empty_sockets = total_socket_count
             for product in products:
-                empty_sockets = total_socket_count
-                shift = self.GetCurrentShift()
                 shift_task = self.GetShiftTask(shift,tpaoid,product[1],product[3])
                 if len(shift_task) > 0:
                     if total_socket_count == product[2]:
@@ -115,7 +115,8 @@ class ProductionDataDaemon(BaseObjectModel):
                             shift_tasks.append(shift_task[0])
                         else:
                             break
-                
+        else:
+            return self.GetShiftTaskWithouEP(shift, tpaoid)          
         return shift_tasks
     
     # Метод возвращает Oid текущей смены
@@ -136,8 +137,8 @@ class ProductionDataDaemon(BaseObjectModel):
         else:
             return None
 
-    # Метод ищет совпадающее по заданным параметрам сменное задание
-    def GetShiftTask(self,shift,equipment,product,cycle):
+    # Метод вытягивает сменное задание без справочника производительности
+    def GetShiftTaskWithouEP(self, shift, equipment):
         if shift == None:
             return []
         sql_ST = f"""
@@ -162,8 +163,6 @@ class ProductionDataDaemon(BaseObjectModel):
             WHERE 
                 Shift = '{shift}' AND
                 Equipment = '{equipment}' AND
-                Product = '{product}' AND
-                Cycle = '{cycle}' AND
                 ShiftTask.Product = Product.Oid AND
                 Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
                 ShiftTask.Shift = Shift.Oid
@@ -178,7 +177,53 @@ class ProductionDataDaemon(BaseObjectModel):
                     WHERE ShiftTask = '{st[0]}' AND Status = 2
                 """
                 find_shifttask_ended = self.SQLExecute(sql)
-                if len(find_shifttask_ended):
+                if len(find_shifttask_ended) > 0:
+                    shift_task.remove(st)
+                    offset += find_shifttask_ended[0][1]
+        self.offsetlist[equipment] = offset
+        return shift_task
+
+    # Метод ищет совпадающее по заданным параметрам сменное задание
+    def GetShiftTask(self, shift, equipment, product, cycle):
+        if shift == None:
+            return []
+        sql_ST = f"""
+            SELECT [ShiftTask].[Oid]
+                ,[Shift].Note
+                ,[Equipment]
+                ,[Ordinal]
+                ,[Product].Name
+                ,[Specification]
+                ,[Traits]
+                ,[ExtraTraits]
+                ,[PackingScheme]
+                ,[PackingCount]
+                ,[SocketCount]
+                ,[ProductCount]
+                ,[Cycle]
+                ,[Weight]
+                ,[ProductURL]
+                ,[PackingURL]
+                ,[Shift]
+            FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift 
+            WHERE 
+                Shift = '{shift}' AND
+                Equipment = '{equipment}' AND
+                ShiftTask.Product = Product.Oid AND
+                Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
+                ShiftTask.Shift = Shift.Oid
+        """
+        offset = 0
+        shift_task = self.SQLExecute(sql_ST)
+        if len(shift_task) > 0:
+            for st in shift_task:
+                sql = f"""
+                    SELECT [Oid] ,[CountFact]
+                    FROM [MES_Iplast].[dbo].[ProductionData] 
+                    WHERE ShiftTask = '{st[0]}' AND Status = 2
+                """
+                find_shifttask_ended = self.SQLExecute(sql)
+                if len(find_shifttask_ended) > 0:
                     shift_task.remove(st)
                     offset += find_shifttask_ended[0][1]
         self.offsetlist[equipment] = offset
@@ -305,7 +350,7 @@ class ProductionDataDaemon(BaseObjectModel):
                 for i in range(0, len(self.tpalist)):
                     if self.tpalist[i][0] == tpaoid:
                         self.tpalist[i][3]['ShiftTask'] = []
-                        break
+                        return
         else: return
 
         # Получаем количество смыканий сделанных во время исполнения сменного задания
