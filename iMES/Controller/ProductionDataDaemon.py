@@ -181,7 +181,8 @@ class ProductionDataDaemon(BaseObjectModel):
                     shift_task.remove(st)
                     offset += find_shifttask_ended[0][1]
         self.offsetlist[equipment] = offset
-        return shift_task
+        shift_task_l = [shift_task[0]]
+        return shift_task_l
 
     # Метод ищет совпадающее по заданным параметрам сменное задание
     def GetShiftTask(self, shift, equipment, product, cycle):
@@ -209,6 +210,8 @@ class ProductionDataDaemon(BaseObjectModel):
             WHERE 
                 Shift = '{shift}' AND
                 Equipment = '{equipment}' AND
+                Product = '{product}' AND
+                Cycle = '{cycle}' AND
                 ShiftTask.Product = Product.Oid AND
                 Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
                 ShiftTask.Shift = Shift.Oid
