@@ -427,16 +427,16 @@
                 (arr[address]['Product'] == 'Нет сменного задания')){
                 if (arr[address]['Product'] == 'Нет сменного задания')
                 {
-                    product[0].textContent = arr[address]['Product']
+                    product.textContent = arr[address]['Product']
                     cycle.textContent = ''
                     cycle_fact.textContent = ''
-                    product_fact[0].textContent = ''
+                    product_fact.textContent = ''
                 }
                 else{
                     product[0].textContent = arr[address]['Product'][0]
                 }
                 product_plan[0].textContent = arr[address]['Plan'][0]
-                if (!product_fact[0].textContent == '')
+                if (arr[address]['Fact'][0] != 0)
                 {
                     product_fact[0].textContent = arr[address]['Fact'][0]
                 }

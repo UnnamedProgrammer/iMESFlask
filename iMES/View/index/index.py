@@ -473,7 +473,7 @@ def Auth(passnumber):
         else:
             return redirect('/menu')
     else:
-        redirect('/')
+        return redirect('/')
 
 # Метод вызываемый при переходе на роутинг требующий авторизации будучи не авторизованным
 
