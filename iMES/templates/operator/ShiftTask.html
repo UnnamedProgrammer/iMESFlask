@@ -14,13 +14,13 @@
                 </tr>
             </thead>
             <tbody id="">
-                {% for task in current_tpa[2].shift_tasks_traits %}
+                {% for i in range(0,current_tpa[2].shift_tasks_traits | length) %}
                 <tr>
-                    <td>{{ task[0] }}</td>
-                    <td>{{ task[1] }}</td>
-                    <td>{{ task[2] }}</td>
-                    <td>{{ task[3] }}</td>
-                    <td>{{ task[4] }}</td>
+                    <td>{{ current_tpa[2].shift_tasks_traits[i][0] }}</td>
+                    <td>{{ current_tpa[2].traits[i][:-2]}}.</td>
+                    <td>{{ current_tpa[2].shift_tasks_traits[i][2] }}</td>
+                    <td>{{ current_tpa[2].shift_tasks_traits[i][3] }}</td>
+                    <td>{{ current_tpa[2].shift_tasks_traits[i][4] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
