@@ -38,14 +38,14 @@
                         {% if downtime[9] != None%}
                             <tr>
                                 <td class="align-middle idle-entered" id="{{ downtime[0] }}">
-                                    <input class="big-checkbox" type="checkbox">
+                                    <input class="big-checkbox" type="checkbox" id="{{ loop.index0 }}">
                                 </td>
                                 <td class="align-middle red">Простой</td>
-                                <td class="align-middle" id="idleTime">{{ downtime[2].strftime('%Y.%m.%d %H:%M:%S') }}</td>
+                                <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d %H:%M:%S') }}</td>
                                 {% if downtime[3] != None %}
-                                    <td class="align-middle" id="idleTime">{{ downtime[3] }}</td>
+                                    <td class="align-middle" id="idleTimeEnd">{{ downtime[3] }}</td>
                                 {% else %}
-                                    <td class="align-middle" id="idleTime"></td>
+                                    <td class="align-middle" id="idleTimeEnd"></td>
                                 {% endif %}
                                 <td class="align-middle">{{ downtime[4] }}</td>
                                 <td class="align-middle"></td>
@@ -55,16 +55,16 @@
                                 </td>
                             </tr>
                         {% else %}
-                            <tr class="table-warning">
+                            <tr class="warning">
                                 <td class="align-middle" id="{{ downtime[0] }}">
-                                    <input class="big-checkbox" type="checkbox">
+                                    <input class="big-checkbox" type="checkbox" id="{{ loop.index0 }}">
                                 </td>
                                 <td class="align-middle red">Простой</td>
-                                <td class="align-middle" id="idleTime">{{ downtime[2].strftime('%Y.%m.%d %H:%M:%S') }}</td>
+                                <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d %H:%M:%S') }}</td>
                                 {% if downtime[3] != None %}
-                                    <td class="align-middle" id="idleTime">{{ downtime[3] }}</td>
+                                    <td class="align-middle" id="idleTimeEnd">{{ downtime[3] }}</td>
                                 {% else %}
-                                    <td class="align-middle" id="idleTime"></td>
+                                    <td class="align-middle" id="idleTimeEnd"></td>
                                 {% endif %}
                                 <td class="align-middle"></td>
                                 <td class="align-middle"></td>
@@ -101,6 +101,9 @@
 {% endblock %}
 {% block script %}
 <script>
+    let checkboxs = document.querySelectorAll('input[type=checkbox]')
+    let checkedArr = []
+    let endDateValue = null
 
     const tbody = document.querySelector('#journalTable tbody');
     tbody.addEventListener('click', function (e) {
@@ -113,10 +116,57 @@
             window.location.href='/adjuster/journal/idleEnter?oid='+idleOid
         } else {
             window.location.href='/adjuster/journal/idleView?oid='+idleOid
-        }
-        
+        } 
     });
 
-    trCheck = document.getElementsByClassName('tr-check')
+    $('input:checkbox').click(function(){
+       
+        if ($(this).is(':checked')) {
+            $(this).closest('tr').addClass('green'); // Красит выбранную строку в зеленый
+
+            $.each($('input[type=checkbox]:checked'), function(){ // Перебор всех отмеченных чекбоксов
+                if (checkedArr.includes(this)) { // Если отмеченный, уже есть в массиве - пропуск
+                    return
+                } else {
+                    checkedArr.push(this) // Иначе добавляет в массив
+                }
+
+                for(const elem of checkboxs) { // Перебор всех имеющихся чекбоксов
+                    // Если не отмеченный чекбокс (элемент), находится между отмеченных. То отмечаем его и перекрашиваем в зеленый
+                    if (elem.id > checkedArr[0].id && elem.id < checkedArr[checkedArr.length-1].id) {
+                        $(elem).closest('tr').addClass('green');
+                        $(elem).prop("checked", true);
+                        $(elem).closest('tr').children()[2].innerHTML= ''
+                        $(elem).closest('tr').children()[3].innerHTML= ''
+                        $(elem).closest('tr').children().last().remove()
+                    }
+                    if (elem.id == checkedArr[checkedArr.length-1].id) {
+                        if(checkedArr.length > 1) {
+                            $(elem).closest('tr').children()[2].innerHTML= ''
+
+                            if($(elem).closest('tr').children()[3].innerHTML.trim() != '') {
+                                console.log('Yes')
+                                endDateValue = $(elem).closest('tr').children()[3].innerHTML
+                                $(elem).closest('tr').children()[3].innerHTML= ''
+                            }
+                        }
+                    }
+                }
+
+                let startDate = $(checkedArr[0]).closest('tr').children()[2]
+                let endDate = $(checkedArr[0]).closest('tr').children()[3]
+                let buttonCell = $(checkedArr[0]).closest('tr').children().last()
+                
+                $(startDate).attr('rowspan', $('input[type=checkbox]:checked').length);
+                $(endDate).attr('rowspan', $('input[type=checkbox]:checked').length);
+                $(buttonCell).attr('rowspan', $('input[type=checkbox]:checked').length);
+                endDate.innerHTML = endDateValue
+
+            });
+
+        } else {
+            $(this).closest('tr').removeClass('green');
+        }
+    });
 </script>
 {% endblock %}

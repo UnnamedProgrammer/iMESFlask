@@ -650,14 +650,21 @@ select.clip {
   height: 300px;
   overflow: hidden; }
 
+table .warning {
+  background-color: #fff3cd;
+  border-color: #e6dbb9; }
+
 table .green {
-  background-color: #BEF7C7; }
+  background-color: #BEF7C7;
+  тborder-color: #bcd0c7; }
 
 table .primary {
-  background-color: #90c6d1; }
+  background-color: #90c6d1;
+  border-color: #bacbe6; }
 
 table .red {
-  background: #f77; }
+  background: #f77;
+  border-color: #dfc2c4; }
 
 .custom-select::-webkit-scrollbar {
   width: 80px;
