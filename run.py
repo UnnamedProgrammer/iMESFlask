@@ -35,10 +35,4 @@ while True:
 
 # Точка входа в основной цикл программы
 if __name__ == "__main__":
-    from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
-    from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
-    ShiftTaskMonitoring = ShiftTaskDaemon()
-    ShiftTaskMonitoring.Start()
-    ProductDataMonitoring = ProductionDataDaemon()
-    ProductDataMonitoring.Start()
     socketio.run(app, host=host, port=port, debug=True, use_reloader=False)

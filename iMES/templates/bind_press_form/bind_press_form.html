@@ -12,6 +12,9 @@
             <input type="hidden" id="pressFormData">
             <select class="custom-select jsScroll" id="selectPressForm"  size="12">
                 {% for press_form in press_forms %}
+                    {% if current_tpa[2].need_pressform_oid == press_form[0] %}
+                        <option class="primary" value="{{ press_form[0] }}">{{ press_form[1] }}</option>
+                    {% endif %}
                     <option value="{{ press_form[0] }}">{{ press_form[1] }}</option>
                 {% endfor %}
             </select>
@@ -20,7 +23,7 @@
     <div class="view-footer">
         <div class="row">
             <div class="col-6">
-                <button type="button" class="btn btn__view primary fs-3" data="" id="bindPressForm">Привязать пресс-форму</button>
+                <button type="button" class="btn btn__view primary fs-3" data="" onclick=LinkClick() id="bindPressForm">Привязать пресс-форму</button>
             </div>  
             <div class="col-6">
                 <button type="button" class="btn btn__view secondary startLoad" id="exitNoSave" onclick="location.href='/'">

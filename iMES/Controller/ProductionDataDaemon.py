@@ -1,7 +1,6 @@
 from threading import Thread
 from time import sleep
 from iMES.Model.BaseObjectModel import BaseObjectModel
-from iMES import app
 
 
 
@@ -10,17 +9,17 @@ class ProductionDataDaemon(BaseObjectModel):
         Класс отвечающий за подсчёт продукции для ТПА по сменному заданию, а так же
         и за саму выдачу сменных заданий из базы данных для ТПА 
     """
-    def __init__(self):
+    def __init__(self, _app):
         # Инициализация начальных значений спика ТПА, совершенных ТПА смыканий
         self.tpalist = self.GetAllTpa()
         self.offsetlist = {}
         self.last_shift = None
-
+        self.app = _app
     # Метод запускающий основную функцию в отдельном потоке    
     def Start(self):
         thread = Thread(target=self.TpaProductionDataMonitoring, args=())
         thread.start()
-        app.logger.info("Демон мониторинга продукции запущен")
+        self.app.logger.info("Демон мониторинга продукции запущен")
 
     # Основной метод класса
     def TpaProductionDataMonitoring(self):
@@ -60,10 +59,47 @@ class ProductionDataDaemon(BaseObjectModel):
                     continue
                 except Exception as error:
                     # Вывод в лог возникших ошибок
-                    app.logger.info(f"{error} in {str(self.tpalist[tpanum])}")
+                    self.app.logger.info(f"{error} in {str(self.tpalist[tpanum])}")
                     continue
             sleep(8)
     
+    def OnceMonitoring(self):
+        for tpanum in range(0,len(self.tpalist)):
+                try:
+                    # Проверяем наличие сменных заданий у ТПА
+                    if len(self.tpalist[tpanum][3]['ShiftTask']) > 0:
+                        # Перебор сменных заданий у ТПА
+                        for shift_task in self.tpalist[tpanum][3]['ShiftTask']:
+                            # Проверяем наличие записи в таблице ProductionData
+                            # для выбранного сменного задания
+                            if self.ProductionDataRecordIsCreated(shift_task[0]):
+                                # Если есть запись то подсчитываем и обновляем значения
+                                self.UpdateCountClosures(shift_task[0],
+                                                        shift_task[16],
+                                                        shift_task[5],
+                                                        shift_task[11],
+                                                        shift_task[10],
+                                                        shift_task[2])
+                            else:
+                                # Иначе создаём новую запись и заполняем её подсчитанными значениями
+                                self.CreateProductionDataRecord(shift_task)
+                                self.UpdateCountClosures(shift_task[0],
+                                                        shift_task[16],
+                                                        shift_task[5],
+                                                        shift_task[11],
+                                                        shift_task[10],
+                                                        shift_task[2])
+                    else:
+                        # Если у ТПА нет сменных заданий то выдаём новое
+                        shift_task_list = self.GetShiftTaskByEquipmentPerformance(self.tpalist[tpanum][0])
+                        self.tpalist[tpanum][3]["ShiftTask"] = shift_task_list
+                except IndexError:
+                    continue
+                except Exception as error:
+                    # Вывод в лог возникших ошибок
+                    self.app.logger.info(f"{error} in {str(self.tpalist[tpanum])}")
+                    continue
+
     # Метод получающий весь список ТПА, и задающий им новую опцию "Сменное задание"
     def GetAllTpa(self):
         TpaList = []
@@ -116,7 +152,7 @@ class ProductionDataDaemon(BaseObjectModel):
                         else:
                             break
         else:
-            return self.GetShiftTaskWithouEP(shift, tpaoid)          
+            return self.GetShiftTaskWithoutEP(shift, tpaoid)          
         return shift_tasks
     
     # Метод возвращает Oid текущей смены
@@ -138,7 +174,7 @@ class ProductionDataDaemon(BaseObjectModel):
             return None
 
     # Метод вытягивает сменное задание без справочника производительности
-    def GetShiftTaskWithouEP(self, shift, equipment):
+    def GetShiftTaskWithoutEP(self, shift, equipment):
         if shift == None:
             return []
         sql_ST = f"""

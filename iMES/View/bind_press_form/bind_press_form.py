@@ -1,10 +1,11 @@
 from iMES import app
 from iMES import socketio
-from flask import render_template, request
+from flask import render_template, request, redirect
 from iMES import current_tpa,TpaList
 from iMES.Model.SQLManipulator import SQLManipulator
 from flask_login import login_required
-import datetime
+import datetime, json
+from iMES import ProductDataMonitoring
 
 
 @app.route("/bindPressForms")
@@ -12,7 +13,6 @@ import datetime
 def bindPressForms():
     ip_addr = request.remote_addr
     device_tpa = TpaList[ip_addr]
-    
     # Вытаскиваем Oid и названия существующих пресс-форм
     sql_GetPressForms = """SELECT Equipment.Oid, Equipment.Name
                                                 FROM Equipment 
@@ -20,7 +20,8 @@ def bindPressForms():
                                                 WHERE EquipmentType.Name = 'Пресс-форма' 
                                                 ORDER BY Equipment.Name"""
     press_forms = SQLManipulator.SQLExecute(sql_GetPressForms)
-
+    current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
+    current_tpa[ip_addr][2].Check_pressform()
     return render_template("/bind_press_form/bind_press_form.html", device_tpa=device_tpa, current_tpa=current_tpa[ip_addr], press_forms=press_forms)
 
 
@@ -57,3 +58,20 @@ def handle_selected_press_forms(data):
     
     else:
         app.logger.critical(f"[{datetime.datetime.now()}] Нет привязки контроллера к ТПА ({current_tpa[ip_addr][2].tpa})")
+    for i in range(0, len(ProductDataMonitoring.tpalist)):
+        if ProductDataMonitoring.tpalist[i][0] == current_tpa[ip_addr][2].tpaoid:
+            copy_shift_task = ProductDataMonitoring.tpalist[i][3]['ShiftTask'] 
+            ProductDataMonitoring.tpalist[i][3]['ShiftTask'] = []
+            for shift_task in copy_shift_task:
+                try:
+                    ProductDataMonitoring.SQLExecute(f"""
+                        DELETE FROM ProductionData WHERE ShiftTask = '{shift_task[0]}'
+                    """)
+                except:
+                    pass
+            break
+    ProductDataMonitoring.GetShiftTaskByEquipmentPerformance(current_tpa[ip_addr][2].tpaoid)
+    ProductDataMonitoring.OnceMonitoring()
+    socketio.emit('ChangePF',
+                    data=json.dumps({ip_addr:{'status':'OK'}},
+                    ensure_ascii=False, indent=4))

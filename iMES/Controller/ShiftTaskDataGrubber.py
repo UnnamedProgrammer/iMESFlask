@@ -9,7 +9,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
     def __init__(self,_app) -> None:
         BaseObjectModel.__init__(self,_app)
         self.tpa = ''
-        self._pressform = None
+        self.pressform = self.update_pressform()
         self.production_plan = (0,)
         self.cycle = 0
         self.cycle_fact = 0
@@ -28,12 +28,14 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.shift_tasks_traits = ()
         self.specifications = []
         self.traits = ()
-        
-    @property
-    def pressform(self):
+        self.product = ()
+        self.product_oids = ()
+        self.pressform_oid = ""
+
+    def update_pressform(self):
         # Проверка прессформы
         sql = f"""
-            SELECT TOP (1) Equipment.Name, RFIDClosureData.Date
+            SELECT TOP (1) Equipment.Name, RFIDClosureData.Date, Equipment.Oid
             FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
             WHERE 
             Controller = (SELECT RFIDEquipment 
@@ -46,16 +48,15 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         pf = self.SQLExecute(sql)
         if len(pf) > 0:
             if pf[0][0] == None or pf == () or pf == []:
-                self.pressform = 'Метка не привязана к прессформе'
+                pressform = 'Метка не привязана к прессформе'
             else:
-                self.pressform = pf[0][0]
+                pressform = pf[0][0]
+                self.pressform_oid = pf[0][2]
         else:
-            self.pressform = 'Не определена'
-        return self._pressform
+            pressform = 'Не определена'
+            self.pressform_oid = ""
+        return pressform
     
-    @pressform.setter
-    def pressform(self,value):
-        self._pressform = value
 
     # Метод получения данных из сменного задания
     def data_from_shifttask(self):
@@ -78,6 +79,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 ,[PackingURL]
                 ,[Traits]
                 ,[ExtraTraits]
+                ,[Product]
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{self.tpa}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
@@ -95,12 +97,14 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             traits = []
             specs = []
             traits_operator = []
+            product_oids = []
             for shift_task in data:
                 st_oid.append(shift_task[0])
                 product_list.append(shift_task[4])
                 production_plan.append(shift_task[11])
                 plan_weight.append(f"{float(shift_task[13]):.{2}f}")
                 traits_operator.append(shift_task[6])
+                product_oids.append(shift_task[18])
                 self.cycle = shift_task[12]
                 self.shift = shift_task[1]
                 self.PackingURL = shift_task[15]
@@ -118,6 +122,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             self.production_plan = tuple(production_plan)
             self.plan_weight = tuple(plan_weight)
             self.traits = tuple(traits_operator)
+            self.product_oids = tuple(product_oids)
 
             for i in range(0,len(data)):
                 traits.append([self.product[i],

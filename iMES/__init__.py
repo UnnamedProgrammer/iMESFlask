@@ -9,6 +9,9 @@ import configparser
 import logging
 import os
 from engineio.payload import Payload
+from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
+from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
+
 
 # Максимальное число обрабатываемых пакетов за раз
 Payload.max_decode_packets = 50
@@ -33,6 +36,12 @@ app.config['SECRET_KEY'] = 'secret!'
 from iMES.Model.BaseObjectModel import BaseObjectModel
 Initiator = BaseObjectModel(app)
 socketio = SocketIO(app,async_handlers=True)
+
+# Запуск демонов
+ShiftTaskMonitoring = ShiftTaskDaemon(app)
+ShiftTaskMonitoring.Start()
+ProductDataMonitoring = ProductionDataDaemon(app)
+ProductDataMonitoring.Start()
 
 # Подключение менеджера авторизации
 login_manager = LoginManager()
@@ -74,7 +83,6 @@ for device in Devices:
     current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],
                                 TpaList[device[0]][0]['Name'],
                                 TpaList[device[0]][0]['Controller']]
-
 # Импорт роутингов
 from iMES.View.operator import operator, visualInstructions
 from iMES.View.navbar_footer import navbar_footer
