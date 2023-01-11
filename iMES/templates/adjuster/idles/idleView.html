@@ -15,7 +15,9 @@
     <script src="{{url_for('static', filename='/js/jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static', filename='/js/socket.io.js')}}"></script>
     
-    {% set downtimeData = somedata %}
+    
+    {% set downtimeData = somedata[0] %}
+    {% set downtimeWastes = somedata[1] %}
     
     {% if downtimeData[0][2] != None %}
         {% set idleTime = downtimeData[0][2] - downtimeData[0][1] %}
@@ -62,6 +64,38 @@
 
                     <div class="idle-form__body_waste mt-4">
                         <div class="idle_enteredData px-3 mt-1 jsScroll">  
+                            {% for wastes in downtimeWastes %}
+                                {% if wastes[0] != None %}
+                                    <div class="enteredData waste-card mb-2 row">
+                                        <div class="input-group p-0 me-2" style="width: 74.3%;">
+                                            <span class="input-group-text text-bg-primary fs-5" style="width: 90px;">Отход</span>
+                                            <input type="text" class="form-control fs-5" value="{{ wastes[0] }}" disabled readonly>
+                                        </div>
+                                        <div class="input-group" style="width: 14%;">
+                                            <input type="text" class="form-control fs-5" value="{{ '%0.2f'|format(wastes[2]|float) }}" disabled readonly>
+                                            <span class="input-group-text" >КГ</span>
+                                        </div>
+                                        <input class="form-control form-control-lg" style="width: 11%;" type="text" value="{{ wastes[4].strftime('%H:%M:%S') }}"  disabled readonly>
+                                    </div>
+                                {% else %}
+                                    <div class="enteredData waste-card mb-2 row">
+                                        <div class="input-group p-0 me-2" style="width: 60.3%;">
+                                            <span class="input-group-text text-bg-danger fs-5" style="width: 90px;">Брак</span>
+                                            <input type="text" class="form-control fs-5" value="{{ wastes[1] }}" disabled readonly>
+                                        </div>
+                                        <div class="input-group" style="width: 14%;">
+                                            <input type="text" class="form-control fs-5" value="{{ '%0.2f'|format(wastes[2]|float) }}" disabled readonly>
+                                            <span class="input-group-text" >КГ</span>
+                                        </div>
+                                        <div class="input-group" style="width: 14%;">
+                                            <input type="text" class="form-control fs-5" value="{{ '%0.2f'|format(wastes[3]|float) }}" disabled readonly>
+                                            <span class="input-group-text" >ШТ</span>
+                                        </div>
+                                        <input class="form-control form-control-lg" style="width: 11%;" type="text" value="{{ wastes[4].strftime('%H:%M:%S') }}"  disabled readonly>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+
                         </div> 
                     </div>
                 </div>

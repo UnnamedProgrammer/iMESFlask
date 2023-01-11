@@ -221,7 +221,17 @@ def adjusterIdleView():
                             WHERE [DF].[Oid] = '{idleOid[0]}' """
     idleData = SQLManipulator.SQLExecute(sql_GetIdleData)
     
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleView.html', idleData)
+    sql_GetIdleWastes = f"""    SELECT [Material].[Name], [Product].[Name], [PW].[Weight], [PW].[Count], [PW].[CreateDate]
+                                FROM [MES_Iplast].[dbo].[ProductWaste] AS [PW]
+                                LEFT JOIN [MES_Iplast].[dbo].[Material] AS [Material] ON [PW].[Material] = [Material].[Oid]
+                                LEFT JOIN [MES_Iplast].[dbo].[ProductionData] AS [PD] ON [PW].[ProductionData] = [PD].[Oid]
+                                LEFT JOIN [MES_Iplast].[dbo].[ShiftTask] AS [ST] ON [PD].[ShiftTask] = [ST].[Oid]
+                                LEFT JOIN [MES_Iplast].[dbo].[Product] AS [Product] ON [ST].[Product] = [Product].[Oid]
+                                WHERE [PW].[Downtime] = '{idleOid[0]}' """
+                                
+    idleWastes = SQLManipulator.SQLExecute(sql_GetIdleWastes)
+    
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleView.html', [idleData, idleWastes])
 
 # Сырье до конца выпуска
 @app.route('/adjuster/RawMaterials')
