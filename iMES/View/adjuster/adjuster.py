@@ -117,7 +117,8 @@ def adjusterIdleEnter():
                                         INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
                                         INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
                                         INNER JOIN [Material] ON [ProductWaste].[Material] = [Material].[Oid]
-                                        WHERE [ProductWaste].[Type] = 0 """
+                                        WHERE [ProductWaste].[Type] = 0
+                                        AND [ProductWaste].[Downtime] IS NULL"""
     existing_wastes = SQLManipulator.SQLExecute(sql_GetExistingWastes)
     
     # Получаем уже введенный брак
@@ -131,7 +132,8 @@ def adjusterIdleEnter():
                                         INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
                                         INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
                                         INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
-                                        WHERE [ProductWaste].[Type] = 1 """
+                                        WHERE [ProductWaste].[Type] = 1
+                                        AND [ProductWaste].[Downtime] IS NULL """
     existing_defect = SQLManipulator.SQLExecute(sql_GetExistingDefect)
     
     return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes, existing_wastes, current_product, existing_defect])
@@ -184,8 +186,9 @@ def idleEnterFixing(data):
         if len(data['existingWaste']) != 0:
             for i in range(len(data['existingWaste'])):
                 print(data['existingWaste'][i])
+                print(data['idleOid'])
                 SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]   
-                                                SET [Downtime] = '{data['idleOid']}',
+                                                SET [Downtime] = '{data['idleOid']}'
                                                 WHERE [Oid] = '{data['existingWaste'][i]}' """)
         
     # Привязку существующего брака к простою
@@ -193,8 +196,9 @@ def idleEnterFixing(data):
         if len(data['existingDefect']) != 0:
             for i in range(len(data['existingDefect'])):
                 print(data['existingDefect'][i])
+                print(data['idleOid'])
                 SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]
-                                                SET [Downtime] = '{data['idleOid']}',
+                                                SET [Downtime] = '{data['idleOid']}'
                                                 WHERE [Oid] = '{data['existingDefect'][i]}' """)
     
     socketio.emit("IdleEntered", data=json.dumps({ip_addr: ''}),ensure_ascii=False, indent=4)
