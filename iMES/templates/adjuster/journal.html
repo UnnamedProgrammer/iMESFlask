@@ -138,11 +138,10 @@
                         $(elem).prop("checked", true);
                         $(elem).closest('tr').children()[2].innerHTML= ''
                         $(elem).closest('tr').children()[3].innerHTML= ''
-                        $(elem).closest('tr').children().last().remove();
+                        $(elem).closest('tr').children().last().remove()
                     }
                     if (elem.id == checkedArr[checkedArr.length-1].id) {
                         if(checkedArr.length > 1) {
-                            $(elem).closest('tr').children().last().remove();
                             $(elem).closest('tr').children()[2].innerHTML= ''
 
                             if($(elem).closest('tr').children()[3].innerHTML.trim() != '') {

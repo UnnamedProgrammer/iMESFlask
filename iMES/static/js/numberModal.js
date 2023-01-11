@@ -81,7 +81,7 @@ function numberModalControl(event){
                 addEnteredData(data, 'defect')
             }
 
-            else if (enter.id = 'addIdleWasteWeight')
+            else if (enter.id == 'addIdleWasteWeight')
             {
                 let enteredWasteWeight = document.getElementById('inputDefect').textContent;
                 let data = [productData, wasteData, enteredWasteWeight]
