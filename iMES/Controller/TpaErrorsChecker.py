@@ -1,5 +1,9 @@
 from iMES.Model.BaseObjectModel import BaseObjectModel
 from datetime import datetime
+from flask import request
+import json
+
+
 
 class TpaErrorsChecker(BaseObjectModel):
     """
@@ -21,8 +25,11 @@ class TpaErrorsChecker(BaseObjectModel):
         else:
             self.system_user = None
         self.error_string_const = "УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ."
-    
-    def _update_downtime_list(self):
+        self.error_pressform_string_const = "ПРЕССФОРМА НЕ СООТВЕТСВУЕТ ПРОДУКТУ."
+        self.pressform_error = False
+        self.need_pressform_oid = ""
+
+    def __update_downtime_list(self):
         fail_list = self.SQLExecute(f"""
             SELECT [Oid], StartDate 
             FROM [MES_Iplast].[dbo].[DowntimeFailure]
@@ -31,28 +38,28 @@ class TpaErrorsChecker(BaseObjectModel):
         if len(fail_list) > 0:
             self.current_downtime_oids.clear()
             self.current_downtime_oids.append(fail_list[0][0])
-            if not self._is_message_in_errors(self.error_string_const):
-                self._add_error_message(self.error_string_const,fail_list[0][1])
+            if not self.__is_message_in_errors(self.error_string_const):
+                self.__add_error_message(self.error_string_const,fail_list[0][1])
         else:
-            self._remove_error_message(error=self.error_string_const)
+            self.__remove_error_message(error=self.error_string_const)
             return []
     
-    def _add_error_message(self,error,date) -> None:
+    def __add_error_message(self,error,date) -> None:
         time = date.strftime('%Y.%m.%d %H:%M:%S')
         self.errors.append({"Date":time, "Message":error})
 
-    def _remove_error_message(self,error) -> None:
+    def __remove_error_message(self,error) -> None:
         for elem in self.errors:
             if elem["Message"] == error:
                 self.errors.remove(elem)
     
-    def _is_message_in_errors(self,error) -> bool:
+    def __is_message_in_errors(self,error) -> bool:
         for elem in self.errors:
             if elem["Message"] == error:
                 return True
         return False
         
-    def _is_downtime_created(self,date) -> bool:
+    def __is_downtime_created(self,date) -> bool:
         time = date.strftime('%Y-%m-%dT%H:%M:%S')
         sql = self.SQLExecute(f"""
             SELECT [Oid],Equipment
@@ -66,7 +73,7 @@ class TpaErrorsChecker(BaseObjectModel):
             return False
         
 
-    def _create_downtime(self,date) -> None:
+    def __create_downtime(self,date) -> None:
         time = date.strftime('%Y-%m-%dT%H:%M:%S')
         if len(self.system_user) > 0:
             dowtime_type = self.SQLExecute("""
@@ -108,7 +115,7 @@ class TpaErrorsChecker(BaseObjectModel):
     def Check_Downtime(self,tpaoid) -> bool:
         if tpaoid == None or tpaoid == '':
             return False
-        self._update_downtime_list()
+        self.__update_downtime_list()
         sql = f"""
             SELECT TOP(1) [Date],Controller,[RFIDEquipmentBinding].RFIDEquipment
             FROM [MES_Iplast].[dbo].[RFIDClosureData], Equipment, [RFIDEquipmentBinding]
@@ -124,10 +131,10 @@ class TpaErrorsChecker(BaseObjectModel):
             current_date = datetime.now()
             seconds = (current_date - last_closure_date).total_seconds()
             if seconds >= 400:
-                if not self._is_downtime_created(last_closure_date):
-                    if self._create_downtime(last_closure_date):
-                        if not self._is_message_in_errors(error=self.error_string_const):
-                            self._add_error_message(self.error_string_const,last_closure_date) 
+                if not self.__is_downtime_created(last_closure_date):
+                    if self.__create_downtime(last_closure_date):
+                        if not self.__is_message_in_errors(error=self.error_string_const):
+                            self.__add_error_message(self.error_string_const,last_closure_date) 
                 return False
             else:
                 if len(self.current_downtime_oids) > 0:
@@ -139,3 +146,30 @@ class TpaErrorsChecker(BaseObjectModel):
                 return True
         else:
             return False
+    
+    def Check_pressform(self):
+        if self.product == 'Нет сменного задания':
+            return
+        for i in range(0, len(self.product_oids)):
+            get_product_perfomance_sql = f"""
+                SELECT [EquipmentPerformance]
+                FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
+                WHERE Product = '{self.product_oids[i]}'
+            """
+            equipment_perfomance = self.SQLExecute(get_product_perfomance_sql)
+            if len(equipment_perfomance) > 0:     
+                get_rig_from_ep_sql = f"""
+                    SELECT [RigEquipment]
+                    FROM [MES_Iplast].[dbo].[EquipmentPerformance] 
+                    WHERE Oid = '{equipment_perfomance[0][0]}'    
+                """
+                rig_from_ep = self.SQLExecute(get_rig_from_ep_sql)
+                if len(rig_from_ep) > 0:
+                    self.need_pressform_oid = rig_from_ep[0][0]
+                    if self.pressform_oid == rig_from_ep[0][0]:
+                        self.__remove_error_message(self.error_pressform_string_const)
+                        self.pressform_error = False
+                    else:
+                        if not self.__is_message_in_errors(self.error_pressform_string_const):
+                            self.__add_error_message(self.error_pressform_string_const,datetime.now())
+                            self.pressform_error = True

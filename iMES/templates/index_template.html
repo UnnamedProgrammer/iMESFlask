@@ -49,7 +49,7 @@
                     {% endif %}
                 {% endfor %}
                 <div class="card height150 shadow">
-                    <div class="card-header text-center primary">ПРЕСС-ФОРМА</div>
+                    <div class="card-header text-center primary" id="pfsign">ПРЕСС-ФОРМА</div>
                     <div class="card-body nopadding">
                         <p class="card-text text-center fw-bold" id="tpf"></p>
                     </div>
@@ -263,10 +263,7 @@
                 </div>
                 <div class="col-6">
                     <a href="/menu">
-                        <div class="card height-bottom shadow">
-                            {% for error in current_tpa[2].errors %}
-                                <div class="accent left-padding">[{{ error['Date'] }}] {{ error['Message'] }}</div>
-                            {% endfor %}
+                        <div class="card height-bottom shadow" id="error_list">
                         </div>
                     </a>
                 </div>
@@ -296,6 +293,7 @@
     const swiper4 = new Swiper(".mySwiper4", {});
     const swiper5 = new Swiper(".mySwiper5", {});
     const swiper6 = new Swiper(".mySwiper6", {});
+    const preloader = document.querySelector('.preloader')
 
     const swipeAllSliders = (index) => {
         swiper1.slideTo(index);
@@ -315,6 +313,7 @@
 
     let end_date = NaN
     let product_count = 0
+    let pf_error = false
     devicetype = "Терминал"
     socket.on('connect', function () {
         socket.emit('connecting', { data: 'I\'m connected!' });
@@ -325,7 +324,6 @@
     socket.on('Auth',function(data) {
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0]) {
-            console.log(arr[address])
             window.location.href = `/Auth/GetPass/PassNumber=${arr[address]}`
         }
     })
@@ -406,7 +404,7 @@
 
     socket.on('GetMainWindowData', function(data){
         arr = JSON.parse(data)
-        if (address == Object.keys(arr))
+        if (address == Object.keys(arr)[0])
         {   
             let pressform = document.getElementById('tpf')
             let product = document.querySelectorAll('#tprod')
@@ -418,11 +416,37 @@
             let average_weight = document.querySelectorAll('#average_weigth')
             let shift = document.getElementById('smena')
             let defective = document.querySelectorAll('#nvDefect')
+            let error_list = document.querySelectorAll('#error')
+            let got_errors = arr[address]['Errors']
             pressform.textContent = arr[address]['PF']
             cycle.textContent = arr[address]['PlanCycle']
             cycle_fact.textContent = arr[address]['FactCycle']
             average_weight.textContent = arr[address]['AverageWeight']
             shift.textContent = arr[address]['Shift']
+            if (got_errors != null)
+            {
+                $('#error').remove()
+                for (let err_i = 0; err_i < got_errors.length; err_i++)
+                    {
+                        if (got_errors[err_i]['Message'] == "ПРЕССФОРМА НЕ СООТВЕТСВУЕТ ПРОДУКТУ.")
+                        {
+                            pf_error = true
+                        }
+                        $('#error_list').append(`<div class="accent left-padding" id="error">[${got_errors[err_i]['Date']}] ${got_errors[err_i]['Message']} </div>`)
+                    }
+            }
+            else
+            {
+                $('#error').remove()
+                pf_error = false
+                let elem = document.getElementById('pfsign')
+                if(elem.classList.contains('accent'))
+                {
+                    elem.classList.add("primary");
+                    elem.classList.remove("accent");
+                    trigger_flag = false 
+                }
+            }
             if ((arr[address]['Product'].length == 1) ||
                 (arr[address]['Product'] == 'Нет сменного задания')){
                 if (arr[address]['Product'] == 'Нет сменного задания')
@@ -467,6 +491,10 @@
                     defective[item].textContent = arr[address]['Wastes'][item - 1]
                 }
             }
+            if (arr['Reason'] == 'AfterSwitchPF')
+            {
+                preloader.classList.add('preloader_hidden')
+            }
         }
     })
 
@@ -478,6 +506,12 @@
             //let time_to_end = document.getElementById('time_to_end')
             end_date = new Date(arr[address])  
         }
+    })
+
+    socket.on('ChangePF',function(data)
+    {
+        arr = JSON.parse(data)
+        socket.emit('NeedUpdateMainWindowData', { data: 'AfterSwitchPF' })
     })
 
     socket.on('TubsStatus', function(data){
@@ -572,7 +606,6 @@
             await sleep(30000)
         }           
     }
-
     UpdateMainWindowData()
 
     window.addEventListener('load', () => { 
@@ -580,7 +613,6 @@
         preloader.classList.add('preloader_hidden')
     })
     function LinkClick() {
-        const preloader = document.querySelector('.preloader')
         preloader.classList.remove('preloader_hidden')
     }
 function RequestOperatorAndAdjuster() {
@@ -627,6 +659,33 @@ function scroll(){
 }  
 
 RequestOperatorAndAdjuster()
+
+async function UpdateError()
+{
+    let trigger_flag = false
+    setInterval(
+        () => {
+            if (pf_error == true)
+            {
+                let elem = document.getElementById('pfsign')
+                if (trigger_flag == false)
+                {
+                    elem.classList.add("accent");
+                    elem.classList.remove("primary");
+                    trigger_flag = true  
+                }
+                else
+                {
+                    elem.classList.add("primary");
+                    elem.classList.remove("accent");
+                    trigger_flag = false 
+                }
+            }
+        },
+        1000
+    );
+}
+UpdateError()
 </script>
 {% block script %}                
 {% endblock %}

@@ -22,6 +22,8 @@ urllib3.disable_warnings()
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     current_tpa[ip_addr][2].data_from_shifttask()
+    current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
+    current_tpa[ip_addr][2].Check_pressform()
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
@@ -33,37 +35,40 @@ def index():
                                     Device.DeviceType = DeviceType.Oid
                             """
         device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
-        # Если устройство является веб то находим пользователя привязаннаго за устройством
-        # И автоматически авторизуем его по его номеру карты
-        if device_type == "Веб":
-            sql_GetCardNumber = f"""
-                        SELECT [User].CardNumber
-                        FROM [User],Device WHERE 
-                        Device.DeviceId = '{ip_addr}' AND
-                        Device.[Name] = [User].UserName
-                    """
-            CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
-            is_authorized = False
-            for key in user_dict.keys():
-                if user_dict[key].CardNumber == CardNumber:
-                    is_authorized = True
-            if not is_authorized:
-                from iMES import host, port
-                session = requests.Session()
-                retry = Retry(connect=3,backoff_factor=0.5)
-                adapter = HTTPAdapter(max_retries=retry)
-                session.mount('http://', adapter)
-                session.mount('https://', adapter)
-                headers={
-                'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-                }
-                r = session.get(
-                    f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
-                if r.status_code == 200:
-                    for key in list(user_dict.keys()):
-                        if user_dict[key].CardNumber == CardNumber:
-                            login_user(user_dict[key])  
+        if len(device_type) > 0:
+            # Если устройство является веб то находим пользователя привязаннаго за устройством
+            # И автоматически авторизуем его по его номеру карты
+            if device_type == "Веб":
+                sql_GetCardNumber = f"""
+                            SELECT [User].CardNumber
+                            FROM [User],Device WHERE 
+                            Device.DeviceId = '{ip_addr}' AND
+                            Device.[Name] = [User].UserName
+                        """
+                CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
+                is_authorized = False
+                for key in user_dict.keys():
+                    if user_dict[key].CardNumber == CardNumber:
+                        is_authorized = True
+                if not is_authorized:
+                    from iMES import host, port
+                    session = requests.Session()
+                    retry = Retry(connect=3,backoff_factor=0.5)
+                    adapter = HTTPAdapter(max_retries=retry)
+                    session.mount('http://', adapter)
+                    session.mount('https://', adapter)
+                    headers={
+                    'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+                    }
+                    r = session.get(
+                        f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
+                    if r.status_code == 200:
+                        for key in list(user_dict.keys()):
+                            if user_dict[key].CardNumber == CardNumber:
+                                login_user(user_dict[key])  
+        else:
+            return "Undefinded user, access denied"
     # Рендерим страницу
     return render_template("index.html",
                            device_tpa=device_tpa,
@@ -77,7 +82,6 @@ def ChangeTPA():
     for tpa in TpaList[ip_addr]:
         if tpa['Oid'] == request.args.getlist('oid')[0]:
             current_tpa[ip_addr] = [request.args.getlist('oid')[0], request.args.getlist('name')[0], tpa['Controller']]
-            current_tpa[ip_addr][2].data_from_shifttask() 
             break
     return {}
 
@@ -580,22 +584,36 @@ def socket_connected(data):
 @socketio.on(message="NeedUpdateMainWindowData")
 def UpdateMainWindowData(data):
     ip_addr = request.remote_addr
+    errors = None
+    current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
+    current_tpa[ip_addr][2].data_from_shifttask()
+    current_tpa[ip_addr][2].Check_pressform()
+    if len(current_tpa[ip_addr][2].errors) > 0:
+        errors = current_tpa[ip_addr][2].errors
     try:
-        current_tpa[ip_addr][2].data_from_shifttask()
         MWData = {
-            ip_addr: {"PF": str(current_tpa[ip_addr][2].pressform),
-                      "Product": current_tpa[ip_addr][2].product,
-                      "Plan": current_tpa[ip_addr][2].production_plan,
-                      "Fact": current_tpa[ip_addr][2].product_fact,
-                      "PlanCycle": str(current_tpa[ip_addr][2].cycle),
-                      "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
-                      "PlanWeight": current_tpa[ip_addr][2].plan_weight,
-                      "AverageWeight": current_tpa[ip_addr][2].average_weight,
-                      "Shift": str(current_tpa[ip_addr][2].shift),
-                      "Wastes": current_tpa[ip_addr][2].wastes}
+            ip_addr: {
+                "PF": str(current_tpa[ip_addr][2].pressform),
+                "Product": current_tpa[ip_addr][2].product,
+                "Plan": current_tpa[ip_addr][2].production_plan,
+                "Fact": current_tpa[ip_addr][2].product_fact,
+                "PlanCycle": str(current_tpa[ip_addr][2].cycle),
+                "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
+                "PlanWeight": current_tpa[ip_addr][2].plan_weight,
+                "AverageWeight": current_tpa[ip_addr][2].average_weight,
+                "Shift": str(current_tpa[ip_addr][2].shift),
+                "Wastes": current_tpa[ip_addr][2].wastes,
+                "Errors": errors
+            },
+            'Reason': ""
         }
-        socketio.emit("GetMainWindowData", data=json.dumps(
-            MWData, ensure_ascii=False, indent=4))
+        if data['data'] == "AfterSwitchPF":
+            MWData['Reason'] = "AfterSwitchPF"
+            socketio.emit("GetMainWindowData", data=json.dumps(
+                MWData, ensure_ascii=False, indent=4))
+        else:
+            socketio.emit("GetMainWindowData", data=json.dumps(
+                MWData, ensure_ascii=False, indent=4))
     except Exception as error:
         app.logger.warning(f"[{datetime.now()}] {error}")
         pass

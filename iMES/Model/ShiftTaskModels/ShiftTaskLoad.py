@@ -5,7 +5,6 @@ import json
 from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
 from iMES.Model.BaseObjectModel import BaseObjectModel
 import datetime
-from iMES import app
 import sys, pyodbc
 
 class ShiftTaskLoader(BaseObjectModel):
@@ -33,7 +32,7 @@ class ShiftTaskLoader(BaseObjectModel):
         "Данные о сменном задании получены."
     """
 
-    def __init__(self, _nomenclature_group, _date: int, _shift: int):
+    def __init__(self, _nomenclature_group, _date: int, _shift: int, _app):
         self.nomenclature_group = _nomenclature_group
         self.date = _date
         if _shift == 3:
@@ -45,13 +44,14 @@ class ShiftTaskLoader(BaseObjectModel):
         self.shift_task_list = []
         self.shift_task_parsed = None
         self.data = None
+        self.app = _app
 
     # Метод парсит сменные задания в зависимости от переданного аргумента
     # _nomenclature_group и добавляет их в список self.shift_task_list
     def Get_ShiftTask(self) -> list:
         self.data = self.ShiftTask_Update()
         if self.data == '':
-            app.logger.critical("Ошибка 1С при выгрузке сменного задания.")
+            self.app.logger.critical("Ошибка 1С при выгрузке сменного задания.")
             sys.exit()
         if isinstance(self.nomenclature_group, list):
             for NomGroup in self.nomenclature_group:
@@ -73,7 +73,7 @@ class ShiftTaskLoader(BaseObjectModel):
         except:
             with open('st.json', 'r', encoding='windows-1251',errors='ignore') as file_json:
                 load_file = file_json.read()
-                app.logger.critical(load_file)
+                self.app.logger.critical(load_file)
                 return ''
         return load_file
 
@@ -94,7 +94,7 @@ class ShiftTaskLoader(BaseObjectModel):
     # чтобы небыло конфликтов и ошибок
     def CheckingRequiredValuesInTheDataBase(self, ShiftTask) -> bool:
         # Проверка основных полей на None значение
-        app.logger.info(
+        self.app.logger.info(
             f"Валидация обязательных значений сменного задания № {ShiftTask.Ordinal}")
         args_cantbe_null = {"Shift": ShiftTask.Shift,
                             "Equipment": ShiftTask.Equipment,
@@ -111,16 +111,16 @@ class ShiftTaskLoader(BaseObjectModel):
                 continue
             else:
                 error = f"Значение self.{key} в сменном задании №{ShiftTask.Ordinal} является None, что недопустимо."
-                app.logger.critical(f"Ошибка: {error}")
+                self.app.logger.critical(f"Ошибка: {error}")
                 raise Exception(error)
-        app.logger.info("Валидация полей закончена.")
+        self.app.logger.info("Валидация полей закончена.")
 
         # Поиск записей в базе данных от которых зависит сменное задание
         # чтобы предотвратить ошибки вставки записи сменного задания в таблицу
-        app.logger.info(
+        self.app.logger.info(
             f"Проверка наличия записей на которые ссылается сменное задание № {ShiftTask.Ordinal}:")
-        app.logger.info(f"    Проверка наличия требуемых записей:")
-        app.logger.info(f"        Проверка оборудования {ShiftTask.Equipment}")
+        self.app.logger.info(f"    Проверка наличия требуемых записей:")
+        self.app.logger.info(f"        Проверка оборудования {ShiftTask.Equipment}")
         equipment_sql = f"""
             SELECT [Equipment].[Oid],
                 EquipmentType.[Name]
@@ -135,13 +135,13 @@ class ShiftTaskLoader(BaseObjectModel):
         if len(equipment) > 0:
             pass
         else:
-            app.logger.warning(
+            self.app.logger.warning(
                 f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
             return False
         if equipment[0][1] == "Термопластавтомат":
-            app.logger.info(
+            self.app.logger.info(
                 f"        Термопластавтомат {ShiftTask.Equipment} найден")
-            app.logger.info(
+            self.app.logger.info(
                 f"        Проверка продукта {ShiftTask.ProductCode}")
             productsql = f"""
                 SELECT [Oid]
@@ -150,9 +150,9 @@ class ShiftTaskLoader(BaseObjectModel):
             while True:
                 product = self.SQLExecute(productsql)
                 if (len(product) > 0):
-                    app.logger.info(
+                    self.app.logger.info(
                         f"        Продукт {ShiftTask.ProductCode} найден")
-                    app.logger.info(
+                    self.app.logger.info(
                         f"        Проверка спецификации {ShiftTask.Specification}")
                     get_spec_sql = f"""
                             SELECT [Oid]
@@ -160,22 +160,22 @@ class ShiftTaskLoader(BaseObjectModel):
                         """
                     specification = self.SQLExecute(get_spec_sql)
                     if len(specification) > 0:
-                        app.logger.info(
+                        self.app.logger.info(
                             f"        Спецификация {ShiftTask.Specification} найдена")
-                        app.logger.info(
+                        self.app.logger.info(
                             f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
                         return True
                     else:
-                        app.logger.warning(
+                        self.app.logger.warning(
                             f"Внимание: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
-                        app.logger.info(f"  Поиск спецификации {ShiftTask.Specification} в массиве 1С")
+                        self.app.logger.info(f"  Поиск спецификации {ShiftTask.Specification} в массиве 1С")
                         for specification_1C in self.data['Spec']:
                             spec1C_code = specification_1C['SpecCode']
                             if len(spec1C_code) < 11:
                                 while len(spec1C_code) != 11:
                                     spec1C_code = '0' + spec1C_code
                             if spec1C_code == ShiftTask.Specification:
-                                app.logger.info(f"  Спецификация {ShiftTask.Specification} найдена")
+                                self.app.logger.info(f"  Спецификация {ShiftTask.Specification} найдена")
                                 isActive = 0
                                 if specification_1C['IsActive'] == "Да":
                                     isActive = 1
@@ -186,35 +186,35 @@ class ShiftTaskLoader(BaseObjectModel):
                                         '{product[0][0]}',{float(specification_1C['UseFactor'])},
                                         {isActive})              
                                     """
-                                app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
+                                self.app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
                                 self.SQLExecute(insert_specsql)
                                 break
-                        app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
+                        self.app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
                         specification = self.SQLExecute(get_spec_sql)
                         if len(specification) > 0:
-                            app.logger.info(
+                            self.app.logger.info(
                                 f"        Спецификация {ShiftTask.Specification} найдена")
-                            app.logger.info(
+                            self.app.logger.info(
                                 f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
-                            app.logger.info(f"\r\n")
+                            self.app.logger.info(f"\r\n")
                             return True
                         else:
-                            app.logger.warning(
+                            self.app.logger.warning(
                                 f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
                             return False
                 else:
-                    app.logger.warning(
+                    self.app.logger.warning(
                         f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
-                    app.logger.info(
+                    self.app.logger.info(
                         f"Сменное задание № {ShiftTask.Ordinal} - вставка нового продукта {ShiftTask.ProductCode} в базу данных")
                     self.SQLExecute(f"""
                         INSERT INTO Product (Oid, Code, Name, Article) VALUES (NEWID(),'{ShiftTask.ProductCode}','{ShiftTask.Product}','{ShiftTask.Article}')                   
                     """)
-                    app.logger.info(
+                    self.app.logger.info(
                         f"Сменное задание № {ShiftTask.Ordinal} - Новый продукт {ShiftTask.ProductCode} добавлен в базу данных")
                     continue
         else:
-            app.logger.warning(
+            self.app.logger.warning(
                 f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
             return False
 
@@ -229,7 +229,7 @@ class ShiftTaskLoader(BaseObjectModel):
         # Проверяем длинну списка сменных заданий
         if len(self.shift_task_list) == 0:
             # Если заданий нет
-            app.logger.warning(
+            self.app.logger.warning(
                 "В списке отсутсвуют сменные задания для выгрузки")
             return
         else:
@@ -454,7 +454,7 @@ class ShiftTaskLoader(BaseObjectModel):
                         '{task.ProductURL}',
                         '{task.PackingURL}')
                     """
-            app.logger.info("Вставка сменного задания №" + task.Ordinal)
+            self.app.logger.info("Вставка сменного задания №" + task.Ordinal)
             self.SQLExecute(ShiftTaskInsertSQL)
 
     def LoadEquipmentPerfomance(self,tasklist,jsondata):
@@ -522,7 +522,7 @@ class ShiftTaskLoader(BaseObjectModel):
                                 except pyodbc.Error as error:
                                     sqlstate = error.args[0]
                                     if sqlstate == '23000':
-                                        app.logger.error(error.args[1])
+                                        self.app.logger.error(error.args[1])
                                     continue
                         else:
                             get_product = f"""

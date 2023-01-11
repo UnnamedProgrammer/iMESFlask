@@ -4,22 +4,21 @@ from iMES.Model.BaseObjectModel import BaseObjectModel
 from time import sleep
 from datetime import datetime
 from threading import Thread
-from iMES import app
 
 class ShiftTaskDaemon(BaseObjectModel):
     """
         Класс мониторинга сменяемости смен для получения сменных заданий на новую смену
     """
-    def __init__(self):
+    def __init__(self, _app):
         # Инициализация начальных значений
         self.tpa_list = []
         self.insertedToDay = False
-
+        self.app = _app
     # Метод запускающий основной метод в отдельном потоке выполнения
     def Start(self):
         thread = Thread(target=self.DoWork, args=())
         thread.start()
-        app.logger.info("Демон сменных заданий запущен")
+        self.app.logger.info("Демон сменных заданий запущен")
 
     # Основной метод
     def DoWork(self):
@@ -30,7 +29,7 @@ class ShiftTaskDaemon(BaseObjectModel):
             now = datetime.now()
             if (self.insertedToDay == False):
                 # Если сменное задание небыло получено, то получаем
-                app.logger.info(f"Нет сменного задания, получение нового сменного задания на {now}")
+                self.app.logger.info(f"Нет сменного задания, получение нового сменного задания на {now}")
                 # Получаем список всех ТПА
                 get_tpa_list = """
                     SELECT NomenclatureGroup.Code
@@ -60,10 +59,10 @@ class ShiftTaskDaemon(BaseObjectModel):
                         SET Status = 2
                         WHERE Status = 1    
                     """)
-                    Loader = ShiftTaskLoader(self.tpa_list, date, 3)
+                    Loader = ShiftTaskLoader(self.tpa_list, date, 3, self.app)
                     Loader.Get_ShiftTask()
                     Loader.InsertToDataBase()
-                app.logger.info("Новое сменное задание успешно получено")
+                self.app.logger.info("Новое сменное задание успешно получено")
             sleep(10)
 
     # Метод проверки текущей смены
