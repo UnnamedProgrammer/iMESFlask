@@ -59,14 +59,13 @@ class ShiftTaskDaemon(BaseObjectModel):
                         SET Status = 2
                         WHERE Status = 1    
                     """)
-                    Loader = ShiftTaskLoader(self.tpa_list, date, 3, self.app)
+                    Loader = ShiftTaskLoader(self.tpa_list, date, self.get_shift(), self.app)
                     Loader.Get_ShiftTask()
                     Loader.InsertToDataBase()
                 self.app.logger.info("Новое сменное задание успешно получено")
             sleep(10)
 
-    # Метод проверки текущей смены
-    def CheckShift(self):
+    def get_shift(self):
         now = datetime.now()
         hour = now.hour
         shift = 0
@@ -75,6 +74,13 @@ class ShiftTaskDaemon(BaseObjectModel):
             shift = 1
         elif hour >= 7 and hour < 19:
             shift = 0
+        return shift
+
+    # Метод проверки текущей смены
+    def CheckShift(self):
+        now = datetime.now()
+        hour = now.hour
+        shift = self.get_shift()
 
         # Если день то ищем дневную дату смены
         if shift == 0:

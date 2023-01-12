@@ -57,7 +57,7 @@ class ShiftTaskLoader(BaseObjectModel):
             for NomGroup in self.nomenclature_group:
                 self.Find_ShiftTask(NomGroup, self.data)
         elif isinstance(self.nomenclature_group, str):
-            self.Find_ShiftTask(NomGroup, self.data)
+            self.Find_ShiftTask(self.nomenclature_group, self.data)
 
     # Делает запрос в веб-сервис 1С получая json файл, парсит его
     # и возвращает в виде dict
@@ -219,7 +219,7 @@ class ShiftTaskLoader(BaseObjectModel):
             return False
 
     # Главный метод который создаёт записи сменных заданий
-    def InsertToDataBase(self) -> bool:
+    def InsertToDataBase(self, get_task_flag = False) -> bool:
         # Задаём начальные переменные
         shiftsql = ""
         shift = self.Determine_Shift()
@@ -263,7 +263,9 @@ class ShiftTaskLoader(BaseObjectModel):
                     DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
                         """
         getshift = self.SQLExecute(shiftsql)
-        if len(getshift) == 0:
+        if len(getshift) > 0:
+            pass
+        else:
             if shift == 0:
                 start_date = datetime.datetime(datetime.datetime.now().year,
                                                datetime.datetime.now().month,
@@ -300,32 +302,37 @@ class ShiftTaskLoader(BaseObjectModel):
                         '{shift_name}')
                 """
                 self.SQLExecute(insertshiftsql)
-            getshift = self.SQLExecute(shiftsql)
-            self.LoadEquipmentPerfomance(self.shift_task_list,self.data)
-            # Определение цикла для прокдукта в сменном задании
-            for i in range(0,len(self.shift_task_list)):
-                if self.shift_task_list[i].Cycle == '0':
-                    product = f"""
-                        SELECT [Oid]
-                            ,[Code]
-                            ,[Name]
-                            ,[Article]
-                        FROM [MES_Iplast].[dbo].[Product] 
-                        WHERE Code = '{self.shift_task_list[i].ProductCode}'    
-                    """
-                    product = self.SQLExecute(product)[0][0]
+                self.LoadEquipmentPerfomance(self.shift_task_list,self.data)
+        getshift = self.SQLExecute(shiftsql)
+        # Определение цикла для прокдукта в сменном задании
+        for i in range(0,len(self.shift_task_list)):
+            if self.shift_task_list[i].Cycle == '0':
+                product = f"""
+                    SELECT [Oid]
+                        ,[Code]
+                        ,[Name]
+                        ,[Article]
+                    FROM [MES_Iplast].[dbo].[Product] 
+                    WHERE Code = '{self.shift_task_list[i].ProductCode}'    
+                """
+                product = self.SQLExecute(product)[0][0]
 
-                    sql = f"""
-                        SELECT [Cycle]
-                        FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
-                        WHERE Product = '{product}'
-                    """
-                    product_cycle = self.SQLExecute(sql)
-                    if bool(product_cycle):
-                        self.shift_task_list[i].Cycle = str(product_cycle[0][0])
-                    
-            self.InsertShiftTask(getshift, self.shift_task_list)
-        return
+                sql = f"""
+                    SELECT [Cycle]
+                    FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
+                    WHERE Product = '{product}'
+                """
+                product_cycle = self.SQLExecute(sql)
+                if bool(product_cycle):
+                    self.shift_task_list[i].Cycle = str(product_cycle[0][0])
+
+        if get_task_flag == False:        
+            self.InsertShiftTask(getshift, self.shift_task_list, get_tasks_flag=get_task_flag)
+            return
+        else:     
+            shift_task_list = self.InsertShiftTask(
+                getshift, self.shift_task_list, get_tasks_flag=get_task_flag)      
+            return shift_task_list
 
     # Метод ищет сменное задание по номенклатурной группе
     # и json файлу со сменными заданиями далее сменное задание проходит
@@ -375,10 +382,11 @@ class ShiftTaskLoader(BaseObjectModel):
                 if (self.CheckingRequiredValuesInTheDataBase(ShiftTask)):
                     self.shift_task_list.append(ShiftTask)
 
-    def InsertShiftTask(self, shift, tasklist):
+    def InsertShiftTask(self, shift, tasklist, get_tasks_flag):
         # Проходим по всем сменным заданиям в списке прошедших валидацию
         # Находим необходимые поля которые ссылаются на другие таблицы в БД
         # и создаём записи сменных заданий
+        get_tasks_list = []
         for task in tasklist:
             null_count = 0
             for i in task.Ordinal:
@@ -418,44 +426,63 @@ class ShiftTaskLoader(BaseObjectModel):
                     WHERE Code = '{task.Specification}'
                 """
             specification = self.SQLExecute(specification)[0][0]
-
-            ShiftTaskInsertSQL = f"""
-                    INSERT INTO [ShiftTask] (
-                            Oid,
-                            [Shift],
-                            Equipment,
-                            Ordinal,
-                            Product,
-                            Specification,
-                            Traits,
-                            ExtraTraits,
-                            PackingScheme,
-                            PackingCount,
-                            SocketCount,
-                            ProductCount,
-                            Cycle,
-                            [Weight],
-                            ProductURL,
-                            PackingURL)
-                    VALUES (NEWID(),
-                        '{shiftOid}',
-                        '{equipment_oid}',
-                         {task.Ordinal},
-                        '{product}',
-                        '{specification}',
-                        '{task.Traits}',
-                        '{task.ExtraTraits}',
-                        '{task.PackingScheme}',
-                         {task.PackingCount},
-                         {task.SocketCount},
-                         {task.ProductCount},
-                         {task.Cycle},
-                         {float(task.Weight.replace(',','.'))},
-                        '{task.ProductURL}',
-                        '{task.PackingURL}')
-                    """
-            self.app.logger.info("Вставка сменного задания №" + task.Ordinal)
-            self.SQLExecute(ShiftTaskInsertSQL)
+            if not get_tasks_flag:
+                ShiftTaskInsertSQL = f"""
+                        INSERT INTO [ShiftTask] (
+                                Oid,
+                                [Shift],
+                                Equipment,
+                                Ordinal,
+                                Product,
+                                Specification,
+                                Traits,
+                                ExtraTraits,
+                                PackingScheme,
+                                PackingCount,
+                                SocketCount,
+                                ProductCount,
+                                Cycle,
+                                [Weight],
+                                ProductURL,
+                                PackingURL)
+                        VALUES (NEWID(),
+                            '{shiftOid}',
+                            '{equipment_oid}',
+                            {task.Ordinal},
+                            '{product}',
+                            '{specification}',
+                            '{task.Traits}',
+                            '{task.ExtraTraits}',
+                            '{task.PackingScheme}',
+                            {task.PackingCount},
+                            {task.SocketCount},
+                            {task.ProductCount},
+                            {task.Cycle},
+                            {float(task.Weight.replace(',','.'))},
+                            '{task.ProductURL}',
+                            '{task.PackingURL}')
+                        """
+                self.app.logger.info("Вставка сменного задания №" + task.Ordinal)
+                self.SQLExecute(ShiftTaskInsertSQL)
+            else:
+                get_tasks_list.append(('NOID',
+                                        shiftOid,
+                                        equipment_oid,
+                                        task.Ordinal,
+                                        product,
+                                        specification,
+                                        task.Traits,
+                                        task.ExtraTraits,
+                                        task.PackingScheme,
+                                        task.PackingCount,
+                                        task.SocketCount,
+                                        task.ProductCount,
+                                        task.Cycle,
+                                        float(task.Weight.replace(',','.')),
+                                        task.ProductURL,
+                                        task.PackingURL))
+        if get_tasks_flag:
+            return get_tasks_list
 
     def LoadEquipmentPerfomance(self,tasklist,jsondata):
         for task in tasklist:

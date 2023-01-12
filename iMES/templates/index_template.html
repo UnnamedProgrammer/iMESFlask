@@ -686,6 +686,11 @@ async function UpdateError()
     );
 }
 UpdateError()
+
+function UpdateShiftTask()
+{
+    socket.emit('UpdateShiftTask', { data: '' })    
+}
 </script>
 {% block script %}                
 {% endblock %}
