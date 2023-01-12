@@ -220,7 +220,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 else:
                     wastes.append(0)
                 
-                if len(defectives_result) > 0:
+                if len(defectives_result) > 0 and defectives_result[0][0] != None:
                     defectives.append(int(defectives_result[0][0]))
                 else:
                     defectives.append(0)
