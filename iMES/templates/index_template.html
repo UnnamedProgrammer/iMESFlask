@@ -445,6 +445,12 @@
                         {
                             trigger_flag = false 
                             pf_error = false
+                            let elem = document.getElementById('pfsign')
+                            if(elem.classList.contains('accent'))
+                            {
+                                elem.classList.add("primary");
+                                elem.classList.remove("accent");
+                            }
                         }
                         $('#error_list').append(`<div class="accent left-padding" id="error">[${got_errors[err_i]['Date']}] ${got_errors[err_i]['Message']} </div>`)
                     }
@@ -454,12 +460,6 @@
                 $('#error').remove()
                 trigger_flag = false 
                 pf_error = false
-                let elem = document.getElementById('pfsign')
-                if(elem.classList.contains('accent'))
-                {
-                    elem.classList.add("primary");
-                    elem.classList.remove("accent");
-                }
             }
             if ((arr[address]['Product'].length == 1) ||
                 (arr[address]['Product'] == 'Нет сменного задания')){
