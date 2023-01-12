@@ -122,7 +122,7 @@
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">БРАК</div>
-                    <div class="swiper-container mySwiper4 mt-2">
+                    <div class="swiper-container mySwiper4">
                         <div class="swiper-wrapper">
                             <p class="swiper-slide card-text text-center nvDefect" id="nvDefect"></p>
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
@@ -195,13 +195,13 @@
                         <p class="card-text text-center display-3" id="pointVCS"></p>
                     </div>  
                 </div>
-                <div class="card height200 shadow">
+                <div class="card height120 shadow">
                     <div class="card-header text-center primary">ПЛАНОВЫЙ ВЕС</div>
-                    <div class="swiper-container mySwiper5 mt-2">
+                    <div class="swiper-container mySwiper5">
                         <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center display-3 mt-2" id="planweight"></p>
+                            <p class="swiper-slide card-text text-center display-4 fw-normal" id="planweight"></p>
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
-                            <p class="swiper-slide card-text text-center display-3 mt-2" id="planweight"></p>
+                            <p class="swiper-slide card-text text-center display-4 fw-normal" id="planweight"></p>
                         {% endfor %}
                         </div>
                         {% if current_tpa[2].ProductCount > 1 %}
@@ -210,20 +210,20 @@
                         <div class="custom-option custom-option_left custom-option_planWeight opacity-0" id="showMoreLeft">
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                             <div class="custom-option__item shadow border">
-                                <p class="swiper-slide card-text text-center display-3" id="planweight"></p>
+                                <p class="swiper-slide card-text text-center display-4 fw-normal" id="planweight"></p>
                             </div>
                         {% endfor %}
                         <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 40px"></div>
                         </div>
                     </div>
                 </div>
-                <div class="card height200 shadow">
+                <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">СРЕДНИЙ ВЕС</div>
-                    <div class="swiper-container mySwiper6 mt-2">
+                    <div class="swiper-container mySwiper6">
                         <div class="swiper-wrapper">
-                            <p class="swiper-slide card-text text-center display-3 mt-2" id="average_weigth"></p>
+                            <p class="swiper-slide card-text text-center display-4 fw-normal" id="average_weigth"></p>
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
-                            <p class="swiper-slide card-text text-center display-3 mt-2" id="average_weigth"></p>
+                            <p class="swiper-slide card-text text-center display-4 fw-normal" id="average_weigth"></p>
                         {% endfor %}
                         </div>
                         {% if current_tpa[2].ProductCount > 1 %}
@@ -232,12 +232,19 @@
                         <div class="custom-option custom-option_left custom-option_averageWeight opacity-0" id="showMoreLeft">
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                             <div class="custom-option__item custom-option__item shadow border">
-                                <p class="swiper-slide card-text text-center display-3" id="average_weigth"></p>
+                                <p class="swiper-slide card-text text-center " id="average_weigth"></p>
                             </div>
                         {% endfor %}
                         <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 40px"></div>
                         </div>
                     </div>
+                </div>
+                <div class="card height120 shadow">
+                    <div class="card-header text-center card-h-uppercase primary">ОТХОДЫ</div>
+                    <div class="swiper-container">
+                        <p class="swiper-slide card-text text-center nvDefect" id="">0</p>
+                    </div>
+                    
                 </div>
                 <div class="card height100 shadow">
                     <div class="card-body nopadding primary">
