@@ -32,6 +32,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.product = ()
         self.product_oids = ()
         self.pressform_oid = ""
+        self.defectives = ()
 
     def update_pressform(self):
         # Проверка прессформы
@@ -179,6 +180,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 self.ProductCount = len(self.product)
         average_weight = []
         wastes = []
+        defectives = []
         for task_oid in self.shift_task_oid:
             get_production_data_sql = f"""
                 SELECT TOP(1) [Oid]
@@ -193,11 +195,18 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                     WHERE ProductionData = '{production_data_oid}'
                 """
                 wastes_sql = f"""
-                    SELECT [Count]
+                    SELECT SUM([Weight])
                     FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
+                    AND Type = 0
+                """
+                defectives_sql = f"""
+                    SELECT SUM([Count])
+                    FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
+                    AND Type = 1
                 """
                 average_weight_result = self.SQLExecute(average_weight_sql)
                 wastes_result = self.SQLExecute(wastes_sql)
+                defectives_result = self.SQLExecute(defectives_sql)
                 if len(average_weight_result) > 0:
                     if (average_weight_result[0][0] != None):
                         average_weight.append(f"{float(average_weight_result[0][0]):.{2}f}")
@@ -210,9 +219,15 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                         wastes.append(0)
                 else:
                     wastes.append(0)
+                
+                if len(defectives_result) > 0:
+                    defectives.append(int(defectives_result[0][0]))
+                else:
+                    defectives.append(0)
 
         self.wastes = tuple(wastes)
         self.average_weight = tuple(average_weight)
+        self.defectives = tuple(defectives)
         sql_controller = self.SQLExecute(f"""
             SELECT [RFIDEquipment]
             FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding]

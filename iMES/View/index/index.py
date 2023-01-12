@@ -586,8 +586,9 @@ def UpdateMainWindowData(data):
     ip_addr = request.remote_addr
     errors = None
     current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
-    current_tpa[ip_addr][2].data_from_shifttask()
+    current_tpa[ip_addr][2].Check_Downtime(current_tpa[ip_addr][2].tpa)
     current_tpa[ip_addr][2].Check_pressform()
+    current_tpa[ip_addr][2].data_from_shifttask()
     if len(current_tpa[ip_addr][2].errors) > 0:
         errors = current_tpa[ip_addr][2].errors
     try:
@@ -603,6 +604,7 @@ def UpdateMainWindowData(data):
                 "AverageWeight": current_tpa[ip_addr][2].average_weight,
                 "Shift": str(current_tpa[ip_addr][2].shift),
                 "Wastes": current_tpa[ip_addr][2].wastes,
+                "Defectives": current_tpa[ip_addr][2].defectives,
                 "Errors": errors
             },
             'Reason': ""
