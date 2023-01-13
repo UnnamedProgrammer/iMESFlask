@@ -16,6 +16,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.plan_weight = (0,)
         self.average_weight = (0,)
         self.shift = ''
+        self.shift_oid = ''
         self.shift_task_oid = ''
         self.product_fact = (0,)
         self.label = ''
@@ -31,6 +32,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.product = ()
         self.product_oids = ()
         self.pressform_oid = ""
+        self.defectives = ()
 
     def update_pressform(self):
         # Проверка прессформы
@@ -80,6 +82,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 ,[Traits]
                 ,[ExtraTraits]
                 ,[Product]
+                ,[Shift].Oid
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{self.tpa}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
@@ -108,6 +111,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 self.cycle = shift_task[12]
                 self.shift = shift_task[1]
                 self.PackingURL = shift_task[15]
+                self.shift_oid = shift_task[19]
                 spec_code = self.SQLExecute(f"""
                     SELECT [Code]
                         FROM [MES_Iplast].[dbo].[ProductSpecification]
@@ -137,10 +141,12 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             self.production_plan = 0
             self.cycle = 0
             self.plan_weight = 0
-            self.shift = self.SQLExecute("""
-            SELECT TOP (1) [Note]
+            get_shift_data = self.SQLExecute("""
+            SELECT TOP (1) Oid,[Note]
             FROM [MES_Iplast].[dbo].[Shift] ORDER BY StartDate DESC            
-            """)[0][0]
+            """)
+            self.shift = get_shift_data[0][1]
+            self.shift_oid = get_shift_data[0][0]
 
         if self.shift_task_oid != None and len(self.shift_task_oid) > 0:
             production_data = []
@@ -174,6 +180,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 self.ProductCount = len(self.product)
         average_weight = []
         wastes = []
+        defectives = []
         for task_oid in self.shift_task_oid:
             get_production_data_sql = f"""
                 SELECT TOP(1) [Oid]
@@ -188,11 +195,18 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                     WHERE ProductionData = '{production_data_oid}'
                 """
                 wastes_sql = f"""
-                    SELECT [Count]
+                    SELECT SUM([Weight])
                     FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
+                    AND Type = 0
+                """
+                defectives_sql = f"""
+                    SELECT SUM([Count])
+                    FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
+                    AND Type = 1
                 """
                 average_weight_result = self.SQLExecute(average_weight_sql)
                 wastes_result = self.SQLExecute(wastes_sql)
+                defectives_result = self.SQLExecute(defectives_sql)
                 if len(average_weight_result) > 0:
                     if (average_weight_result[0][0] != None):
                         average_weight.append(f"{float(average_weight_result[0][0]):.{2}f}")
@@ -205,9 +219,15 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                         wastes.append(0)
                 else:
                     wastes.append(0)
+                
+                if len(defectives_result) > 0 and defectives_result[0][0] != None:
+                    defectives.append(int(defectives_result[0][0]))
+                else:
+                    defectives.append(0)
 
         self.wastes = tuple(wastes)
         self.average_weight = tuple(average_weight)
+        self.defectives = tuple(defectives)
         sql_controller = self.SQLExecute(f"""
             SELECT [RFIDEquipment]
             FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding]

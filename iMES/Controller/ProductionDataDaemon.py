@@ -152,7 +152,9 @@ class ProductionDataDaemon(BaseObjectModel):
                         else:
                             break
         else:
-            return self.GetShiftTaskWithoutEP(shift, tpaoid)          
+            return self.GetShiftTaskWithoutEP(shift, tpaoid)
+        if len(shift_tasks) == 0:
+            shift_tasks = self.GetShiftTaskWithoutEP(shift,tpaoid)          
         return shift_tasks
     
     # Метод возвращает Oid текущей смены

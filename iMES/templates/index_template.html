@@ -242,7 +242,7 @@
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">ОТХОДЫ</div>
                     <div class="swiper-container">
-                        <p class="swiper-slide card-text text-center nvDefect" id="">0</p>
+                        <p class="swiper-slide card-text text-center nvDefect" id="wastes">0</p>
                     </div>
                     
                 </div>
@@ -413,6 +413,7 @@
         arr = JSON.parse(data)
         if (address == Object.keys(arr)[0])
         {   
+            $('#error').remove()
             let pressform = document.getElementById('tpf')
             let product = document.querySelectorAll('#tprod')
             let product_plan = document.querySelectorAll('#nplan')
@@ -422,7 +423,8 @@
             let plan_weight = document.querySelectorAll('#planweight')
             let average_weight = document.querySelectorAll('#average_weigth')
             let shift = document.getElementById('smena')
-            let defective = document.querySelectorAll('#nvDefect')
+            let wastes = document.querySelectorAll('#wastes')
+            let defectives = document.querySelectorAll('#nvDefect')
             let error_list = document.querySelectorAll('#error')
             let got_errors = arr[address]['Errors']
             pressform.textContent = arr[address]['PF']
@@ -439,20 +441,25 @@
                         {
                             pf_error = true
                         }
+                        else
+                        {
+                            trigger_flag = false 
+                            pf_error = false
+                            let elem = document.getElementById('pfsign')
+                            if(elem.classList.contains('accent'))
+                            {
+                                elem.classList.add("primary");
+                                elem.classList.remove("accent");
+                            }
+                        }
                         $('#error_list').append(`<div class="accent left-padding" id="error">[${got_errors[err_i]['Date']}] ${got_errors[err_i]['Message']} </div>`)
                     }
             }
             else
             {
                 $('#error').remove()
+                trigger_flag = false 
                 pf_error = false
-                let elem = document.getElementById('pfsign')
-                if(elem.classList.contains('accent'))
-                {
-                    elem.classList.add("primary");
-                    elem.classList.remove("accent");
-                    trigger_flag = false 
-                }
             }
             if ((arr[address]['Product'].length == 1) ||
                 (arr[address]['Product'] == 'Нет сменного задания')){
@@ -473,7 +480,8 @@
                 }
                 plan_weight[0].textContent = arr[address]['PlanWeight'][0]
                 average_weight[0].textContent = arr[address]['AverageWeight'][0]
-                defective[0].textContent = arr[address]['Wastes'][0]
+                wastes[0].textContent = arr[address]['Wastes'][0]
+                defectives[0].textContent = arr[address]['Defectives'][0]
             }
             else
             {
@@ -485,7 +493,8 @@
                     product_fact[item].textContent = arr[address]['Fact'][item]
                     plan_weight[item].textContent = arr[address]['PlanWeight'][item]
                     average_weight[item].textContent = arr[address]['AverageWeight'][item]
-                    defective[item].textContent = arr[address]['Wastes'][item]
+                    wastes[item].textContent = arr[address]['Wastes'][item]
+                    defectives[item].textContent = arr[address]['Defectives'][item]
                     count += 1 
                 }
                 for (let item = count; item < product.length; item++)
@@ -495,7 +504,8 @@
                     product_fact[item].textContent = arr[address]['Fact'][item - 1]
                     plan_weight[item].textContent = arr[address]['PlanWeight'][item - 1]
                     average_weight[item].textContent = arr[address]['AverageWeight'][item - 1]
-                    defective[item].textContent = arr[address]['Wastes'][item - 1]
+                    wastes[item].textContent = arr[address]['Wastes'][item - 1]
+                    defectives[item].textContent = arr[address]['Defectives'][item]
                 }
             }
             if (arr['Reason'] == 'AfterSwitchPF')
@@ -693,6 +703,11 @@ async function UpdateError()
     );
 }
 UpdateError()
+
+function UpdateShiftTask()
+{
+    socket.emit('UpdateShiftTask', { data: '' })    
+}
 </script>
 {% block script %}                
 {% endblock %}
