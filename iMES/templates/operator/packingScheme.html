@@ -3,13 +3,7 @@
 <div class="view"> 
     <div class="view-header text-center primary">Схема упаковки</div>
     <div class="view-body jsScroll p-3 fs-5">
-        {% if current_tpa[2].PackingScheme == '' or 
-              current_tpa[2].PackingScheme == "" or 
-              current_tpa[2].PackingScheme == None%} 
-            <p>{{current_tpa[2].PackingScheme}}</p>
-        {% else %}
-            <p>Нет описания</p>
-        {% endif %}
+        {{current_tpa[2].PackingScheme}}
     </div>
     <div class="view-footer">
         <div class="row">

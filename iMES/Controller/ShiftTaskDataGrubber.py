@@ -33,6 +33,8 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.product_oids = ()
         self.pressform_oid = ""
         self.defectives = ()
+        self.PackingScheme = ""
+        self.specName = ()
 
     def update_pressform(self):
         # Проверка прессформы
@@ -101,6 +103,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             specs = []
             traits_operator = []
             product_oids = []
+            spec_names = []
             for shift_task in data:
                 st_oid.append(shift_task[0])
                 product_list.append(shift_task[4])
@@ -111,6 +114,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 self.cycle = shift_task[12]
                 self.shift = shift_task[1]
                 self.PackingURL = shift_task[15]
+                self.PackingScheme = shift_task[8]
                 self.shift_oid = shift_task[19]
                 spec_code = self.SQLExecute(f"""
                     SELECT [Code]
@@ -119,6 +123,12 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 """)
                 if len(spec_code) > 0:
                     specs.append((spec_code[0][0])[2:])
+                    spec_names_sql = self.SQLExecute(f"""
+                        SELECT [Name]
+                        FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{spec_code[0][0]}'                             
+                    """)
+                    if len(spec_names_sql) > 0:
+                        spec_names.append(spec_names_sql[0][0])
 
             self.specifications = specs            
             self.shift_task_oid = st_oid
@@ -127,7 +137,8 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             self.plan_weight = tuple(plan_weight)
             self.traits = tuple(traits_operator)
             self.product_oids = tuple(product_oids)
-
+            self.specName = tuple(spec_names)
+            
             for i in range(0,len(data)):
                 traits.append([self.product[i],
                                f"{data[i][16]} {data[i][17]}",
