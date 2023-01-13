@@ -66,16 +66,20 @@ function commentModalController(event) {
 
 // Печать этикетки
 function stickerPrint() {
-
-    mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
     
     socket.emit('GetStickerInfo', { data: '' })
 
     socket.on('SendStickerInfo',function(data)
     {
         arr = JSON.parse(data)
-        if (address == Object.keys(arr))
+
+        if (arr[address] == 'Empty'){
+            showError('Не указано количество продукта!')
+        } 
+        else if (address == Object.keys(arr))
         {
+            mywindow = window.open('', 'PRINT', 'height=400,width=600,left=300,top=300');
+
             let smena = document.querySelector('#smena').innerHTML,
                 clock = document.querySelector('#clock').innerHTML,
                 html = ''

@@ -692,6 +692,10 @@ def GetStickerInfo(data):
                                 
     stickerData = SQLManipulator.SQLExecute(sql_GetStickerInfo)
     
-    data = {'Product': stickerData[0][0], 'Count': stickerData[0][1]}
+    if len(stickerData) != 0:
+        data = {'Product': stickerData[0][0], 'Count': stickerData[0][1]}
+    else:
+        data = 'Empty'
+   
     socketio.emit("SendStickerInfo", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
