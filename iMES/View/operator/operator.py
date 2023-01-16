@@ -141,7 +141,8 @@ def tableWasteDefect():
                                         INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
                                         INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
                                         INNER JOIN [User] ON [ProductWaste].[Creator] = [User].[Oid]
-                                        INNER JOIN [Employee] ON [User].[Employee] = [Employee].[Oid] """
+                                        INNER JOIN [Employee] ON [User].[Employee] = [Employee].[Oid]
+                                        ORDER BY [ProductWaste].[CreateDate] DESC"""
     current_product_waste = SQLManipulator.SQLExecute(sql_GetCurrentProductWaste)
 
     # Проверяем были ли введены отходы и/или брак в текущую смену

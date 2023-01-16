@@ -17,7 +17,12 @@
                 {% for task in current_tpa[2].shift_tasks_traits %}
                 <tr>
                     <td>{{ task[0] }}</td>
-                    <td>{{ task[1] }}</td>
+                    <td>{{ task[1] }}
+                        , Спецификация:
+                        {% for spec in current_tpa[2].specName %}
+                            {{spec}}
+                        {% endfor %}
+                    </td>
                     <td>{{ task[2] }}</td>
                     <td>{{ task[3] }}</td>
                     <td>{{ task[4] }}</td>
