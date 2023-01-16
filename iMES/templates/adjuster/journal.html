@@ -101,7 +101,7 @@
 {% endblock %}
 {% block script %}
 <script>
-    let checkboxs = document.querySelectorAll('input[type=checkbox]')
+    let checkboxes = document.querySelectorAll('input[type=checkbox]')
     let checkedArr = []
     let endDateValue = null
 
@@ -131,37 +131,56 @@
                     checkedArr.push(this) // Иначе добавляет в массив
                 }
 
-                for(const elem of checkboxs) { // Перебор всех имеющихся чекбоксов
+                for(const elem of checkboxes) { // Перебор всех имеющихся чекбоксов
+
                     // Если не отмеченный чекбокс (элемент), находится между отмеченных. То отмечаем его и перекрашиваем в зеленый
                     if (elem.id > checkedArr[0].id && elem.id < checkedArr[checkedArr.length-1].id) {
                         $(elem).closest('tr').addClass('green');
                         $(elem).prop("checked", true);
-                        $(elem).closest('tr').children()[2].innerHTML= ''
-                        $(elem).closest('tr').children()[3].innerHTML= ''
+
+                        // Удаление ячейки начала и конца промежуточных простоев 
+                        $(elem).closest('tr').children('#idleTimeStart').remove()
+                        $(elem).closest('tr').children('#idleTimeEnd').remove()
+
+                        // Удаление последней чейки с кнопкой, в промежуточных простоях
                         $(elem).closest('tr').children().last().remove()
                     }
-                    if (elem.id == checkedArr[checkedArr.length-1].id) {
-                        if(checkedArr.length > 1) {
-                            $(elem).closest('tr').children()[2].innerHTML= ''
 
-                            if($(elem).closest('tr').children()[3].innerHTML.trim() != '') {
-                                console.log('Yes')
-                                endDateValue = $(elem).closest('tr').children()[3].innerHTML
-                                $(elem).closest('tr').children()[3].innerHTML= ''
+                    // Если выбранный элемент последний
+                    if (elem.id == checkedArr[checkedArr.length-1].id) {
+                        // Если выбранных чеек большей одной
+                        if(checkedArr.length > 1) {
+                            $(elem).closest('tr').children('#idleTimeStart').remove()
+
+                            // Если ячейка конец простоя, не пустой, то присваеваем его значение в переменную endDateValue
+                            // а так же чистим ячейки конца простоя и кнопки
+                            if($(elem).closest('tr').children()[2].innerHTML.trim() != '') {
+                                endDateValue = $(elem).closest('tr').children()[2].innerHTML
+                                $(elem).closest('tr').children('#idleTimeEnd').remove()
+                                $(elem).closest('tr').children().last().remove()
+                            // Если чейка конец простоя, пустой, то просто удаляем две ячейки
+                            } else {
+                                $(elem).closest('tr').children('#idleTimeEnd').remove()
+                                $(elem).closest('tr').children().last().remove()
                             }
                         }
                     }
                 }
 
-                let startDate = $(checkedArr[0]).closest('tr').children()[2]
-                let endDate = $(checkedArr[0]).closest('tr').children()[3]
+                let startDate = $(checkedArr[0]).closest('tr').children('#idleTimeStart')
+                let endDate = $(checkedArr[0]).closest('tr').children('#idleTimeEnd')
                 let buttonCell = $(checkedArr[0]).closest('tr').children().last()
                 
-                $(startDate).attr('rowspan', $('input[type=checkbox]:checked').length);
-                $(endDate).attr('rowspan', $('input[type=checkbox]:checked').length);
-                $(buttonCell).attr('rowspan', $('input[type=checkbox]:checked').length);
-                endDate.innerHTML = endDateValue
-
+                if(checkedArr.length > 1) {
+                    $(startDate).attr('rowspan', $('input[type=checkbox]:checked').length);
+                    $(endDate).attr('rowspan', $('input[type=checkbox]:checked').length);
+                    $(buttonCell).attr('rowspan', $('input[type=checkbox]:checked').length);
+                    endDate.innerHTML = endDateValue
+                } else {
+                    if($(checkedArr[0]).closest('tr').children()[3].innerHTML.trim() != '') {
+                        endDateValue = $(checkedArr[0]).closest('tr').children()[3].innerHTML
+                    }
+                }
             });
 
         } else {
