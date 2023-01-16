@@ -219,7 +219,7 @@ class ShiftTaskLoader(BaseObjectModel):
             return False
 
     # Главный метод который создаёт записи сменных заданий
-    def InsertToDataBase(self, get_task_flag = False) -> bool:
+    def InsertToDataBase(self, get_task_flag = False, to_current_shift = False) -> bool:
         # Задаём начальные переменные
         shiftsql = ""
         shift = self.Determine_Shift()
@@ -265,6 +265,28 @@ class ShiftTaskLoader(BaseObjectModel):
         getshift = self.SQLExecute(shiftsql)
         if len(getshift) > 0:
             pass
+        elif to_current_shift:
+            for i in range(0,len(self.shift_task_list)):
+                if self.shift_task_list[i].Cycle == '0':
+                    product = f"""
+                        SELECT [Oid]
+                            ,[Code]
+                            ,[Name]
+                            ,[Article]
+                        FROM [MES_Iplast].[dbo].[Product] 
+                        WHERE Code = '{self.shift_task_list[i].ProductCode}'    
+                    """
+                    product = self.SQLExecute(product)[0][0]
+
+                    sql = f"""
+                        SELECT [Cycle]
+                        FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
+                        WHERE Product = '{product}'
+                    """
+                    product_cycle = self.SQLExecute(sql)
+                    if bool(product_cycle):
+                        self.shift_task_list[i].Cycle = str(product_cycle[0][0])
+            self.InsertShiftTask(getshift[0][0], self.shift_task_list, get_tasks_flag=get_task_flag)
         else:
             if shift == 0:
                 start_date = datetime.datetime(datetime.datetime.now().year,
