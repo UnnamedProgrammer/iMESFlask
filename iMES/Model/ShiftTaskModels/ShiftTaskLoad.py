@@ -135,7 +135,7 @@ class ShiftTaskLoader(BaseObjectModel):
         if len(equipment) > 0:
             pass
         else:
-            self.app.logger.warning(
+            self.app.logger.error(
                 f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
             return False
         if equipment[0][1] == "Термопластавтомат":
@@ -166,7 +166,7 @@ class ShiftTaskLoader(BaseObjectModel):
                             f"Валидация сменного задания № {ShiftTask.Specification} успешна.")
                         return True
                     else:
-                        self.app.logger.warning(
+                        self.app.logger.error(
                             f"Внимание: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
                         self.app.logger.info(f"  Поиск спецификации {ShiftTask.Specification} в массиве 1С")
                         for specification_1C in self.data['Spec']:
@@ -199,11 +199,11 @@ class ShiftTaskLoader(BaseObjectModel):
                             self.app.logger.info(f"\r\n")
                             return True
                         else:
-                            self.app.logger.warning(
+                            self.app.logger.error(
                                 f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о спецификации {ShiftTask.Specification}")
                             return False
                 else:
-                    self.app.logger.warning(
+                    self.app.logger.error(
                         f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
                     self.app.logger.info(
                         f"Сменное задание № {ShiftTask.Ordinal} - вставка нового продукта {ShiftTask.ProductCode} в базу данных")
@@ -214,7 +214,7 @@ class ShiftTaskLoader(BaseObjectModel):
                         f"Сменное задание № {ShiftTask.Ordinal} - Новый продукт {ShiftTask.ProductCode} добавлен в базу данных")
                     continue
         else:
-            self.app.logger.warning(
+            self.app.logger.error(
                 f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
             return False
 
@@ -229,7 +229,7 @@ class ShiftTaskLoader(BaseObjectModel):
         # Проверяем длинну списка сменных заданий
         if len(self.shift_task_list) == 0:
             # Если заданий нет
-            self.app.logger.warning(
+            self.app.logger.error(
                 "В списке отсутсвуют сменные задания для выгрузки")
             return
         else:

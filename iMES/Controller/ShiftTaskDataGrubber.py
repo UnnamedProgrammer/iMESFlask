@@ -38,28 +38,32 @@ class ShiftTaskDataGrubber(BaseObjectModel):
 
     def update_pressform(self):
         # Проверка прессформы
-        sql = f"""
-            SELECT TOP (1) Equipment.Name, RFIDClosureData.Date, Equipment.Oid
-            FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
-            WHERE 
-            Controller = (SELECT RFIDEquipment 
-                            FROM RFIDEquipmentBinding 
-                            WHERE Equipment = '{self.tpa}') AND
-            RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
-            Equipment.Oid = RFIDEquipmentBinding.Equipment
-            ORDER BY Date DESC
-            """
-        pf = self.SQLExecute(sql)
-        if len(pf) > 0:
-            if pf[0][0] == None or pf == () or pf == []:
-                pressform = 'Метка не привязана к прессформе'
+        if self.tpa != '':
+            sql = f"""
+                SELECT TOP (1) Equipment.Name, RFIDClosureData.Date, Equipment.Oid
+                FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
+                WHERE 
+                Controller = (SELECT RFIDEquipment 
+                                FROM RFIDEquipmentBinding 
+                                WHERE Equipment = '{self.tpa}') AND
+                RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
+                Equipment.Oid = RFIDEquipmentBinding.Equipment
+                ORDER BY Date DESC
+                """
+            pf = self.SQLExecute(sql)
+            if len(pf) > 0:
+                if pf[0][0] == None or pf == () or pf == []:
+                    pressform = 'Метка не привязана к прессформе'
+                else:
+                    pressform = pf[0][0]
+                    self.pressform_oid = pf[0][2]
             else:
-                pressform = pf[0][0]
-                self.pressform_oid = pf[0][2]
+                pressform = 'Не определена'
+                self.pressform_oid = ""
+            return pressform
         else:
             pressform = 'Не определена'
-            self.pressform_oid = ""
-        return pressform
+            return pressform
     
 
     # Метод получения данных из сменного задания
