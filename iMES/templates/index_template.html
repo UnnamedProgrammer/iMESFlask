@@ -88,7 +88,7 @@
                         {% if current_tpa[2].ProductCount > 1 %}
                             <div class="show-more"  onClick="showMore(event)" style="top: 50px"></div>
                         {% endif %}
-                        <div class="custom-option custom-option_prodPlan opacity-0" id="showMoreRight">
+                        <div class="custom-option custom-option_tiny opacity-0" id="showMoreRight">
                             {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                                 <div class="custom-option__item shadow border">
                                     <p class="card-text text-center nplan" id="nplan"></p>
@@ -110,7 +110,7 @@
                         {% if current_tpa[2].ProductCount > 1 %}
                             <div class="show-more"  onClick="showMore(event)" style="top: 50px;"></div>
                         {% endif %}
-                        <div class="custom-option custom-option_prodFact opacity-0" id="showMoreRight">
+                        <div class="custom-option custom-option_tiny opacity-0" id="showMoreRight">
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                             <div class="custom-option__item shadow border">
                                 <p class="card-text text-center nvplan" id="nvplan"></p>
@@ -132,7 +132,7 @@
                         {% if current_tpa[2].ProductCount > 1 %}
                             <div class="show-more"  onClick="showMore(event)" style="top: 50px"></div>
                         {% endif %}
-                        <div class="custom-option custom-option_prodFact opacity-0" id="showMoreRight">
+                        <div class="custom-option custom-option_tiny opacity-0" id="showMoreRight">
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                             <div class="custom-option__item shadow border">
                                 <p class="card-text text-center nvDefect" id="nvDefect"></p>
@@ -208,15 +208,15 @@
                         {% endfor %}
                         </div>
                         {% if current_tpa[2].ProductCount > 1 %}
-                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 80px;"></div>
+                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 52px;"></div>
                         {% endif %}
-                        <div class="custom-option custom-option_left custom-option_planWeight opacity-0" id="showMoreLeft">
+                        <div class="custom-option custom-option_left custom-option_tiny opacity-0" id="showMoreLeft">
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                             <div class="custom-option__item shadow border">
                                 <p class="swiper-slide card-text text-center display-4 fw-normal" id="planweight"></p>
                             </div>
                         {% endfor %}
-                        <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 40px"></div>
+                        <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 13px"></div>
                         </div>
                     </div>
                 </div>
@@ -230,15 +230,15 @@
                         {% endfor %}
                         </div>
                         {% if current_tpa[2].ProductCount > 1 %}
-                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 80px;"></div>
+                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 51px"></div>
                         {% endif %}
-                        <div class="custom-option custom-option_left custom-option_averageWeight opacity-0" id="showMoreLeft">
+                        <div class="custom-option custom-option_left custom-option_tiny opacity-0" id="showMoreLeft">
                         {% for count in range(0,current_tpa[2].ProductCount - 1) %}
                             <div class="custom-option__item custom-option__item shadow border">
-                                <p class="swiper-slide card-text text-center " id="average_weigth"></p>
+                                <p class="swiper-slide card-text text-center display-4 fw-normal" id="average_weigth"></p>
                             </div>
                         {% endfor %}
-                        <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 40px"></div>
+                        <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 13px"></div>
                         </div>
                     </div>
                 </div>
@@ -251,17 +251,18 @@
                                 <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
                             {% endfor %}
                         </div>
-                    </div>
-                    {% if current_tpa[2].ProductCount > 1 %}
-                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 80px;"></div>
-                    {% endif %}
-                    <div class="custom-option custom-option_left custom-option_averageWeight opacity-0" id="showMoreLeft"></div>
-                    {% for count in range(0,current_tpa[2].ProductCount - 1) %}
-                        <div class="custom-option__item custom-option__item shadow border">
-                            <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                        {% if current_tpa[2].ProductCount > 1 %}
+                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 52px;"></div>
+                        {% endif %}
+                        <div class="custom-option custom-option_left custom-option_tiny opacity-0" id="showMoreLeft">
+                            {% for count in range(0,current_tpa[2].ProductCount - 1) %}
+                                <div class="custom-option__item custom-option__item shadow border">
+                                    <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                                </div>
+                            {% endfor %}
+                            <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 13px"></div>
                         </div>
-                    {% endfor %}
-                    <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 40px"></div>
+                    </div>
                 </div>
                 <div class="card height100 shadow">
                     <div class="card-body nopadding primary">
