@@ -244,10 +244,24 @@
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">ОТХОДЫ</div>
-                    <div class="swiper-container">
-                        <p class="swiper-slide card-text text-center nvDefect" id="wastes">0</p>
+                    <div class="swiper-container mySwiper7">
+                        <div class="swiper-wrapper">
+                            <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                            {% for count in range(0,current_tpa[2].ProductCount - 1) %}
+                                <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                            {% endfor %}
+                        </div>
                     </div>
-                    
+                    {% if current_tpa[2].ProductCount > 1 %}
+                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 80px;"></div>
+                    {% endif %}
+                    <div class="custom-option custom-option_left custom-option_averageWeight opacity-0" id="showMoreLeft"></div>
+                    {% for count in range(0,current_tpa[2].ProductCount - 1) %}
+                        <div class="custom-option__item custom-option__item shadow border">
+                            <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                        </div>
+                    {% endfor %}
+                    <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 40px"></div>
                 </div>
                 <div class="card height100 shadow">
                     <div class="card-body nopadding primary">
@@ -303,6 +317,7 @@
     const swiper4 = new Swiper(".mySwiper4", {});
     const swiper5 = new Swiper(".mySwiper5", {});
     const swiper6 = new Swiper(".mySwiper6", {});
+    const swiper7 = new Swiper(".mySwiper7", {});
     const preloader = document.querySelector('.preloader')
 
     const swipeAllSliders = (index) => {
@@ -312,6 +327,7 @@
         swiper4.slideTo(index);
         swiper5.slideTo(index);
         swiper6.slideTo(index);
+        swiper7.slideTo(index);
     }
 
     swiper1.on('slideChange', () => swipeAllSliders(swiper1.activeIndex));
@@ -320,7 +336,8 @@
     swiper4.on('slideChange', () => swipeAllSliders(swiper4.activeIndex));
     swiper5.on('slideChange', () => swipeAllSliders(swiper5.activeIndex));
     swiper6.on('slideChange', () => swipeAllSliders(swiper6.activeIndex));
-
+    swiper7.on('slideChange', () => swipeAllSliders(swiper7.activeIndex));
+    
     let end_date = NaN
     let product_count = localStorage.getItem('product_count')
     let pf_error = false
@@ -433,17 +450,17 @@
         if (product_count > 1)
         {
             data_from_lstorage = {
-                "PF": JSON.parse(localStorage.getItem('pressform')),
-                "Product": JSON.parse(localStorage.getItem('product')),
-                "Plan": JSON.parse(localStorage.getItem('product_plan')),
-                "Fact": JSON.parse(localStorage.getItem('product_fact')),
-                "PlanCycle": JSON.parse(localStorage.getItem('plan_cycle')),
-                "FactCycle": JSON.parse(localStorage.getItem('fact_cycle')),
-                "PlanWeight": JSON.parse(localStorage.getItem('plan_weight')),
-                "AverageWeight": JSON.parse(localStorage.getItem('average_weight')),
-                "Shift": JSON.parse(localStorage.getItem('shift')),
-                "Wastes": JSON.parse(localStorage.getItem('wastes')),
-                "Defectives": JSON.parse(localStorage.getItem('Defectives')),
+                "PF": localStorage.getItem('pressform'),
+                "Product": JSON.parse(localStorage.getItem('product'))['product'],
+                "Plan":  JSON.parse(localStorage.getItem('product_plan'))['product_plan'],
+                "Fact": JSON.parse(localStorage.getItem('product_fact'))['product_fact'],
+                "PlanCycle": localStorage.getItem('plan_cycle'),
+                "FactCycle": localStorage.getItem('fact_cycle'),
+                "PlanWeight": JSON.parse(localStorage.getItem('plan_weight'))['plan_weight'],
+                "AverageWeight": JSON.parse(localStorage.getItem('average_weight'))['average_weight'],
+                "Shift": localStorage.getItem('shift'),
+                "Wastes": JSON.parse(localStorage.getItem('wastes'))['wastes'],
+                "Defectives": JSON.parse(localStorage.getItem('Defectives'))['Defectives'],
                 "Errors": JSON.parse(localStorage.getItem('got_errors'))
             }
         }
@@ -499,7 +516,7 @@
                 trigger_flag = false 
                 pf_error = false
             }
-            if (typeof(data_from_lstorage['Product'] === 'string') || 
+            if (typeof(data_from_lstorage['Product']) === 'string' || 
                 (data_from_lstorage['Product'] == 'Нет сменного задания')){
                 if (data_from_lstorage['Product'] == 'Нет сменного задания')
                 {
@@ -533,18 +550,16 @@
                     average_weight[item].textContent = data_from_lstorage['AverageWeight'][item]
                     wastes[item].textContent = data_from_lstorage['Wastes'][item]
                     defectives[item].textContent = data_from_lstorage['Defectives'][item]
-                    count += 1 
+                    count += 1
                 }
-                for (let item = count; item < product.length; item++)
-                {
-                    product[item].textContent = data_from_lstorage['Product'][item - 1]
-                    product_plan[item].textContent = data_from_lstorage['Plan'][item - 1]
-                    product_fact[item].textContent = data_from_lstorage['Fact'][item - 1]
-                    plan_weight[item].textContent = data_from_lstorage['PlanWeight'][item - 1]
-                    average_weight[item].textContent = data_from_lstorage['AverageWeight'][item - 1]
-                    wastes[item].textContent = data_from_lstorage['Wastes'][item - 1]
-                    defectives[item].textContent = data_from_lstorage['Defectives'][item]
-                }
+                product[count].textContent = data_from_lstorage['Product'][count - 1]
+                product_plan[item].textContent = data_from_lstorage['Plan'][item - 1]
+                product_fact[item].textContent = data_from_lstorage['Fact'][item - 1]
+                plan_weight[item].textContent = data_from_lstorage['PlanWeight'][item - 1]
+                average_weight[item].textContent = data_from_lstorage['AverageWeight'][item - 1]
+                wastes[item].textContent = data_from_lstorage['Wastes'][item - 1]
+                defectives[item].textContent = data_from_lstorage['Defectives'][item - 1]
+                
             }
             cycle.textContent = data_from_lstorage['PlanCycle']
             cycle_fact.textContent = data_from_lstorage['FactCycle']
@@ -568,13 +583,13 @@
             }
             if ((typeof(arr[address]['Product']) != 'string') && (arr[address]['Product'].length > 1))
             {
-                localStorage.setItem('product', JSON.stringify([arr[address]['Product'][0], arr[address]['Product'][1]]))
-                localStorage.setItem('product_plan', JSON.stringify([arr[address]['Plan'][0], arr[address]['Plan'][1]]))
-                localStorage.setItem('product_fact', JSON.stringify([arr[address]['Fact'][0], arr[address]['Fact'][1]]))
-                localStorage.setItem('Defectives', JSON.stringify([arr[address]['Defectives'][0], arr[address]['Defectives'][1]]))
-                localStorage.setItem('plan_weight', JSON.stringify([arr[address]['PlanWeight'][0], arr[address]['PlanWeight'][1]]))
-                localStorage.setItem('average_weight', JSON.stringify([arr[address]['AverageWeight'][0], arr[address]['AverageWeight'][1]]))
-                localStorage.setItem('wastes', JSON.stringify([arr[address]['Wastes'][0], arr[address]['Wastes'][1]]))
+                localStorage.setItem('product', JSON.stringify({'product':[arr[address]['Product'][0], arr[address]['Product'][1]]}))
+                localStorage.setItem('product_plan', JSON.stringify({'product_plan':[arr[address]['Plan'][0], arr[address]['Plan'][1]]}))
+                localStorage.setItem('product_fact', JSON.stringify({'product_fact':[arr[address]['Fact'][0], arr[address]['Fact'][1]]}))
+                localStorage.setItem('Defectives', JSON.stringify({'Defectives':[arr[address]['Defectives'][0], arr[address]['Defectives'][1]]}))
+                localStorage.setItem('plan_weight', JSON.stringify({'plan_weight':[arr[address]['PlanWeight'][0], arr[address]['PlanWeight'][1]]}))
+                localStorage.setItem('average_weight', JSON.stringify({'average_weight':[arr[address]['AverageWeight'][0], arr[address]['AverageWeight'][1]]}))
+                localStorage.setItem('wastes', JSON.stringify({'wastes':[arr[address]['Wastes'][0], arr[address]['Wastes'][1]]}))
             }
             else   
             {

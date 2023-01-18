@@ -1,16 +1,18 @@
-from datetime import datetime
-from flask_socketio import SocketIO
-from flask import Flask
-from flask_login import LoginManager
-from iMES.Controller.UserCountController import UserCountController
-from iMES.Model.UserModel import UserModel
-from iMES.Controller.TpaController import TpaController 
 import configparser
 import logging
 import os
+from datetime import datetime
+
+from flask_socketio import SocketIO
+from flask import Flask
+from flask_login import LoginManager
+
 from engineio.payload import Payload
 from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
 from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
+from iMES.Controller.UserCountController import UserCountController
+from iMES.Model.UserModel import UserModel
+from iMES.Controller.TpaController import TpaController 
 
 
 # Максимальное число обрабатываемых пакетов за раз

@@ -117,7 +117,11 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 product_oids.append(shift_task[18])
                 self.cycle = shift_task[12]
                 self.shift = shift_task[1]
-                self.PackingURL = shift_task[15]
+                purls = shift_task[15].split(",")
+                for i in range(0, len(purls)):
+                    self.PackingURL = purls[i][36:].replace(" ", "")
+                else:
+                     self.PackingURL = purls[i][36:]
                 self.PackingScheme = shift_task[8]
                 self.shift_oid = shift_task[19]
                 spec_code = self.SQLExecute(f"""
