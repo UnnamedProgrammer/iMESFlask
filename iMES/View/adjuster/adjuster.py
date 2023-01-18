@@ -285,7 +285,7 @@ def adjusterWasteDefectFix():
     sql_GetCurrentProductWaste = f"""   SELECT [Material].[Name] AS [Material], [Product].[Name] AS [Product],[ProductWaste].[Type], [ProductWaste].[Count],
                                         	[ProductWaste].[Weight], [ProductWaste].[Note], [ProductWaste].[Downtime],
                                         	[ProductWaste].[CreateDate],[Employee].[LastName],[Employee].[FirstName],
-                                        	[Employee].[MiddleName]
+                                        	[Employee].[MiddleName],  ProductWaste.Oid
                                         FROM [ShiftTask]
                                         INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
                                         	AND [Shift].[StartDate] <= GETDATE() AND [Shift].[EndDate] >= GETDATE()
@@ -307,6 +307,7 @@ def adjusterWasteDefectFix():
 # Кнопка "Указать причину" на странице "Зафиксировать брак и отход" была нажата
 @socketio.on('waste_note_change')
 def handle_waste_note_change(data):
+    print(data)
     selected_waste_oid = str(data[0])
     entered_waste_note = str(data[1])
 
