@@ -307,7 +307,6 @@ def adjusterWasteDefectFix():
 # Кнопка "Указать причину" на странице "Зафиксировать брак и отход" была нажата
 @socketio.on('waste_note_change')
 def handle_waste_note_change(data):
-    print(data)
     selected_waste_oid = str(data[0])
     entered_waste_note = str(data[1])
 

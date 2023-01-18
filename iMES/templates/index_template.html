@@ -486,85 +486,92 @@
 
     function InsertMainData()
     {
-        $('#error').remove()   
-        pressform.textContent = data_from_lstorage['PF']
-        if (data_from_lstorage["Errors"] != null)
-            {
-                $('#error').remove()
-                for (let err_i = 0; err_i < data_from_lstorage["Errors"].length; err_i++)
-                    {
-                        if (data_from_lstorage["Errors"][err_i]['Message'] == "ПРЕССФОРМА НЕ СООТВЕТСВУЕТ ПРОДУКТУ.")
+        try
+        {
+            $('#error').remove()   
+            pressform.textContent = data_from_lstorage['PF']
+            if (data_from_lstorage["Errors"] != null)
+                {
+                    $('#error').remove()
+                    for (let err_i = 0; err_i < data_from_lstorage["Errors"].length; err_i++)
                         {
-                            pf_error = true
-                        }
-                        else
-                        {
-                            trigger_flag = false 
-                            pf_error = false
-                            let elem = document.getElementById('pfsign')
-                            if(elem.classList.contains('accent'))
+                            if (data_from_lstorage["Errors"][err_i]['Message'] == "ПРЕССФОРМА НЕ СООТВЕТСВУЕТ ПРОДУКТУ.")
                             {
-                                elem.classList.add("primary");
-                                elem.classList.remove("accent");
+                                pf_error = true
                             }
+                            else
+                            {
+                                trigger_flag = false 
+                                pf_error = false
+                                let elem = document.getElementById('pfsign')
+                                if(elem.classList.contains('accent'))
+                                {
+                                    elem.classList.add("primary");
+                                    elem.classList.remove("accent");
+                                }
+                            }
+                            $('#error_list').append(`<div class="accent left-padding" id="error">[${data_from_lstorage["Errors"][err_i]['Date']}] ${data_from_lstorage["Errors"][err_i]['Message']} </div>`)
                         }
-                        $('#error_list').append(`<div class="accent left-padding" id="error">[${data_from_lstorage["Errors"][err_i]['Date']}] ${data_from_lstorage["Errors"][err_i]['Message']} </div>`)
+                }
+                else
+                {
+                    $('#error').remove()
+                    trigger_flag = false 
+                    pf_error = false
+                }
+                if (typeof(data_from_lstorage['Product']) === 'string' || 
+                    (data_from_lstorage['Product'] == 'Нет сменного задания')){
+                    if (data_from_lstorage['Product'] == 'Нет сменного задания')
+                    {
+                        product.textContent = data_from_lstorage['Product']
+                        cycle.textContent = ''
+                        cycle_fact.textContent = ''
+                        product_fact.textContent = ''
                     }
-            }
-            else
-            {
-                $('#error').remove()
-                trigger_flag = false 
-                pf_error = false
-            }
-            if (typeof(data_from_lstorage['Product']) === 'string' || 
-                (data_from_lstorage['Product'] == 'Нет сменного задания')){
-                if (data_from_lstorage['Product'] == 'Нет сменного задания')
+                    else{
+                        product[0].textContent = data_from_lstorage['Product']
+                    }
+                    product_plan[0].textContent = data_from_lstorage['Plan']
+                    if (data_from_lstorage['Fact'] != 0)
+                    {
+                        product_fact[0].textContent = data_from_lstorage['Fact']
+                    }
+                    plan_weight[0].textContent = data_from_lstorage['PlanWeight']
+                    average_weight[0].textContent = data_from_lstorage['AverageWeight']
+                    wastes[0].textContent = data_from_lstorage['Wastes']
+                    defectives[0].textContent = data_from_lstorage['Defectives']
+                }
+                else
                 {
-                    product.textContent = data_from_lstorage['Product']
-                    cycle.textContent = ''
-                    cycle_fact.textContent = ''
-                    product_fact.textContent = ''
+                    let count = 0
+                    for (let item = 0; item < data_from_lstorage['Product'].length; item++ )
+                    {
+                        product[item].textContent = data_from_lstorage['Product'][item]
+                        product_plan[item].textContent = data_from_lstorage['Plan'][item]
+                        product_fact[item].textContent = data_from_lstorage['Fact'][item]
+                        plan_weight[item].textContent = data_from_lstorage['PlanWeight'][item]
+                        average_weight[item].textContent = data_from_lstorage['AverageWeight'][item]
+                        wastes[item].textContent = data_from_lstorage['Wastes'][item]
+                        defectives[item].textContent = data_from_lstorage['Defectives'][item]
+                        count += 1
+                    }
+                    product[count].textContent = data_from_lstorage['Product'][count - 1]
+                    product_plan[count].textContent = data_from_lstorage['Plan'][count - 1]
+                    product_fact[count].textContent = data_from_lstorage['Fact'][count - 1]
+                    plan_weight[count].textContent = data_from_lstorage['PlanWeight'][count - 1]
+                    average_weight[count].textContent = data_from_lstorage['AverageWeight'][count - 1]
+                    wastes[count].textContent = data_from_lstorage['Wastes'][count - 1]
+                    defectives[count].textContent = data_from_lstorage['Defectives'][count - 1]
+                    
                 }
-                else{
-                    product[0].textContent = data_from_lstorage['Product']
-                }
-                product_plan[0].textContent = data_from_lstorage['Plan']
-                if (data_from_lstorage['Fact'] != 0)
-                {
-                    product_fact[0].textContent = data_from_lstorage['Fact']
-                }
-                plan_weight[0].textContent = data_from_lstorage['PlanWeight']
-                average_weight[0].textContent = data_from_lstorage['AverageWeight']
-                wastes[0].textContent = data_from_lstorage['Wastes']
-                defectives[0].textContent = data_from_lstorage['Defectives']
-            }
-            else
-            {
-                let count = 0
-                for (let item = 0; item < data_from_lstorage['Product'].length; item++ )
-                {
-                    product[item].textContent = data_from_lstorage['Product'][item]
-                    product_plan[item].textContent = data_from_lstorage['Plan'][item]
-                    product_fact[item].textContent = data_from_lstorage['Fact'][item]
-                    plan_weight[item].textContent = data_from_lstorage['PlanWeight'][item]
-                    average_weight[item].textContent = data_from_lstorage['AverageWeight'][item]
-                    wastes[item].textContent = data_from_lstorage['Wastes'][item]
-                    defectives[item].textContent = data_from_lstorage['Defectives'][item]
-                    count += 1
-                }
-                product[count].textContent = data_from_lstorage['Product'][count - 1]
-                product_plan[count].textContent = data_from_lstorage['Plan'][count - 1]
-                product_fact[count].textContent = data_from_lstorage['Fact'][count - 1]
-                plan_weight[count].textContent = data_from_lstorage['PlanWeight'][count - 1]
-                average_weight[count].textContent = data_from_lstorage['AverageWeight'][count - 1]
-                wastes[count].textContent = data_from_lstorage['Wastes'][count - 1]
-                defectives[count].textContent = data_from_lstorage['Defectives'][count - 1]
-                
-            }
-            cycle.textContent = data_from_lstorage['PlanCycle']
-            cycle_fact.textContent = data_from_lstorage['FactCycle']
-            shift.textContent = data_from_lstorage['Shift']
+                cycle.textContent = data_from_lstorage['PlanCycle']
+                cycle_fact.textContent = data_from_lstorage['FactCycle']
+                shift.textContent = data_from_lstorage['Shift']
+        }
+        catch
+        {
+            //Nothing
+        }
     }
 
     socket.on('GetMainWindowData', function(data){
