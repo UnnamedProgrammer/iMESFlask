@@ -1,5 +1,5 @@
 from iMES import app
-from flask import redirect, render_template, send_file, request
+from flask import render_template, send_file, request
 from iMES.Model.DirectumInterationModule import DirectumIntegration
 import os
 from flask_login import login_required

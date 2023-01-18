@@ -1,7 +1,6 @@
 from audioop import reverse
 from iMES import app
 from iMES import socketio,current_tpa
-from flask_login import login_required, current_user
 from flask import request
 from iMES.Model.BaseObjectModel import BaseObjectModel
 from datetime import datetime

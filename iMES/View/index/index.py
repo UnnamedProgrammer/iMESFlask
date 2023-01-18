@@ -1,11 +1,10 @@
 from iMES import socketio
 from iMES import app
 from iMES import UserController
-from flask import redirect, render_template, request, jsonify
+from flask import redirect, render_template, request
 from flask_login import login_required, login_user, logout_user, current_user
 from iMES import login_manager
 from iMES.Model.SQLManipulator import SQLManipulator
-from iMES.Controller.TpaController import TpaController
 import json
 from iMES import TpaList, current_tpa, user_dict
 import requests
@@ -311,7 +310,7 @@ def Authorization(passnumber):
         except:
             SavedRole = ''
             pass
-        if SavedRole != '':
+        if SavedRole != '' or len(SavedRole) > 0:
             user.role = SavedRole
             user.savedrole = True
         else:
@@ -412,7 +411,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         except:
             SavedRole = ''
             pass
-        if SavedRole != '':
+        if SavedRole != '' or len(SavedRole) > 0:
             user.role = SavedRole
             user.savedrole = True
         else:

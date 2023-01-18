@@ -1,6 +1,6 @@
 from iMES import app
 from iMES import socketio
-from flask import render_template, request, redirect
+from flask import render_template, request
 from iMES import current_tpa,TpaList
 from iMES.Model.SQLManipulator import SQLManipulator
 from flask_login import login_required
