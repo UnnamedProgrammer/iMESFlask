@@ -107,9 +107,9 @@ class TpaErrorsChecker(BaseObjectModel):
                 """)
                 return True
             else:
-                self.app.logger.warning(f"[{datetime.now()}] Тип простоя 'Не задан' отсутсвует, операция отменена.")
+                self.app.logger.error(f"[{datetime.now()}] Тип простоя 'Не задан' отсутсвует, операция отменена.")
         else:
-            self.app.logger.warning(f"[{datetime.now()}] Отсутсвует системный пользователь, операция отменена.")
+            self.app.logger.error(f"[{datetime.now()}] Отсутсвует системный пользователь, операция отменена.")
         return False
 
     def Check_Downtime(self,tpaoid) -> bool:

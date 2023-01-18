@@ -14,7 +14,7 @@ DirectumConnection = DirectumIntegration()
 @login_required
 def VisualInstructions():
     device_tpa = TpaList[request.remote_addr]
-    InstructionsId = [current_tpa[request.remote_addr][2].PackingURL[36:]]
+    InstructionsId = current_tpa[request.remote_addr][2].PackingURL
     Authorization = DirectumConnection.Authorization()
     table = """"""
     if (Authorization == True):

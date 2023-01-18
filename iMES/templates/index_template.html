@@ -244,10 +244,24 @@
                 </div>
                 <div class="card height120 shadow">
                     <div class="card-header text-center card-h-uppercase primary">ОТХОДЫ</div>
-                    <div class="swiper-container">
-                        <p class="swiper-slide card-text text-center nvDefect" id="wastes">0</p>
+                    <div class="swiper-container mySwiper7">
+                        <div class="swiper-wrapper">
+                            <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                            {% for count in range(0,current_tpa[2].ProductCount - 1) %}
+                                <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                            {% endfor %}
+                        </div>
                     </div>
-                    
+                    {% if current_tpa[2].ProductCount > 1 %}
+                            <div class="show-more show-more_left" id="showMoreLeft" onClick="showMore(event)" style="top: 80px;"></div>
+                    {% endif %}
+                    <div class="custom-option custom-option_left custom-option_averageWeight opacity-0" id="showMoreLeft"></div>
+                    {% for count in range(0,current_tpa[2].ProductCount - 1) %}
+                        <div class="custom-option__item custom-option__item shadow border">
+                            <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
+                        </div>
+                    {% endfor %}
+                    <div class="close-more close-more_left" onClick="closeMore(event)" style="top: 40px"></div>
                 </div>
                 <div class="card height100 shadow">
                     <div class="card-body nopadding primary">
@@ -303,6 +317,7 @@
     const swiper4 = new Swiper(".mySwiper4", {});
     const swiper5 = new Swiper(".mySwiper5", {});
     const swiper6 = new Swiper(".mySwiper6", {});
+    const swiper7 = new Swiper(".mySwiper7", {});
     const preloader = document.querySelector('.preloader')
 
     const swipeAllSliders = (index) => {
@@ -312,6 +327,7 @@
         swiper4.slideTo(index);
         swiper5.slideTo(index);
         swiper6.slideTo(index);
+        swiper7.slideTo(index);
     }
 
     swiper1.on('slideChange', () => swipeAllSliders(swiper1.activeIndex));
@@ -320,9 +336,10 @@
     swiper4.on('slideChange', () => swipeAllSliders(swiper4.activeIndex));
     swiper5.on('slideChange', () => swipeAllSliders(swiper5.activeIndex));
     swiper6.on('slideChange', () => swipeAllSliders(swiper6.activeIndex));
-
+    swiper7.on('slideChange', () => swipeAllSliders(swiper7.activeIndex));
+    
     let end_date = NaN
-    let product_count = 0
+    let product_count = localStorage.getItem('product_count')
     let pf_error = false
     devicetype = "Терминал"
     socket.on('connect', function () {
@@ -412,35 +429,70 @@
         }
     })
 
-    socket.on('GetMainWindowData', function(data){
-        arr = JSON.parse(data)
-        if (address == Object.keys(arr)[0])
-        {   
-            $('#error').remove()
-            let pressform = document.getElementById('tpf')
-            let product = document.querySelectorAll('#tprod')
-            let product_plan = document.querySelectorAll('#nplan')
-            let product_fact = document.querySelectorAll('#nvplan')
-            let cycle = document.getElementById('pointTC')
-            let cycle_fact = document.getElementById('pointVCS')
-            let plan_weight = document.querySelectorAll('#planweight')
-            let average_weight = document.querySelectorAll('#average_weigth')
-            let shift = document.getElementById('smena')
-            let wastes = document.querySelectorAll('#wastes')
-            let defectives = document.querySelectorAll('#nvDefect')
-            let error_list = document.querySelectorAll('#error')
-            let got_errors = arr[address]['Errors']
-            pressform.textContent = arr[address]['PF']
-            cycle.textContent = arr[address]['PlanCycle']
-            cycle_fact.textContent = arr[address]['FactCycle']
-            average_weight.textContent = arr[address]['AverageWeight']
-            shift.textContent = arr[address]['Shift']
-            if (got_errors != null)
+
+    let pressform = document.getElementById('tpf')
+    let product = document.querySelectorAll('#tprod')
+    let product_plan = document.querySelectorAll('#nplan')
+    let product_fact = document.querySelectorAll('#nvplan')
+    let cycle = document.getElementById('pointTC')
+    let cycle_fact = document.getElementById('pointVCS')
+    let plan_weight = document.querySelectorAll('#planweight')
+    let average_weight = document.querySelectorAll('#average_weigth')
+    let shift = document.getElementById('smena')
+    let wastes = document.querySelectorAll('#wastes')
+    let defectives = document.querySelectorAll('#nvDefect')
+    let error_list = document.querySelectorAll('#error')
+    let got_errors = []
+    let data_from_lstorage = {}
+    
+    function GetDataFromCache()
+    {
+        if (product_count > 1)
+        {
+            data_from_lstorage = {
+                "PF": localStorage.getItem('pressform'),
+                "Product": JSON.parse(localStorage.getItem('product'))['product'],
+                "Plan":  JSON.parse(localStorage.getItem('product_plan'))['product_plan'],
+                "Fact": JSON.parse(localStorage.getItem('product_fact'))['product_fact'],
+                "PlanCycle": localStorage.getItem('plan_cycle'),
+                "FactCycle": localStorage.getItem('fact_cycle'),
+                "PlanWeight": JSON.parse(localStorage.getItem('plan_weight'))['plan_weight'],
+                "AverageWeight": JSON.parse(localStorage.getItem('average_weight'))['average_weight'],
+                "Shift": localStorage.getItem('shift'),
+                "Wastes": JSON.parse(localStorage.getItem('wastes'))['wastes'],
+                "Defectives": JSON.parse(localStorage.getItem('Defectives'))['Defectives'],
+                "Errors": JSON.parse(localStorage.getItem('got_errors'))
+            }
+        }
+        else
+        {
+            data_from_lstorage = {
+                "PF": localStorage.getItem('pressform'),
+                "Product": localStorage.getItem('product'),
+                "Plan": localStorage.getItem('product_plan'),
+                "Fact": localStorage.getItem('product_fact'),
+                "PlanCycle": localStorage.getItem('plan_cycle'),
+                "FactCycle": localStorage.getItem('fact_cycle'),
+                "PlanWeight": localStorage.getItem('plan_weight'),
+                "AverageWeight": localStorage.getItem('average_weight'),
+                "Shift": localStorage.getItem('shift'),
+                "Wastes": localStorage.getItem('wastes'),
+                "Defectives": localStorage.getItem('Defectives'),
+                "Errors": JSON.parse(localStorage.getItem('got_errors'))
+            }
+        }
+    }
+
+    function InsertMainData()
+    {
+        $('#error').remove()   
+        pressform.textContent = data_from_lstorage['PF']
+        if (data_from_lstorage["Errors"] != null)
             {
                 $('#error').remove()
-                for (let err_i = 0; err_i < got_errors.length; err_i++)
+                for (let err_i = 0; err_i < data_from_lstorage["Errors"].length; err_i++)
                     {
-                        if (got_errors[err_i]['Message'] == "ПРЕССФОРМА НЕ СООТВЕТСВУЕТ ПРОДУКТУ.")
+                        if (data_from_lstorage["Errors"][err_i]['Message'] == "ПРЕССФОРМА НЕ СООТВЕТСВУЕТ ПРОДУКТУ.")
                         {
                             pf_error = true
                         }
@@ -455,7 +507,7 @@
                                 elem.classList.remove("accent");
                             }
                         }
-                        $('#error_list').append(`<div class="accent left-padding" id="error">[${got_errors[err_i]['Date']}] ${got_errors[err_i]['Message']} </div>`)
+                        $('#error_list').append(`<div class="accent left-padding" id="error">[${data_from_lstorage["Errors"][err_i]['Date']}] ${data_from_lstorage["Errors"][err_i]['Message']} </div>`)
                     }
             }
             else
@@ -464,58 +516,103 @@
                 trigger_flag = false 
                 pf_error = false
             }
-            if ((arr[address]['Product'].length == 1) ||
-                (arr[address]['Product'] == 'Нет сменного задания')){
-                if (arr[address]['Product'] == 'Нет сменного задания')
+            if (typeof(data_from_lstorage['Product']) === 'string' || 
+                (data_from_lstorage['Product'] == 'Нет сменного задания')){
+                if (data_from_lstorage['Product'] == 'Нет сменного задания')
                 {
-                    product.textContent = arr[address]['Product']
+                    product.textContent = data_from_lstorage['Product']
                     cycle.textContent = ''
                     cycle_fact.textContent = ''
                     product_fact.textContent = ''
                 }
                 else{
-                    product[0].textContent = arr[address]['Product'][0]
+                    product[0].textContent = data_from_lstorage['Product']
                 }
-                product_plan[0].textContent = arr[address]['Plan'][0]
-                if (arr[address]['Fact'][0] != 0)
+                product_plan[0].textContent = data_from_lstorage['Plan']
+                if (data_from_lstorage['Fact'] != 0)
                 {
-                    product_fact[0].textContent = arr[address]['Fact'][0]
+                    product_fact[0].textContent = data_from_lstorage['Fact']
                 }
-                plan_weight[0].textContent = arr[address]['PlanWeight'][0]
-                average_weight[0].textContent = arr[address]['AverageWeight'][0]
-                wastes[0].textContent = arr[address]['Wastes'][0]
-                defectives[0].textContent = arr[address]['Defectives'][0]
+                plan_weight[0].textContent = data_from_lstorage['PlanWeight']
+                average_weight[0].textContent = data_from_lstorage['AverageWeight']
+                wastes[0].textContent = data_from_lstorage['Wastes']
+                defectives[0].textContent = data_from_lstorage['Defectives']
             }
             else
             {
                 let count = 0
-                for (let item = 0; item < arr[address]['Product'].length; item++ )
+                for (let item = 0; item < data_from_lstorage['Product'].length; item++ )
                 {
-                    product[item].textContent = arr[address]['Product'][item]
-                    product_plan[item].textContent = arr[address]['Plan'][item]
-                    product_fact[item].textContent = arr[address]['Fact'][item]
-                    plan_weight[item].textContent = arr[address]['PlanWeight'][item]
-                    average_weight[item].textContent = arr[address]['AverageWeight'][item]
-                    wastes[item].textContent = arr[address]['Wastes'][item]
-                    defectives[item].textContent = arr[address]['Defectives'][item]
-                    count += 1 
+                    product[item].textContent = data_from_lstorage['Product'][item]
+                    product_plan[item].textContent = data_from_lstorage['Plan'][item]
+                    product_fact[item].textContent = data_from_lstorage['Fact'][item]
+                    plan_weight[item].textContent = data_from_lstorage['PlanWeight'][item]
+                    average_weight[item].textContent = data_from_lstorage['AverageWeight'][item]
+                    wastes[item].textContent = data_from_lstorage['Wastes'][item]
+                    defectives[item].textContent = data_from_lstorage['Defectives'][item]
+                    count += 1
                 }
-                for (let item = count; item < product.length; item++)
-                {
-                    product[item].textContent = arr[address]['Product'][item - 1]
-                    product_plan[item].textContent = arr[address]['Plan'][item - 1]
-                    product_fact[item].textContent = arr[address]['Fact'][item - 1]
-                    plan_weight[item].textContent = arr[address]['PlanWeight'][item - 1]
-                    average_weight[item].textContent = arr[address]['AverageWeight'][item - 1]
-                    wastes[item].textContent = arr[address]['Wastes'][item - 1]
-                    defectives[item].textContent = arr[address]['Defectives'][item]
-                }
+                product[count].textContent = data_from_lstorage['Product'][count - 1]
+                product_plan[item].textContent = data_from_lstorage['Plan'][item - 1]
+                product_fact[item].textContent = data_from_lstorage['Fact'][item - 1]
+                plan_weight[item].textContent = data_from_lstorage['PlanWeight'][item - 1]
+                average_weight[item].textContent = data_from_lstorage['AverageWeight'][item - 1]
+                wastes[item].textContent = data_from_lstorage['Wastes'][item - 1]
+                defectives[item].textContent = data_from_lstorage['Defectives'][item - 1]
+                
             }
-            if (arr['Reason'] == 'AfterSwitchPF')
+            cycle.textContent = data_from_lstorage['PlanCycle']
+            cycle_fact.textContent = data_from_lstorage['FactCycle']
+            shift.textContent = data_from_lstorage['Shift']
+    }
+
+    socket.on('GetMainWindowData', function(data){
+        arr = JSON.parse(data)
+        if (address == Object.keys(arr)[0])
+        {   
+            localStorage.setItem('pressform', arr[address]['PF'])
+            if (arr[address]['Product'] == 'Нет сменного задания')
             {
-                preloader.classList.add('preloader_hidden')
+                product_count = 0
+                localStorage.setItem('product_count', 0)
             }
+            else
+            {
+                localStorage.setItem('product_count', arr[address]['Product'].length)
+                product_count = arr[address]['Product'].length
+            }
+            if ((typeof(arr[address]['Product']) != 'string') && (arr[address]['Product'].length > 1))
+            {
+                localStorage.setItem('product', JSON.stringify({'product':[arr[address]['Product'][0], arr[address]['Product'][1]]}))
+                localStorage.setItem('product_plan', JSON.stringify({'product_plan':[arr[address]['Plan'][0], arr[address]['Plan'][1]]}))
+                localStorage.setItem('product_fact', JSON.stringify({'product_fact':[arr[address]['Fact'][0], arr[address]['Fact'][1]]}))
+                localStorage.setItem('Defectives', JSON.stringify({'Defectives':[arr[address]['Defectives'][0], arr[address]['Defectives'][1]]}))
+                localStorage.setItem('plan_weight', JSON.stringify({'plan_weight':[arr[address]['PlanWeight'][0], arr[address]['PlanWeight'][1]]}))
+                localStorage.setItem('average_weight', JSON.stringify({'average_weight':[arr[address]['AverageWeight'][0], arr[address]['AverageWeight'][1]]}))
+                localStorage.setItem('wastes', JSON.stringify({'wastes':[arr[address]['Wastes'][0], arr[address]['Wastes'][1]]}))
+            }
+            else   
+            {
+                localStorage.setItem('product', arr[address]['Product'])
+                localStorage.setItem('product_plan', arr[address]['Plan'])
+                localStorage.setItem('product_fact', arr[address]['Fact'])
+                localStorage.setItem('Defectives', arr[address]['Defectives'])
+                localStorage.setItem('plan_weight', arr[address]['PlanWeight'])
+                localStorage.setItem('average_weight', arr[address]['AverageWeight'])
+                localStorage.setItem('wastes', arr[address]['Wastes'])
+            }
+
+            localStorage.setItem('plan_cycle', arr[address]['PlanCycle'])
+            localStorage.setItem('fact_cycle', arr[address]['FactCycle'])
+            localStorage.setItem('shift', arr[address]['Shift'])
+            localStorage.setItem('got_errors', JSON.stringify(arr[address]['Errors']))
         }
+        if (arr['Reason'] == 'AfterSwitchPF')
+        {
+            preloader.classList.add('preloader_hidden')
+        }
+        GetDataFromCache()
+        InsertMainData()
     })
 
     socket.on('GetExecutePlan',function(data)
@@ -562,29 +659,7 @@
                         }
                     }
                 }
-                // console.log(status)
             }
-            // nav_tabs.forEach(tab => {
-            //     for (let status of tabs_status['Active']) {
-            //         console.log(status['Oid'])
-            //         if (tab.dataset.oid == status['Oid'])
-            //         {
-            //             tab.className = "nav-link nav_tpa nav_green"
-            //             if(tab.dataset.oid == tabs_status['CurrentTpa'])
-            //             {
-            //                 tab.className = "nav-link nav_tpa nav_green active"
-            //             }
-            //         }
-            //         else
-            //         {
-            //             tab.className = "nav-link nav_tpa nav_red"
-            //             if(tab.dataset.oid == tabs_status['CurrentTpa'])
-            //             {
-            //                 tab.className = "nav-link nav_tpa nav_red active"
-            //             }
-            //         }
-            //     }
-            // });
         }
     })
 
@@ -627,6 +702,8 @@
         }           
     }
     UpdateMainWindowData()
+    GetDataFromCache()
+    InsertMainData()
 
     window.addEventListener('load', () => { 
         const preloader = document.querySelector('.preloader')

@@ -40,6 +40,6 @@ class SQLManipulator():
                     connection.close()
                     break
             except pyodbc.ProgrammingError as error:
-                self.app.logger.warning(f"[{datetime.now()}] {error}")
+                self.app.logger.error(f"[{datetime.now()}] {error} {sqlcode}")
                 break
         return result

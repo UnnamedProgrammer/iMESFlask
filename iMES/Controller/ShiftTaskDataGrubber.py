@@ -38,28 +38,32 @@ class ShiftTaskDataGrubber(BaseObjectModel):
 
     def update_pressform(self):
         # Проверка прессформы
-        sql = f"""
-            SELECT TOP (1) Equipment.Name, RFIDClosureData.Date, Equipment.Oid
-            FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
-            WHERE 
-            Controller = (SELECT RFIDEquipment 
-                            FROM RFIDEquipmentBinding 
-                            WHERE Equipment = '{self.tpa}') AND
-            RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
-            Equipment.Oid = RFIDEquipmentBinding.Equipment
-            ORDER BY Date DESC
-            """
-        pf = self.SQLExecute(sql)
-        if len(pf) > 0:
-            if pf[0][0] == None or pf == () or pf == []:
-                pressform = 'Метка не привязана к прессформе'
+        if self.tpa != '':
+            sql = f"""
+                SELECT TOP (1) Equipment.Name, RFIDClosureData.Date, Equipment.Oid
+                FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
+                WHERE 
+                Controller = (SELECT RFIDEquipment 
+                                FROM RFIDEquipmentBinding 
+                                WHERE Equipment = '{self.tpa}') AND
+                RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
+                Equipment.Oid = RFIDEquipmentBinding.Equipment
+                ORDER BY Date DESC
+                """
+            pf = self.SQLExecute(sql)
+            if len(pf) > 0:
+                if pf[0][0] == None or pf == () or pf == []:
+                    pressform = 'Метка не привязана к прессформе'
+                else:
+                    pressform = pf[0][0]
+                    self.pressform_oid = pf[0][2]
             else:
-                pressform = pf[0][0]
-                self.pressform_oid = pf[0][2]
+                pressform = 'Не определена'
+                self.pressform_oid = ""
+            return pressform
         else:
             pressform = 'Не определена'
-            self.pressform_oid = ""
-        return pressform
+            return pressform
     
 
     # Метод получения данных из сменного задания
@@ -113,7 +117,11 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 product_oids.append(shift_task[18])
                 self.cycle = shift_task[12]
                 self.shift = shift_task[1]
-                self.PackingURL = shift_task[15]
+                purls = shift_task[15].split(",")
+                for i in range(0, len(purls)):
+                    self.PackingURL = purls[i][36:].replace(" ", "")
+                else:
+                     self.PackingURL = purls[i][36:]
                 self.PackingScheme = shift_task[8]
                 self.shift_oid = shift_task[19]
                 spec_code = self.SQLExecute(f"""

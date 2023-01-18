@@ -589,6 +589,9 @@ def UpdateMainWindowData(data):
     current_tpa[ip_addr][2].Check_Downtime(current_tpa[ip_addr][2].tpa)
     current_tpa[ip_addr][2].Check_pressform()
     current_tpa[ip_addr][2].data_from_shifttask()
+    
+    shift = current_tpa[ip_addr][2].shift.split()
+    shift = f'{shift[0]} {shift[1]}'
     if len(current_tpa[ip_addr][2].errors) > 0:
         errors = current_tpa[ip_addr][2].errors
     try:
@@ -602,7 +605,7 @@ def UpdateMainWindowData(data):
                 "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
                 "PlanWeight": current_tpa[ip_addr][2].plan_weight,
                 "AverageWeight": current_tpa[ip_addr][2].average_weight,
-                "Shift": str(current_tpa[ip_addr][2].shift),
+                "Shift": str(shift),
                 "Wastes": current_tpa[ip_addr][2].wastes,
                 "Defectives": current_tpa[ip_addr][2].defectives,
                 "Errors": errors
@@ -617,7 +620,7 @@ def UpdateMainWindowData(data):
             socketio.emit("GetMainWindowData", data=json.dumps(
                 MWData, ensure_ascii=False, indent=4))
     except Exception as error:
-        app.logger.warning(f"[{datetime.now()}] {error}")
+        app.logger.error(f"[{datetime.now()}] {error}")
         pass
 
 
