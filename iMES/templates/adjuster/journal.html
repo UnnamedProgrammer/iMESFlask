@@ -38,7 +38,7 @@
                         {% if downtime[9] != None%}
                             <tr>
                                 <td class="align-middle idle-entered" id="{{ downtime[0] }}">
-                                    <input class="big-checkbox" type="checkbox" id="{{ loop.index0 }}">
+                                    <input class="big-checkbox" type="checkbox" id="{{ loop.index0 }}" disabled>
                                 </td>
                                 <td class="align-middle red">Простой</td>
                                 <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d %H:%M:%S') }}</td>
@@ -101,6 +101,32 @@
 {% endblock %}
 {% block script %}
 <script>
+
+    let jsScroll = document.getElementsByClassName('jsScroll');
+
+    if(jsScroll){
+        [].forEach.call(jsScroll, function(item) {
+            let startX, startY;
+            let listener = function(e) {
+                startX = this.scrollLeft + e.pageX;
+                startY = this.scrollTop + e.pageY;
+                item.addEventListener('mousemove', endListener);
+            };
+        
+            let endListener = function(e) {
+                this.scrollLeft = startX - e.pageX;
+                this.scrollTop = startY - e.pageY;
+                return false;
+            };
+        
+            item.addEventListener('mousedown', listener);
+        
+            window.addEventListener("mouseup", function(){ 
+                item.removeEventListener('mousemove', endListener);
+            });
+        });
+    }
+
     let checkboxes = document.querySelectorAll('input[type=checkbox]')
     let checkedArr = []
     let endDateValue = null
@@ -186,6 +212,6 @@
         } else {
             $(this).closest('tr').removeClass('green');
         }
-    });
+    }); 
 </script>
 {% endblock %}
