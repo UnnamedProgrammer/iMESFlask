@@ -317,12 +317,11 @@ def Authorization(passnumber):
         else:
             user.savedrole = False
         # Добавляем данные в экземпляр пользователя
-        user.id = userdata[0]
+        user.id = userdata[8]
         user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
-        user.oid = userdata[8]
         packet = {terminal: f'{user.CardNumber}'}
         for key in list(user_dict.keys()):
             if user_dict[key].CardNumber == user.CardNumber:
@@ -418,12 +417,11 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
             user.savedrole = True
         else:
             user.savedrole = False
-        user.id = userdata[0]
+        user.id = userdata[8]
         user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
-        user.oid = userdata[8]
         packet = {terminal: f'{user.CardNumber}'}
         for key in list(user_dict.keys()):
             if user_dict[key].CardNumber == user.CardNumber:
@@ -437,18 +435,8 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
 
 @login_manager.user_loader
 def load_user(_id):
-    ret_user = UserModel()
     if str(_id) in user_dict:
-        ret_user.id = user_dict[str(_id)].id
-        ret_user.oid = user_dict[str(_id)].oid
-        ret_user.name = user_dict[str(_id)].name
-        ret_user.username = user_dict[str(_id)].username
-        ret_user.CardNumber = user_dict[str(_id)].CardNumber
-        ret_user.savedrole = user_dict[str(_id)].savedrole
-        ret_user.device_type = user_dict[str(_id)].device_type
-        ret_user.role = user_dict[str(_id)].role
-        ret_user.interface = user_dict[str(_id)].interface
-    return ret_user
+        return user_dict[str(_id)]
 
 # Метод аутентификации пользователя и редирект на страницы в зависимости от роли
 
