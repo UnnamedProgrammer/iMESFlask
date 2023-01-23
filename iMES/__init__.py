@@ -99,3 +99,4 @@ from iMES.View.menu import menu
 from iMES.View.index import index
 from iMES.View.bind_press_form import bind_press_form
 from iMES.View.operator import update_shift_task
+from iMES.View.UnloadTo1C import UnloadTo1C

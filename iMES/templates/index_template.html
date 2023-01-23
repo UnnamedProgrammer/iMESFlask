@@ -77,7 +77,7 @@
                     </div>
                 </div>
                 <div class="card height120 shadow">
-                    <div class="card-header text-center primary">ПЛАН ПО ПРОД.</div>
+                    <div class="card-header text-center primary">ПЛАН (шт.).</div>
                     <div class="swiper-container mySwiper2">
                         <div class="swiper-wrapper">
                             <p class="swiper-slide card-text text-center nplan" id="nplan"></p>
@@ -99,7 +99,7 @@
                     </div>
                 </div>
                 <div class="card height120 shadow">
-                    <div class="card-header text-center card-h-uppercase primary">ВЫПУЩЕНО ПРОД.</div>
+                    <div class="card-header text-center card-h-uppercase primary">ВЫПУЩЕНО (шт.).</div>
                     <div class="swiper-container mySwiper3 mt-2">
                         <div class="swiper-wrapper">
                             <p class="swiper-slide card-text text-center nvplan" id="nvplan"></p>
@@ -121,7 +121,7 @@
                     </div>
                 </div>
                 <div class="card height120 shadow">
-                    <div class="card-header text-center card-h-uppercase primary">БРАК</div>
+                    <div class="card-header text-center card-h-uppercase primary">БРАК (шт.)</div>
                     <div class="swiper-container mySwiper4">
                         <div class="swiper-wrapper">
                             <p class="swiper-slide card-text text-center nvDefect" id="nvDefect"></p>
@@ -158,8 +158,7 @@
                         <div class="preloader_hidden progress mt-5" style="width: 50%;" id="progress">
                             <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%; z-index: 0;" id="progressbar">0%</div>
                         </div>
-                    </div>
-                      
+                    </div>   
                     {% block main_window %}                
                     {% endblock %}
                 </div>
@@ -187,19 +186,19 @@
             </div>
             <div class="col-2">
                 <div class="card height200 shadow">
-                    <div class="card-header text-center primary">ПЛАНОВЫЙ ЦИКЛ</div>
+                    <div class="card-header text-center primary">ЦИКЛ ПЛАН (с.)</div>
                     <div class="text-center">
                         <p class="card-text text-center display-3" id="pointTC"></p>
                     </div>
                 </div>
                 <div class="card height200 shadow">
-                    <div class="card-header text-center primary">ЦИКЛ ЗА СМЕНУ</div>
+                    <div class="card-header text-center primary">ЦИКЛ ЗА СМЕНУ (с.)</div>
                     <div class="text-center">
                         <p class="card-text text-center display-3" id="pointVCS"></p>
                     </div>  
                 </div>
                 <div class="card height120 shadow">
-                    <div class="card-header text-center primary">ПЛАНОВЫЙ ВЕС</div>
+                    <div class="card-header text-center primary">ПЛАНОВЫЙ ВЕС (кг.)</div>
                     <div class="swiper-container mySwiper5">
                         <div class="swiper-wrapper">
                             <p class="swiper-slide card-text text-center display-4 fw-normal" id="planweight"></p>
@@ -221,7 +220,7 @@
                     </div>
                 </div>
                 <div class="card height120 shadow">
-                    <div class="card-header text-center card-h-uppercase primary">СРЕДНИЙ ВЕС</div>
+                    <div class="card-header text-center card-h-uppercase primary">СРЕДНИЙ ВЕС (кг.)</div>
                     <div class="swiper-container mySwiper6">
                         <div class="swiper-wrapper">
                             <p class="swiper-slide card-text text-center display-4 fw-normal" id="average_weigth"></p>
@@ -243,7 +242,7 @@
                     </div>
                 </div>
                 <div class="card height120 shadow">
-                    <div class="card-header text-center card-h-uppercase primary">ОТХОДЫ</div>
+                    <div class="card-header text-center card-h-uppercase primary">ОТХОДЫ (кг.)</div>
                     <div class="swiper-container mySwiper7">
                         <div class="swiper-wrapper">
                             <p class="swiper-slide card-text text-center nvDefect" id="wastes"></p>
@@ -771,6 +770,7 @@ function UpdateShiftTask()
 {
     if (UpdShiftTaskPressed != true)
     {
+        infoModalController('shiftUpdateModal')
         UpdShiftTaskPressed = true
         socket.emit('UpdateShiftTask', { data: '' })
         let progress_div = document.getElementById('progress')

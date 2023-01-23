@@ -61,7 +61,6 @@ class ProductionDataDaemon(BaseObjectModel):
                     # Вывод в лог возникших ошибок
                     self.app.logger.info(f"{error} in {str(self.tpalist[tpanum])}")
                     continue
-            sleep(8)
     
     def OnceMonitoring(self):
         for tpanum in range(0,len(self.tpalist)):
@@ -181,7 +180,7 @@ class ProductionDataDaemon(BaseObjectModel):
             return []
         sql_ST = f"""
             SELECT [ShiftTask].[Oid]
-                ,[Shift].Note
+                ,SH.Note
                 ,[Equipment]
                 ,[Ordinal]
                 ,[Product].Name
@@ -197,13 +196,11 @@ class ProductionDataDaemon(BaseObjectModel):
                 ,[ProductURL]
                 ,[PackingURL]
                 ,[Shift]
-            FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift 
-            WHERE 
-                Shift = '{shift}' AND
+            FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift AS SH
+            WHERE
                 Equipment = '{equipment}' AND
                 ShiftTask.Product = Product.Oid AND
-                Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
-                ShiftTask.Shift = Shift.Oid
+                SH.Oid = '{shift}'
         """
         offset = 0
         shift_task = self.SQLExecute(sql_ST)
@@ -390,7 +387,9 @@ class ProductionDataDaemon(BaseObjectModel):
             if production_data[3] == 2:
                 for i in range(0, len(self.tpalist)):
                     if self.tpalist[i][0] == tpaoid:
-                        self.tpalist[i][3]['ShiftTask'] = []
+                        for task in self.tpalist[i][3]['ShiftTask']:
+                            if task[0][0] == ShiftTaskOid:
+                                self.tpalist[i][3]['ShiftTask'].remove(task)
                         return
         else: return
 

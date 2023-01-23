@@ -35,4 +35,4 @@ while True:
 
 # Точка входа в основной цикл программы
 if __name__ == "__main__":
-    socketio.run(app, host=host, port=port, debug=True, use_reloader=False)
+    socketio.run(app, host=host, port=port, debug=True, use_reloader=True)
