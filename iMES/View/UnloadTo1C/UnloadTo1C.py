@@ -215,44 +215,45 @@ def UnloudingTo1C(date,stnum):
                         )
                         if len(prod_wastes) > 0:
                             for waste in prod_wastes:
-                                material_data = BaseObjectModel.SQLExecute(
-                                    f"""
-                                        SELECT TOP (1000) [Oid]
-                                            ,[Code]
-                                            ,[Name]
-                                            ,[Article]
-                                            ,[Type]
-                                        FROM [MES_Iplast].[dbo].[Material]
-                                        WHERE Oid = '{waste[2]}'  
-                                    """
-                                )
-                                if len(material_data) > 0 or waste[2] == None:
-                                    typew = ''
-                                    if waste[3] == 0:
-                                        typew = 'Отход'
+                                if waste[2] != None:
+                                    material_data = BaseObjectModel.SQLExecute(
+                                        f"""
+                                            SELECT TOP (1000) [Oid]
+                                                ,[Code]
+                                                ,[Name]
+                                                ,[Article]
+                                                ,[Type]
+                                            FROM [MES_Iplast].[dbo].[Material]
+                                            WHERE Oid = '{waste[2]}'  
+                                        """
+                                    )
+                                    if len(material_data) > 0 or waste[2] == None:
+                                        typew = ''
+                                        if waste[3] == 0:
+                                            typew = 'Отход'
+                                        else:
+                                            typew = 'Брак'
+                                        if typew == 'Отход':
+                                            wastes_list.append(
+                                                {
+                                                    'wastes_name': material_data[0][2],
+                                                    'wastes_code': material_data[0][1],
+                                                    'type': typew,
+                                                    'weight': str(waste[4]),
+                                                    'create_date': waste[8].strftime('%Y-%m-%d %H:%M:%S')
+                                                }                                     
+                                            )
+                                        elif typew == 'Брак':
+                                            wastes_list.append(
+                                                {
+                                                    'type': typew,
+                                                    'weight': str(waste[4]),
+                                                    'count': str(waste[5]),
+                                                    'create_date': waste[8].strftime('%Y-%m-%d %H:%M:%S')
+                                                }                                     
+                                            )
                                     else:
-                                        typew = 'Брак'
-                                    if typew == 'Отход':
-                                        wastes_list.append(
-                                            {
-                                                'wastes_name': material_data[0][2],
-                                                'wastes_code': material_data[0][1],
-                                                'type': typew,
-                                                'weight': str(waste[4]),
-                                                'create_date': waste[8].strftime('%Y-%m-%d %H:%M:%S')
-                                            }                                     
-                                        )
-                                    elif typew == 'Брак':
-                                        wastes_list.append(
-                                            {
-                                                'type': typew,
-                                                'weight': str(waste[4]),
-                                                'count': str(waste[5]),
-                                                'create_date': waste[8].strftime('%Y-%m-%d %H:%M:%S')
-                                            }                                     
-                                        )
-                                else:
-                                    return f'Неизвестная запись в [Material]'
+                                        return f'Неизвестная запись в [Material]'
                         # Заполняем данные по введёному весу
                         prod_weight_list = []
                         prod_weight = BaseObjectModel.SQLExecute(
