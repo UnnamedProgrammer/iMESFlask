@@ -35,6 +35,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.defectives = ()
         self.PackingScheme = ""
         self.specName = ()
+        self.WorkCenter = ""
 
     def update_pressform(self):
         # Проверка прессформы
@@ -89,6 +90,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 ,[ExtraTraits]
                 ,[Product]
                 ,[Shift].Oid
+                ,[WorkCenter]
             FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
             [ShiftTask].Equipment = '{self.tpa}' AND
             Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
@@ -146,7 +148,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             self.traits = tuple(traits_operator)
             self.product_oids = tuple(product_oids)
             self.specName = tuple(spec_names)
-            
+            self.WorkCenter = shift_task[20]
             for i in range(0,len(data)):
                 traits.append([self.product[i],
                                f"{data[i][16]} {data[i][17]}",

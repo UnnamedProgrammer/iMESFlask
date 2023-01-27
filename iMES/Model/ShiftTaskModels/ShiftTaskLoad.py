@@ -399,7 +399,8 @@ class ShiftTaskLoader(BaseObjectModel):
                                            task['normUpacURL'],
                                            task['ShiftTask'],
                                            task['Product'],
-                                           task['Articul']
+                                           task['Articul'],
+                                           task['WorkCenter']
                                            )
                 if (self.CheckingRequiredValuesInTheDataBase(ShiftTask)):
                     self.shift_task_list.append(ShiftTask)
@@ -466,7 +467,8 @@ class ShiftTaskLoader(BaseObjectModel):
                                 Cycle,
                                 [Weight],
                                 ProductURL,
-                                PackingURL)
+                                PackingURL,
+                                WorkCenter)
                         VALUES (NEWID(),
                             '{shiftOid}',
                             '{equipment_oid}',
@@ -482,7 +484,8 @@ class ShiftTaskLoader(BaseObjectModel):
                             {task.Cycle},
                             {float(task.Weight.replace(',','.'))},
                             '{task.ProductURL}',
-                            '{task.PackingURL}')
+                            '{task.PackingURL}',
+                            '{task.WorkCenter}')
                         """
                 self.app.logger.info("Вставка сменного задания №" + task.Ordinal)
                 self.SQLExecute(ShiftTaskInsertSQL)
@@ -502,7 +505,8 @@ class ShiftTaskLoader(BaseObjectModel):
                                         task.Cycle,
                                         float(task.Weight.replace(',','.')),
                                         task.ProductURL,
-                                        task.PackingURL))
+                                        task.PackingURL,
+                                        task.WorkCenter))
         if get_tasks_flag:
             return get_tasks_list
 

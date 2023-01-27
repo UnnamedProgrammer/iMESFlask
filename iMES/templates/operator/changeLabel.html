@@ -1,6 +1,7 @@
 {% extends 'index_template.html' %}
 
 {% set current_product = somedata[0] %}
+{% set current_product_name = somedata[2] %}
 
 {% block main_window %}
 <div class="view"> 
@@ -17,7 +18,7 @@
             <tbody>
                 <tr>
                     <th>Артикул</th>
-                    <td id="stickerProductCell" data-prodoid="{{current_product[0][0]}}"> {{current_product[0][1]}} </td>
+                    <td id="stickerProductCell" data-prodoid="{{current_product_name[0][1]}}"> {{current_product_name[0][0]}} </td>
                     <td class="nopadding table__button">
                         <button type="button" class="btn__table btn__table_dark" data-toggle="modalOpen" data-target="changeProductModal" onClick="modalController(event)">Выбрать</button>
                     </td>

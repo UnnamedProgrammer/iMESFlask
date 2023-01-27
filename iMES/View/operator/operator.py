@@ -311,19 +311,37 @@ def OperatorChangeLabel():
     ip_addr = request.remote_addr
     
     # Получаем данные о текущих продуктах за смену и название смены
-    sql_GetCurrentProduct = f"""SELECT DISTINCT Product.Oid, Product.Name
-                                FROM ShiftTask INNER JOIN
-                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
-                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask"""
-    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
-
+    current_product_name = SQLManipulator.SQLExecute(
+        f"""
+            SELECT [Product].Name, Product.Oid
+            FROM [MES_Iplast].[dbo].[StickerInfo], Product
+            WHERE Product.Oid = [StickerInfo].Product AND
+            [StickerInfo].Equipment = '{current_tpa[ip_addr][2].tpa}'
+        """
+    )
+    current_product = []
+    if len(current_product_name) > 0:
+        pass
+    else:
+        current_product_name = [' ', ' ']
+    with open('st.json', 'r', encoding='utf-8-sig') as file_json:
+        json_file = json.load(file_json)[0]
+        for task in json_file['Order']:
+            if task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter:
+                product = SQLManipulator.SQLExecute(f"""
+                    SELECT Oid, Name FROM Product WHERE Code = '{task["ProductCode"]}'
+                """)
+                current_product.append(list(product[0]))
+    current_product_duplicate = [] 
+    for i in range(0, len(current_product)):
+        if current_product[i] not in current_product_duplicate:
+            current_product_duplicate.append(current_product[i])
+    current_product = current_product_duplicate
     # Получаем данные о текущей смене
     sql_GetCurrentShift = f"""SELECT Note FROM Shift WHERE Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE()"""
     current_shift = SQLManipulator.SQLExecute(sql_GetCurrentShift)
 
-    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html', [current_product, current_shift[0][0]])
+    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html', [current_product, current_shift[0][0], current_product_name])
 
 
 # Кнопка сохранить на странице изменение этикетки была нажата

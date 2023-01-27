@@ -40,6 +40,7 @@ class ShiftTaskModel(object):
     Product = None
     Articul = None
     ProductName = None
+    WorkCenter = None
 
     def __init__(self,
                  _ID,
@@ -59,7 +60,8 @@ class ShiftTaskModel(object):
                  _PackingURL,
                  _Ordinal,
                  _Product,
-                 _Article):
+                 _Article,
+                 _WorkCenter):
                  
         self.ID = _ID
         self.Shift = _Shift
@@ -79,3 +81,4 @@ class ShiftTaskModel(object):
         self.Ordinal = _Ordinal
         self.Product = _Product
         self.Article = _Article
+        self.WorkCenter = _WorkCenter
