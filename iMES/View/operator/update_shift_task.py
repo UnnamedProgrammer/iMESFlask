@@ -1,4 +1,3 @@
-from audioop import reverse
 from iMES import app
 from iMES import socketio,current_tpa
 from flask import request
@@ -110,7 +109,4 @@ def UpdateShiftTask(data):
             break
     socketio.emit("GetProgressStatus",
         data=json.dumps({ip_addr: "Complete"}),ensure_ascii=False, indent=4)
-    return
-    socketio.emit("GetProgressStatus",
-        data=json.dumps({ip_addr: "Complete"}),ensure_ascii=False, indent=4) 
     return
