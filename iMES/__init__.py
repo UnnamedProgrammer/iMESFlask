@@ -92,11 +92,10 @@ for device in Devices:
                                 TpaList[device[0]][0]['Name'],
                                 TpaList[device[0]][0]['Controller']]
 # Импорт роутингов
-from iMES.View.operator import operator, visualInstructions
+from iMES.View.operator import operator, visualInstructions, update_shift_task, norm_documentation
 from iMES.View.navbar_footer import navbar_footer
 from iMES.View.adjuster import adjuster
 from iMES.View.menu import menu
 from iMES.View.index import index
 from iMES.View.bind_press_form import bind_press_form
-from iMES.View.operator import update_shift_task
 from iMES.View.UnloadTo1C import UnloadTo1C
