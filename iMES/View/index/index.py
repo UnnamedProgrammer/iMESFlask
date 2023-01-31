@@ -1,3 +1,4 @@
+from asyncio.log import logger
 from iMES import socketio
 from iMES import app
 from iMES import UserController
@@ -228,107 +229,110 @@ def GetPlan(data):
 
 @app.route("/Auth/PassNumber=<string:passnumber>")
 def Authorization(passnumber):
-    user = UserModel()
-    # Определяем адресс клиента
-    terminal = request.remote_addr
-    # Запрос на информацию о клиенте по его номеру карты
-    sql = f"""
-    SELECT
-         EMPL.LastName
-        ,EMPL.FirstName
-        ,EMPL.MiddleName
-        ,USR.[UserName]
-        ,USR.[CardNumber]
-        ,RL.Name
-        ,ITF.Name
-        ,USR.[Oid]
-    FROM [MES_Iplast].[dbo].[User] as USR,
-        [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
-        [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
-        [MES_Iplast].[dbo].[Interface] as ITF,
-        [MES_Iplast].[dbo].[Role] as RL,
-        [MES_Iplast].[dbo].[Employee] as EMPL
-    WHERE RUR.[User] = USR.Oid AND 
-        RRI.[Role] = RUR.[Role] AND
-        ITF.Oid = RRI.Interface AND
-        RL.Oid = RUR.Role AND
-        EMPL.Oid = USR.[Employee] AND
-        USR.[CardNumber] = '{passnumber}'
-        """
-    # Отправляем запрос
-    data = SQLManipulator.SQLExecute(sql)
-    # Если записей с таким номером пропуска нет выводим ошибку
-    if (len(data) == 0):
-        return 'User undefinded'
-    else:
-        # Прибавляем к счетчику пользователей 1 для задания ID пользователяUserController.CountUsers += 1
-        UserController.CountUsers += 1
-        # Помещаем данные о клиенте в список для удобства
-        userdata = list(data[0])
-        # Помещаем в начало спика ID
-        userdata.insert(0, UserController.CountUsers)
-        # Запрос на сохраненные роли пользователя
-        sqlLastRole = f"""
-                SELECT [Role].[Name]
-                FROM [SavedRole],[User],[Role] 
-                WHERE [User].CardNumber = '{userdata[5]}' AND
-                    [SavedRole].[User] = [User].Oid AND
-                    [SavedRole].[Role] = [Role].Oid
+    try:
+        user = UserModel()
+        # Определяем адресс клиента
+        terminal = request.remote_addr
+        # Запрос на информацию о клиенте по его номеру карты
+        sql = f"""
+        SELECT
+            EMPL.LastName
+            ,EMPL.FirstName
+            ,EMPL.MiddleName
+            ,USR.[UserName]
+            ,USR.[CardNumber]
+            ,RL.Name
+            ,ITF.Name
+            ,USR.[Oid]
+        FROM [MES_Iplast].[dbo].[User] as USR,
+            [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
+            [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
+            [MES_Iplast].[dbo].[Interface] as ITF,
+            [MES_Iplast].[dbo].[Role] as RL,
+            [MES_Iplast].[dbo].[Employee] as EMPL
+        WHERE RUR.[User] = USR.Oid AND 
+            RRI.[Role] = RUR.[Role] AND
+            ITF.Oid = RRI.Interface AND
+            RL.Oid = RUR.Role AND
+            EMPL.Oid = USR.[Employee] AND
+            USR.[CardNumber] = '{passnumber}'
+            """
+        # Отправляем запрос
+        data = SQLManipulator.SQLExecute(sql)
+        # Если записей с таким номером пропуска нет выводим ошибку
+        if (len(data) == 0):
+            return 'User undefinded'
+        else:
+            # Прибавляем к счетчику пользователей 1 для задания ID пользователяUserController.CountUsers += 1
+            UserController.CountUsers += 1
+            # Помещаем данные о клиенте в список для удобства
+            userdata = list(data[0])
+            # Помещаем в начало спика ID
+            userdata.insert(0, UserController.CountUsers)
+            # Запрос на сохраненные роли пользователя
+            sqlLastRole = f"""
+                    SELECT [Role].[Name]
+                    FROM [SavedRole],[User],[Role] 
+                    WHERE [User].CardNumber = '{userdata[5]}' AND
+                        [SavedRole].[User] = [User].Oid AND
+                        [SavedRole].[Role] = [Role].Oid
+                    """
+            LastRole = SQLManipulator.SQLExecute(sqlLastRole)
+            if(LastRole != []):
+                user.role = {0: LastRole[0][0]}
+            else:
+                sqlUserRoles = f"""
+                    SELECT [Role].[Name]
+                    FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
+                    WHERE [User].CardNumber = '{userdata[5]}' AND 
+                        [Relation_UserRole].[User] = [User].Oid AND
+                        [Relation_UserRole].[Role] = [Role].Oid
                 """
-        LastRole = SQLManipulator.SQLExecute(sqlLastRole)
-        if(LastRole != []):
-            user.role = {0: LastRole[0][0]}
-        else:
-            sqlUserRoles = f"""
-                SELECT [Role].[Name]
-                FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
-                WHERE [User].CardNumber = '{userdata[5]}' AND 
-                    [Relation_UserRole].[User] = [User].Oid AND
-                    [Relation_UserRole].[Role] = [Role].Oid
-            """
-            roles = SQLManipulator.SQLExecute(sqlUserRoles)
-            user.role = {}
-            for i in range(0, len(roles)):
-                user.role[i] = roles[i][0]
-        sqlCheckSavedRole = f"""
-                DECLARE @device uniqueidentifier
-                DECLARE @user uniqueidentifier
-                SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{terminal}')
-                SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{userdata[4]}')
-                SELECT [Role].[Name] AS Роль
-                FROM Employee, [Role], LastSavedRole, SavedRole, [User]
+                roles = SQLManipulator.SQLExecute(sqlUserRoles)
+                user.role = {}
+                for i in range(0, len(roles)):
+                    user.role[i] = roles[i][0]
+            sqlCheckSavedRole = f"""
+                    DECLARE @device uniqueidentifier
+                    DECLARE @user uniqueidentifier
+                    SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{terminal}')
+                    SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{userdata[4]}')
+                    SELECT [Role].[Name] AS Роль
+                    FROM Employee, [Role], LastSavedRole, SavedRole, [User]
 
-                WHERE LastSavedRole.Device = @device AND
-                    SavedRole.Oid = LastSavedRole.SavedRole AND
-                    SavedRole.[Role] = [Role].Oid AND
-                    [User].Oid = SavedRole.[User] AND
-                    Employee.Oid = [User].Employee AND
-                    [User].Oid = @user
-            """
-        try:
-            SavedRole = SQLManipulator.SQLExecute(sqlCheckSavedRole)[0][0]
-        except:
-            SavedRole = ''
-            pass
-        if SavedRole != '' or len(SavedRole) > 0:
-            user.role = SavedRole
-            user.savedrole = True
-        else:
-            user.savedrole = False
-        # Добавляем данные в экземпляр пользователя
-        user.id = userdata[8]
-        user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
-        user.username = userdata[4]
-        user.CardNumber = userdata[5]
-        user.interfaces = userdata[7]
-        packet = {terminal: f'{user.CardNumber}'}
-        for key in list(user_dict.keys()):
-            if user_dict[key].CardNumber == user.CardNumber:
-                user_dict.pop(key)
-        user_dict[str(user.id)] = user
-        # Отправляем в сокет сообщение о успешной авторизации
-        socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
-    return 'Authorization successful'
+                    WHERE LastSavedRole.Device = @device AND
+                        SavedRole.Oid = LastSavedRole.SavedRole AND
+                        SavedRole.[Role] = [Role].Oid AND
+                        [User].Oid = SavedRole.[User] AND
+                        Employee.Oid = [User].Employee AND
+                        [User].Oid = @user
+                """
+            try:
+                SavedRole = SQLManipulator.SQLExecute(sqlCheckSavedRole)[0][0]
+            except:
+                SavedRole = ''
+                pass
+            if SavedRole != '' or len(SavedRole) > 0:
+                user.role = SavedRole
+                user.savedrole = True
+            else:
+                user.savedrole = False
+            # Добавляем данные в экземпляр пользователя
+            user.id = userdata[8]
+            user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
+            user.username = userdata[4]
+            user.CardNumber = userdata[5]
+            user.interfaces = userdata[7]
+            packet = {terminal: f'{user.CardNumber}'}
+            for key in list(user_dict.keys()):
+                if user_dict[key].CardNumber == user.CardNumber:
+                    user_dict.pop(key)
+            user_dict[str(user.id)] = user
+            # Отправляем в сокет сообщение о успешной авторизации
+            socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
+        return 'Authorization successful'
+    except:
+        logger.exception()
 
 # Метод предназначенный для авторизации без пропуска по запросу
 # Большинство операций аналогичны методу авторизации с пропуском
@@ -442,29 +446,32 @@ def load_user(_id):
 
 @app.route('/Auth/GetPass/PassNumber=<string:passnumber>')
 def Auth(passnumber):
-    ip_addr = request.remote_addr  # Получение IP-адресса пользователя
-    sql_GetDeviceType = f"""SELECT DeviceType.[Name]
-                    FROM Device, DeviceType
-                    WHERE Device.DeviceId = '{ip_addr}' AND
-                            Device.DeviceType = DeviceType.Oid
-                    """
-    device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
-    if device_type == "Терминал":
-        for key in list(user_dict.keys()):
-            if user_dict[key].CardNumber == passnumber:
-                login_user(user_dict[key])  
-        if (current_user.role == 'Оператор'):
-            return redirect('/operator')
-        elif (current_user.role == 'Наладчик'):
-            return redirect('/adjuster')
-        elif (current_user.role == {0: 'Наладчик'}):
-            return redirect('/adjuster')
-        elif (current_user.role == {0: 'Оператор'}):
-            return redirect('/operator')
+    try:
+        ip_addr = request.remote_addr  # Получение IP-адресса пользователя
+        sql_GetDeviceType = f"""SELECT DeviceType.[Name]
+                        FROM Device, DeviceType
+                        WHERE Device.DeviceId = '{ip_addr}' AND
+                                Device.DeviceType = DeviceType.Oid
+                        """
+        device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
+        if device_type == "Терминал":
+            for key in list(user_dict.keys()):
+                if user_dict[key].CardNumber == passnumber:
+                    login_user(user_dict[key])  
+            if (current_user.role == 'Оператор'):
+                return redirect('/operator')
+            elif (current_user.role == 'Наладчик'):
+                return redirect('/adjuster')
+            elif (current_user.role == {0: 'Наладчик'}):
+                return redirect('/adjuster')
+            elif (current_user.role == {0: 'Оператор'}):
+                return redirect('/operator')
+            else:
+                return redirect('/menu')
         else:
-            return redirect('/menu')
-    else:
-        return redirect('/')
+            return redirect('/')
+    except:
+        logger.exception()
 
 # Метод вызываемый при переходе на роутинг требующий авторизации будучи не авторизованным
 
