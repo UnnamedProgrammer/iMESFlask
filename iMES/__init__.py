@@ -18,6 +18,7 @@ from iMES.Controller.TpaController import TpaController
 # Максимальное число обрабатываемых пакетов за раз
 Payload.max_decode_packets = 50
 
+
 # Настройки логов
 if (not os.path.exists('log/')):
     os.mkdir('log/')
@@ -43,7 +44,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 from iMES.Model.BaseObjectModel import BaseObjectModel
 Initiator = BaseObjectModel(app)
-socketio = SocketIO(app,async_handlers=True)
+socketio = SocketIO(app, async_handlers=True, ping_interval=120)
 
 # Запуск демонов
 ShiftTaskMonitoring = ShiftTaskDaemon(app)
@@ -99,3 +100,4 @@ from iMES.View.menu import menu
 from iMES.View.index import index
 from iMES.View.bind_press_form import bind_press_form
 from iMES.View.UnloadTo1C import UnloadTo1C
+from iMES.View.GetNormDocumentation import GetNormDocumentation

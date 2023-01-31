@@ -1,7 +1,7 @@
 from iMES import app
 from flask import render_template, send_file, request
 from iMES.Model.DirectumInterationModule import DirectumIntegration
-import os
+import os, json
 from flask_login import login_required
 from iMES import current_tpa, TpaList
 
@@ -13,8 +13,15 @@ DirectumConnection = DirectumIntegration()
 @app.route('/operator/visualinstructions/')
 @login_required
 def VisualInstructions():
+    ip_addr = request.remote_addr
     device_tpa = TpaList[request.remote_addr]
-    InstructionsId = current_tpa[request.remote_addr][2].PackingURL
+    InstructionsId = []
+    with open('st.json', 'r', encoding='utf-8-sig') as file_json:
+        json_file = json.load(file_json)[0]
+        for task in json_file['Order']:
+            if task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter:
+                InstructionsId.append(task['normUpacURL'])
+        file_json.close()
     Authorization = DirectumConnection.Authorization()
     table = """"""
     if (Authorization == True):

@@ -1,3 +1,5 @@
+{% extends 'index_template.html' %}
+{% block main_window %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -8,18 +10,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/icons.css') }}">
 </head>
 <body>
-<div class="view">
+<div class="view" >
     <div class="view-header text-center primary">Нормативная документация</div>
     <div class="view-body jsScroll">
         <div class="container">
-            <div class="col-12 js-squeeze-cards">
+            <div class="col-12">
                 <div class="row">
-                    {% for i in range(0,100) %}
-                        <div class="card m-1 shadow pdf-card js-pdf-card" style="width: 18rem; height: 118px;">
+                    {% for i in range(0,1) %}
+                        <a class="card m-1 shadow text-dark" style="width: 25rem; height: 118px;" href="/">
                             <div class="card-body">
-                                <p class="card-text h6">Test</p>
+                                <p class="card-text h6">Нормативная документация.pdf</p>
                             </div>
-                        </div>
+                        </a>
                     {% endfor %}
                 </div> 
             </div> 
@@ -65,7 +67,4 @@
     
 </script>
 </html>
-
-{% block navbar_footer %}
-    {% include 'navbar_footer/navbar_footer.html' %}        
 {% endblock %}

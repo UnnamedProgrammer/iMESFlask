@@ -332,6 +332,7 @@ def OperatorChangeLabel():
                     SELECT Oid, Name FROM Product WHERE Code = '{task["ProductCode"]}'
                 """)
                 current_product.append(list(product[0]))
+        file_json.close()
     current_product_duplicate = [] 
     for i in range(0, len(current_product)):
         if current_product[i] not in current_product_duplicate:

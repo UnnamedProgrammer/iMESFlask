@@ -388,7 +388,7 @@ class ProductionDataDaemon(BaseObjectModel):
                 for i in range(0, len(self.tpalist)):
                     if self.tpalist[i][0] == tpaoid:
                         for task in self.tpalist[i][3]['ShiftTask']:
-                            if task[0][0] == ShiftTaskOid:
+                            if task[0] == ShiftTaskOid:
                                 self.tpalist[i][3]['ShiftTask'].remove(task)
                         return
         else: return
