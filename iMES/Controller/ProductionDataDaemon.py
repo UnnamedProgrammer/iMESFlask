@@ -61,6 +61,7 @@ class ProductionDataDaemon(BaseObjectModel):
                     # Вывод в лог возникших ошибок
                     self.app.logger.info(f"{error} in {str(self.tpalist[tpanum])}")
                     continue
+            sleep(30)
     
     def OnceMonitoring(self):
         for tpanum in range(0,len(self.tpalist)):
