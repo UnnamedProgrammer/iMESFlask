@@ -578,7 +578,7 @@ def socket_connected(data):
 @socketio.on(message="NeedUpdateMainWindowData")
 def UpdateMainWindowData(data):
     ip_addr = request.remote_addr
-    errors = None
+    errors = []
     current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
     current_tpa[ip_addr][2].Check_Downtime(current_tpa[ip_addr][2].tpa)
     current_tpa[ip_addr][2].Check_pressform()

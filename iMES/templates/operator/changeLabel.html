@@ -18,7 +18,11 @@
             <tbody>
                 <tr>
                     <th>Артикул</th>
-                    <td id="stickerProductCell" data-prodoid="{{current_product_name[0][1]}}"> {{current_product_name[0][0]}} </td>
+                    {% if (current_product_name | length) > 0 %}
+                        <td id="stickerProductCell" data-prodoid="{{current_product_name[0][1]}}"> {{current_product_name[0][0]}} </td>
+                    {%else%}
+                        <td id="stickerProductCell" data-prodoid="{{current_product_name[0][1]}}"> {{current_product_name[0][0]}} </td>
+                    {% endif %}
                     <td class="nopadding table__button">
                         <button type="button" class="btn__table btn__table_dark" data-toggle="modalOpen" data-target="changeProductModal" onClick="modalController(event)">Выбрать</button>
                     </td>
