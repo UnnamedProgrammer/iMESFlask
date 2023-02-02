@@ -12,11 +12,10 @@ from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
 from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
 from iMES.Controller.UserCountController import UserCountController
 from iMES.Model.UserModel import UserModel
-from iMES.Controller.TpaController import TpaController 
-
+from iMES.Controller.TpaController import TpaController
 
 # Максимальное число обрабатываемых пакетов за раз
-Payload.max_decode_packets = 50
+Payload.max_decode_packets = 100
 
 
 # Настройки логов
@@ -44,7 +43,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 from iMES.Model.BaseObjectModel import BaseObjectModel
 Initiator = BaseObjectModel(app)
-socketio = SocketIO(app, async_handlers=True, ping_interval=120)
+socketio = SocketIO(app, async_mode='threading',ping_interval=120)
 
 # Запуск демонов
 ShiftTaskMonitoring = ShiftTaskDaemon(app)
