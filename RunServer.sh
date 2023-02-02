@@ -37,6 +37,6 @@ then
         fi
         source mesenv/bin/activate
         pip install -r requirements.txt 
-        gunicorn -c gunicorn.py --worker-class eventlet -w --preload 1 run:app
+        python run.py
     fi
 fi
