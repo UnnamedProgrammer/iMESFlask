@@ -231,6 +231,7 @@ def GetPlan(data):
 @app.route("/Auth/PassNumber=<string:passnumber>")
 def Authorization(passnumber):
     try:
+        roles = []
         user = UserModel()
         # Определяем адресс клиента
         terminal = request.remote_addr
@@ -272,7 +273,7 @@ def Authorization(passnumber):
             userdata.insert(0, UserController.CountUsers)
             # Запрос на сохраненные роли пользователя
             sqlLastRole = f"""
-                    SELECT [Role].[Name]
+                    SELECT [Role].[Name],[Role.Oid]
                     FROM [SavedRole],[User],[Role] 
                     WHERE [User].CardNumber = '{userdata[5]}' AND
                         [SavedRole].[User] = [User].Oid AND
@@ -281,6 +282,7 @@ def Authorization(passnumber):
             LastRole = SQLManipulator.SQLExecute(sqlLastRole)
             if(LastRole != []):
                 user.role = {0: LastRole[0][0]}
+                roles = LastRole
             else:
                 sqlUserRoles = f"""
                     SELECT [Role].[Name],[Role.Oid]
@@ -387,6 +389,7 @@ def Authorization(passnumber):
 @app.route("/Auth/PassNumber=<string:passnumber>/IP=<string:ipaddress>")
 def AuthorizationWhithoutPass(passnumber, ipaddress):
     user = UserModel()
+    roles = []
     terminal = ipaddress
     sql = f"""
     SELECT
@@ -420,7 +423,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         userdata = list(data[0])
         userdata.insert(0, UserController.CountUsers)
         sqlLastRole = f"""
-                SELECT [Role].[Name]
+                SELECT [Role].[Name], [Role].Oid
                 FROM [SavedRole],[User],[Role] 
                 WHERE [User].CardNumber = '{userdata[5]}' AND
                     [SavedRole].[User] = [User].Oid AND
@@ -429,6 +432,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         LastRole = SQLManipulator.SQLExecute(sqlLastRole)
         if(LastRole != []):
             user.role = {0: LastRole[0][0]}
+            roles = LastRole
         else:
             sqlUserRoles = f"""
                 SELECT [Role].[Name], [Role].Oid
