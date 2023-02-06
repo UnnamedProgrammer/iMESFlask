@@ -24,6 +24,7 @@ def index():
     current_tpa[ip_addr][2].data_from_shifttask()
     current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
     current_tpa[ip_addr][2].Check_pressform()
+    show_notify = False
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
@@ -66,7 +67,7 @@ def index():
                     if r.status_code == 200:
                         for key in list(user_dict.keys()):
                             if user_dict[key].CardNumber == CardNumber:
-                                login_user(user_dict[key])  
+                                login_user(user_dict[key])            
         else:
             return "Undefinded user, access denied"
     # Рендерим страницу
@@ -152,7 +153,7 @@ def GetPlan(data):
                 if i[1] == True:
                     closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
                     y += 1
-                    trend.append({"y": str(y), "x": closure_time[:-3]})
+                    trend.append({"y": str(current_tpa[ip_addr][2].socket_count * y), "x": closure_time[:-3]})
 
         #-------------PLAN
         # Если сменное задание одно
@@ -165,11 +166,11 @@ def GetPlan(data):
             for closure in range(ShiftInfo[0][3]):
                 time += timedelta(seconds=int(ShiftInfo[0][4]))
                 if time < end_shift:
-                    plan.append({"y": str(closure), "x": time.strftime(
+                    plan.append({"y": str(current_tpa[ip_addr][2].socket_count * closure), "x": time.strftime(
                         "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                 # Если время равно времени окончания смены, прибавить цикл и выйти из for
                 elif time == end_shift:
-                    plan.append({"y": str(closure), "x": time.strftime(
+                    plan.append({"y": str(current_tpa[ip_addr][2].socket_count * closure), "x": time.strftime(
                         "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                     break
                 # Если время превышает время окончания смены, не прибавлять данный цикл
@@ -282,7 +283,7 @@ def Authorization(passnumber):
                 user.role = {0: LastRole[0][0]}
             else:
                 sqlUserRoles = f"""
-                    SELECT [Role].[Name]
+                    SELECT [Role].[Name],[Role.Oid]
                     FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
                     WHERE [User].CardNumber = '{userdata[5]}' AND 
                         [Relation_UserRole].[User] = [User].Oid AND
@@ -328,6 +329,19 @@ def Authorization(passnumber):
                 if user_dict[key].CardNumber == user.CardNumber:
                     user_dict.pop(key)
             user_dict[str(user.id)] = user
+
+            # Проверка на непрочитанные документы нормативной документации
+            for role in roles:               
+                NotReadingDocs = SQLManipulator.SQLExecute(
+                    f"""
+                        SELECT * FROM Documentation
+                        WHERE NOT EXISTS 
+                        (SELECT * FROM DocumentReadStatus, Relation_DocumentationRole
+                            WHERE [Role] = '{role[1]}' AND
+                                [User] = '{user.id}')
+                    """
+                )
+
             # Отправляем в сокет сообщение о успешной авторизации
             socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
         return 'Authorization successful'
@@ -385,7 +399,7 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
             user.role = {0: LastRole[0][0]}
         else:
             sqlUserRoles = f"""
-                SELECT [Role].[Name]
+                SELECT [Role].[Name], [Role].Oid
                 FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
                 WHERE [User].CardNumber = '{userdata[5]}' AND 
                     [Relation_UserRole].[User] = [User].Oid AND
@@ -425,11 +439,52 @@ def AuthorizationWhithoutPass(passnumber, ipaddress):
         user.username = userdata[4]
         user.CardNumber = userdata[5]
         user.interfaces = userdata[7]
-        packet = {terminal: f'{user.CardNumber}'}
+        packet = {terminal: f'{user.CardNumber}'}  
+
+        # Проверка на новые документы нормативной документации
+        Docs = []
+        for role in roles:               
+            NewDocs = SQLManipulator.SQLExecute(
+                f"""
+                    SELECT Documentation.Oid FROM Documentation, Relation_DocumentationRole
+                    WHERE [Role] = '{role[1]}' AND
+                    NOT EXISTS
+                    (
+                        SELECT DocumentReadStatus.Document FROM DocumentReadStatus
+                        WHERE [User] = '{user.id}'
+                    )
+                """
+            )
+            if len(NewDocs) > 0:               
+                Docs.append(NewDocs[0][0])  
+
+        Docs = list(set(Docs))
+        for doc in Docs:
+            SQLManipulator.SQLExecute(
+                f"""
+                    INSERT INTO DocumentReadStatus 
+                        (Oid, [User], Document, [Status], ReadDate)
+                    VALUES (NEWID(), '{user.id}', '{doc}', 0, NULL)   
+                """
+            )
+        
+        NoReadDocs = SQLManipulator.SQLExecute(
+            f"""
+                SELECT [Oid]
+                FROM [MES_Iplast].[dbo].[DocumentReadStatus]
+                WHERE [User]='{user.id}' AND Status = 0
+            """
+        )
+        if len(NoReadDocs) > 0:
+            user.ReadingAllDocs = False
+        else:
+            user.ReadingAllDocs = True
+
         for key in list(user_dict.keys()):
             if user_dict[key].CardNumber == user.CardNumber:
                 user_dict.pop(key)
-        user_dict[str(user.id)] = user    
+        user_dict[str(user.id)] = user  
+
         socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
     return 'Authorization successful'
 
@@ -583,9 +638,10 @@ def UpdateMainWindowData(data):
     current_tpa[ip_addr][2].Check_Downtime(current_tpa[ip_addr][2].tpa)
     current_tpa[ip_addr][2].Check_pressform()
     current_tpa[ip_addr][2].data_from_shifttask()
-    
-    shift = current_tpa[ip_addr][2].shift.split()
-    shift = f'{shift[0]} {shift[1]}'
+    if current_tpa[ip_addr][2].shift != '':
+        shift = current_tpa[ip_addr][2].shift.split('(')[0][:-1]
+    else:
+        shift = ''
     if len(current_tpa[ip_addr][2].errors) > 0:
         errors = current_tpa[ip_addr][2].errors
     try:
@@ -698,3 +754,13 @@ def GetStickerInfo(data):
    
     socketio.emit("SendStickerInfo", json.dumps(
         {ip_addr: data}, ensure_ascii=False, indent=4))
+
+@socketio.on(message='GetNotify')
+def SendNotify(data):
+    ip_addr = request.remote_addr
+    if ((current_user.ReadingAllDocs == False) and
+        (current_user.Showed_notify == False)):
+        socketio.emit("ShowNotify", json.dumps(
+            {ip_addr: ''}, ensure_ascii=False, indent=4))
+        current_user.Showed_notify = True
+       

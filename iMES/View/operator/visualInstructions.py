@@ -58,7 +58,7 @@ def GetVisualInstruction(instructionid):
     if (os.path.exists(f"iMES/templates/Directum/doc_{instructionid}")):
         return render_template(f"Directum/doc_{instructionid}/{instructionid}_frame.html")
     else:
-        doc = DirectumConnection.DirectumGetDocument(instructionid)
+        doc = DirectumConnection.DirectumGetDocument(instructionid, 'visual_instructions')
         if (isinstance(doc, str)):
             return render_template("Show_error.html", error=doc,
                                    ret="/operator", device_tpa=device_tpa,

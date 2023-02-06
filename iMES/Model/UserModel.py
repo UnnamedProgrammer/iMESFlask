@@ -13,6 +13,8 @@ class UserModel(UserMixin):
     interface = None
     savedrole = False
     device_type = ''
+    ReadingAllDocs = False
+    Showed_notify = False
 
     def __repr__(self):
         return '<User %r>' % self.name

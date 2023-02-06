@@ -15,7 +15,7 @@ from iMES.Model.UserModel import UserModel
 from iMES.Controller.TpaController import TpaController
 
 # Максимальное число обрабатываемых пакетов за раз
-Payload.max_decode_packets = 100
+Payload.max_decode_packets = 1000
 
 
 # Настройки логов
@@ -97,6 +97,6 @@ from iMES.View.navbar_footer import navbar_footer
 from iMES.View.adjuster import adjuster
 from iMES.View.menu import menu
 from iMES.View.index import index
-from iMES.View.bind_press_form import bind_press_form
+from iMES.View.menu.bind_press_form import bind_press_form
 from iMES.View.UnloadTo1C import UnloadTo1C
 from iMES.View.GetNormDocumentation import GetNormDocumentation

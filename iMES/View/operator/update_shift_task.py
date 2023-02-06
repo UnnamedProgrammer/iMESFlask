@@ -6,9 +6,11 @@ from datetime import datetime
 from iMES.Model.ShiftTaskModels.ShiftTaskLoad import ShiftTaskLoader
 from iMES import ProductDataMonitoring
 import json
+from flask_login import login_required
 
 
 @socketio.on('UpdateShiftTask')
+@login_required
 def UpdateShiftTask(data):
     ip_addr = request.remote_addr
     date = 0

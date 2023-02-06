@@ -63,7 +63,7 @@ class ShiftTaskLoader(BaseObjectModel):
     # и возвращает в виде dict
     def ShiftTask_Update(self):
         json_data = requests.get(
-            f"""http://192.168.137.14:4439/IplMES/hs/MES/GetProductionAssignment2?Date={str(self.date)}000000&Smena={str(self.shift)}""")
+            f"""http://work2-appserv-8.ipt.ls:4439/IplMES/hs/MES/GetProductionAssignment2?Date={str(self.date)}000000&Smena={str(self.shift)}""")
         with open('st.json', 'wb') as file_json:
             file_json.write(json_data.content)
             file_json.close()
