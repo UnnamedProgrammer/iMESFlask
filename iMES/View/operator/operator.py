@@ -66,6 +66,10 @@ def tableWeight():
                                         Product ON ShiftTask.Product = Product.Oid INNER JOIN
                                         ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
     current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+    if len(current_product) > 0:
+        pass
+    else:
+        current_product = []
 
     return CheckRolesForInterface('Оператор', 'operator/tableWeight.html', [table_info, current_tpa[ip_addr], current_product])
 
@@ -323,7 +327,7 @@ def OperatorChangeLabel():
     if len(current_product_name) > 0:
         pass
     else:
-        current_product_name = [' ', ' ']
+        current_product_name = [(' ', ' ')]
     with open('st.json', 'r', encoding='utf-8-sig') as file_json:
         json_file = json.load(file_json)[0]
         for task in json_file['Order']:
@@ -331,7 +335,8 @@ def OperatorChangeLabel():
                 product = SQLManipulator.SQLExecute(f"""
                     SELECT Oid, Name FROM Product WHERE Code = '{task["ProductCode"]}'
                 """)
-                current_product.append(list(product[0]))
+                if len(product) > 0:
+                    current_product.append(list(product[0]))
         file_json.close()
     current_product_duplicate = [] 
     for i in range(0, len(current_product)):
