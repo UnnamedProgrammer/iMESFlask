@@ -29,7 +29,11 @@
                 </tr>
                 <tr>
                     <th>Количество</th>
-                    <td id="selectProductCountData">1</td>
+                    {% if (current_product_name | length) > 0 %}
+                        <td id="selectProductCountData">{{ current_product_name[0][2] }}</td>
+                    {%else%}
+                        <td id="selectProductCountData"></td>
+                    {% endif %}
                     <td class="nopadding table__button">
                         <a href="#" class="btn__table btn__table_dark" id="selectProductCount" onClick="numberModalControl(event)">Изменить</a>
                     </td>

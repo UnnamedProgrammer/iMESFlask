@@ -317,7 +317,7 @@ def OperatorChangeLabel():
     # Получаем данные о текущих продуктах за смену и название смены
     current_product_name = SQLManipulator.SQLExecute(
         f"""
-            SELECT [Product].Name, Product.Oid
+            SELECT [Product].Name, Product.Oid, [StickerCount]
             FROM [MES_Iplast].[dbo].[StickerInfo], Product
             WHERE Product.Oid = [StickerInfo].Product AND
             [StickerInfo].Equipment = '{current_tpa[ip_addr][2].tpa}'
@@ -327,7 +327,7 @@ def OperatorChangeLabel():
     if len(current_product_name) > 0:
         pass
     else:
-        current_product_name = [(' ', ' ')]
+        current_product_name = [(' ', ' ', ' ')]
     with open('st.json', 'r', encoding='utf-8-sig') as file_json:
         json_file = json.load(file_json)[0]
         if current_tpa[ip_addr][2].WorkCenter == "":
