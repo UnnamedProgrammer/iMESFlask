@@ -273,7 +273,7 @@ def Authorization(passnumber):
             userdata.insert(0, UserController.CountUsers)
             # Запрос на сохраненные роли пользователя
             sqlLastRole = f"""
-                    SELECT [Role].[Name],[Role.Oid]
+                    SELECT [Role].[Name],[Role].Oid
                     FROM [SavedRole],[User],[Role] 
                     WHERE [User].CardNumber = '{userdata[5]}' AND
                         [SavedRole].[User] = [User].Oid AND
@@ -285,7 +285,7 @@ def Authorization(passnumber):
                 roles = LastRole
             else:
                 sqlUserRoles = f"""
-                    SELECT [Role].[Name],[Role.Oid]
+                    SELECT [Role].[Name],[Role].Oid
                     FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
                     WHERE [User].CardNumber = '{userdata[5]}' AND 
                         [Relation_UserRole].[User] = [User].Oid AND
