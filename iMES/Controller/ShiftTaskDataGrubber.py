@@ -37,6 +37,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.specName = ()
         self.WorkCenter = ""
         self.socket_count = ""
+        self.TpaNomenclatureCode = ""
 
     def update_pressform(self):
         # Проверка прессформы
@@ -100,6 +101,28 @@ class ShiftTaskDataGrubber(BaseObjectModel):
             (SELECT * FROM ProductionData WHERE ProductionData.ShiftTask = ShiftTask.Oid AND Status = 1)
         """
         data = self.SQLExecute(sql)
+                    # Получение номенклатурной группы ТПА
+        equipngroup = self.SQLExecute(
+            f"""
+                SELECT [NomenclatureGroup]
+                    FROM [MES_Iplast].[dbo].[Equipment] 
+                    WHERE Oid = '{self.tpa}'   
+            """
+        )
+        if len(equipngroup) > 0:
+            nomenclature = self.SQLExecute(
+                f"""
+                    SELECT [Code]
+                        FROM [MES_Iplast].[dbo].[NomenclatureGroup] 
+                        WHERE Oid ='{equipngroup[0][0]}'
+                """
+            )
+            if len(nomenclature) > 0:
+                self.TpaNomenclatureCode = nomenclature[0][0]
+            else:
+                self.TpaNomenclatureCode = ""
+        else:
+            self.TpaNomenclatureCode = ""
         #---------------------------------------------------
         # Простая передача из БД в поля класса
         if len(data) > 0:

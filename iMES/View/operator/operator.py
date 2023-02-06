@@ -330,8 +330,18 @@ def OperatorChangeLabel():
         current_product_name = [(' ', ' ')]
     with open('st.json', 'r', encoding='utf-8-sig') as file_json:
         json_file = json.load(file_json)[0]
+        if current_tpa[ip_addr][2].WorkCenter == "":
+            for task in json_file['Order']:
+                if (((task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter) or
+                    (task['oid'] == current_tpa[ip_addr][2].TpaNomenclatureCode)) and
+                    (current_tpa[ip_addr][2].TpaNomenclatureCode != "")):
+                    current_tpa[ip_addr][2].WorkCenter = task['WorkCenter']
+                    break
+
         for task in json_file['Order']:
-            if task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter:
+            if (((task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter) or
+                (task['oid'] == current_tpa[ip_addr][2].TpaNomenclatureCode)) and
+                (current_tpa[ip_addr][2].TpaNomenclatureCode != "")):
                 product = SQLManipulator.SQLExecute(f"""
                     SELECT Oid, Name FROM Product WHERE Code = '{task["ProductCode"]}'
                 """)
