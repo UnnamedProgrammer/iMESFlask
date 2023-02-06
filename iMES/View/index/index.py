@@ -331,16 +331,48 @@ def Authorization(passnumber):
             user_dict[str(user.id)] = user
 
             # Проверка на непрочитанные документы нормативной документации
+            Docs = []
             for role in roles:               
-                NotReadingDocs = SQLManipulator.SQLExecute(
+                NewDocs = SQLManipulator.SQLExecute(
                     f"""
-                        SELECT * FROM Documentation
-                        WHERE NOT EXISTS 
-                        (SELECT * FROM DocumentReadStatus, Relation_DocumentationRole
-                            WHERE [Role] = '{role[1]}' AND
-                                [User] = '{user.id}')
+                        SELECT Documentation.Oid FROM Documentation, Relation_DocumentationRole
+                        WHERE [Role] = '{role[1]}' AND
+                        NOT EXISTS
+                        (
+                            SELECT DocumentReadStatus.Document FROM DocumentReadStatus
+                            WHERE [User] = '{user.id}'
+                        )
                     """
                 )
+                if len(NewDocs) > 0:               
+                    Docs.append(NewDocs[0][0])  
+
+            Docs = list(set(Docs))
+            for doc in Docs:
+                SQLManipulator.SQLExecute(
+                    f"""
+                        INSERT INTO DocumentReadStatus 
+                            (Oid, [User], Document, [Status], ReadDate)
+                        VALUES (NEWID(), '{user.id}', '{doc}', 0, NULL)   
+                    """
+                )
+            
+            NoReadDocs = SQLManipulator.SQLExecute(
+                f"""
+                    SELECT [Oid]
+                    FROM [MES_Iplast].[dbo].[DocumentReadStatus]
+                    WHERE [User]='{user.id}' AND Status = 0
+                """
+            )
+            if len(NoReadDocs) > 0:
+                user.ReadingAllDocs = False
+            else:
+                user.ReadingAllDocs = True
+
+            for key in list(user_dict.keys()):
+                if user_dict[key].CardNumber == user.CardNumber:
+                    user_dict.pop(key)
+            user_dict[str(user.id)] = user  
 
             # Отправляем в сокет сообщение о успешной авторизации
             socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
