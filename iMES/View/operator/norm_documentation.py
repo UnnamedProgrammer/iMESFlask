@@ -8,7 +8,6 @@ from iMES.Model.DirectumInterationModule import DirectumIntegration
 @app.route("/NormDocumentation")
 @login_required
 def Norm_Documentation():
-    print(current_user.__str__())
     archive = False
     Docs = []
     doc_names = []

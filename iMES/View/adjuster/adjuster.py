@@ -160,7 +160,6 @@ def idleEnterFixing(data):
         if len(data['newWaste']) != 0:  
             for i in range(len(data['newWaste'])):
                 newWaste = data['newWaste'][i][0].split(',')
-                print(newWaste)
                 SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
                                                     ([ProductionData],[Material],[Type],[Weight],
                                                     [Downtime],[CreateDate],[Creator])
@@ -173,7 +172,6 @@ def idleEnterFixing(data):
         if len(data['newDefect']) != 0:  
             for i in range(len(data['newDefect'])):
                 newDefect = data['newDefect'][i].split(',')
-                print(newDefect)
                 SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
                                                     ([ProductionData],[Type],[Weight],[Count],
                                                     [Downtime],[CreateDate],[Creator])
@@ -185,8 +183,6 @@ def idleEnterFixing(data):
     if 'existingWaste' in idle_key_list:
         if len(data['existingWaste']) != 0:
             for i in range(len(data['existingWaste'])):
-                print(data['existingWaste'][i])
-                print(data['idleOid'])
                 SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]   
                                                 SET [Downtime] = '{data['idleOid']}'
                                                 WHERE [Oid] = '{data['existingWaste'][i]}' """)
@@ -195,8 +191,6 @@ def idleEnterFixing(data):
     if 'existingDefect' in idle_key_list:
         if len(data['existingDefect']) != 0:
             for i in range(len(data['existingDefect'])):
-                print(data['existingDefect'][i])
-                print(data['idleOid'])
                 SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]
                                                 SET [Downtime] = '{data['idleOid']}'
                                                 WHERE [Oid] = '{data['existingDefect'][i]}' """)
