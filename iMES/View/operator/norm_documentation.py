@@ -5,9 +5,10 @@ from flask_login import current_user, login_required
 from iMES.Model.BaseObjectModel import BaseObjectModel
 from iMES.Model.DirectumInterationModule import DirectumIntegration
 
-@app.route("/operator/NormDocumentation")
+@app.route("/NormDocumentation")
 @login_required
 def Norm_Documentation():
+    print(current_user.__str__())
     archive = False
     Docs = []
     doc_names = []
@@ -44,13 +45,13 @@ def Norm_Documentation():
                                                               doc_links=doc_links,
                                                               archive=archive)
 
-@app.route("/operator/NormDocumentation/id=<string:id>")
+@app.route("/NormDocumentation/id=<string:id>")
 @login_required
 def ShowDocumentation(id):
     return render_template(
             f"Directum/doc_{id}/{id}_frame.html")
 
-@app.route("/operator/NormDocumentation/Accept/id=<string:id>")
+@app.route("/NormDocumentation/Accept/id=<string:id>")
 @login_required
 def AcceptDoc(id):
     doc_oid = BaseObjectModel.SQLExecute(
@@ -70,9 +71,9 @@ def AcceptDoc(id):
                 WHERE [User] = '{current_user.id}' AND Document = '{doc_oid[0][0]}'   
             """
         )
-    return redirect("/operator/NormDocumentation")
+    return redirect("NormDocumentation")
 
-@app.route("/operator/NormDocumentation/Archive")
+@app.route("/NormDocumentation/Archive")
 @login_required
 def DocsArchive():
     archive = True
@@ -104,7 +105,7 @@ def DocsArchive():
                 doc_name = Directum.DirectumGetDocumentName(doc_id)
                 Directum.DirectumGetDocument(doc_id, "normative_documetation")
                 doc_names.append(doc_name)
-                doc_links.append(f"/operator/NormDocumentation/id={doc_id}")
+                doc_links.append(f"/NormDocumentation/id={doc_id}")
     return render_template("operator/NormDocumentation.html", current_tpa=current_tpa[ip_addr],
                                                             device_tpa=TpaList[request.remote_addr],
                                                             doc_names=doc_names,

@@ -19,5 +19,8 @@ class UserModel(UserMixin):
     def __repr__(self):
         return '<User %r>' % self.name
     
+    def __str__(self) -> str:
+        return f"<User {self.id} {self.name} {self.username} {self.role} {self.interface} {self.savedrole}>"
+    
     def get_id(self):
         return self.id

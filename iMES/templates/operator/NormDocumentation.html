@@ -32,13 +32,20 @@
             {% if archive == True %}
                 <button type="button" class="btn btn__view primary fs-4"></button>
             {% else %}
-                <a type="button" class="btn btn__view primary fs-4" href="/operator/NormDocumentation/Archive">Архив</a>
+                <a type="button" class="btn btn__view primary fs-4" href="/NormDocumentation/Archive">Архив</a>
             {% endif %}
         </div>  
         <div class="col-6">
-            <a type="button" class="btn btn btn__view secondary startLoad" href="/operator">
-                Выход
-            </a>
+            {% if current_user.interface == 'Оператор' %}
+                <a type="button" class="btn btn btn__view secondary startLoad" href="/operator">
+                    Выход
+                </a>
+            {% endif %}
+            {% if current_user.interface == 'Наладчик' %}
+                <a type="button" class="btn btn btn__view secondary startLoad" href="/adjuster">
+                    Выход
+                </a>
+            {% endif %}
         </div>  
     </div>         
 </div>
@@ -67,6 +74,14 @@
                 item.removeEventListener('mousemove', endListener);
             });
         });
+    }
+
+    function exit()
+    {
+        if (location.href == '/adjuster')
+        {
+            localStorage
+        }
     }
     
 </script>
