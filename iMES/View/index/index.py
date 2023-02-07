@@ -1,10 +1,11 @@
 from asyncio.log import logger
+import time
 from iMES import socketio
 from iMES import app
 from iMES import UserController
 from flask import redirect, render_template, request
 from flask_login import login_required, login_user, logout_user, current_user
-from iMES import login_manager
+from iMES import login_manager, ProductDataMonitoring
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
 from iMES import TpaList, current_tpa, user_dict
@@ -94,134 +95,183 @@ def ChangeTPA():
 @socketio.on(message = "getTrendPlanData")
 def GetPlan(data):
     ip_addr = request.remote_addr
-    # Проверяем есть ли сменное задание на ТП
-    if len(current_tpa[ip_addr][2].shift_task_oid) == 0:
-        pass
-    else:
-        # Получаем Oid смены 
-        sql_GetShiftOid = f"""
-                                SELECT TOP(1) ShiftTask.Shift
-                                FROM Shift, ShiftTask
-                                WHERE ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}'
-                            """
-        ShiftOid = SQLManipulator.SQLExecute(sql_GetShiftOid)[0][0]
-        
-        #-------------TREND
-        # Массив и начальная точка, получаю начало и конец текущей смены
+    plan =[]
+    trend = []
+    # Начало и конец смены
+    if (current_tpa[ip_addr][2].shift_oid != ''):
         sql_GetShiftInfo = f"""
-                                SELECT 
-                                    ShiftTask.Oid,
-                                    Shift.StartDate,
-                                    Shift.EndDate,
-                                    ShiftTask.ProductCount,
-                                    ShiftTask.Cycle,
-                                    ShiftTask.Shift,
-                                    ShiftTask.Product
-                                FROM
-                                    Shift, ShiftTask
-                                WHERE
-                                    Shift.Oid = ShiftTask.Shift and ShiftTask.Equipment = '{current_tpa[ip_addr][2].tpa}' and ShiftTask.Shift = '{ShiftOid}'
-                            """
+                    SELECT 
+                        ShiftTask.Oid,
+                        Shift.StartDate,
+                        Shift.EndDate,
+                        ShiftTask.ProductCount,
+                        ShiftTask.Cycle,
+                        ShiftTask.Shift,
+                        ShiftTask.Product
+                    FROM
+                        Shift, ShiftTask
+                    WHERE
+                        Shift.Oid = ShiftTask.Shift and 
+                        ShiftTask.Equipment = '{current_tpa[ip_addr][2].tpa}' and 
+                        ShiftTask.Shift = '{current_tpa[ip_addr][2].shift_oid}'
+                """
         ShiftInfo = SQLManipulator.SQLExecute(sql_GetShiftInfo)
-        for shift_task in ShiftInfo:
-            # Начальная точка назначается из БД (StartDate)
-            trend = [{"y": "0", "x": (shift_task[1].strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3]}]
-            break
-        # Подсчет выпущенных изделий (СОМНИТЕЛЬНО)
-        y = 0
-        # Запрос на время и статус смыкания
-        if (len(current_tpa[ip_addr][2].shift_task_oid) > 0):
-            sql_GetСlosures = f"""
-                                    SELECT [Date]
-                                        ,[Status]
-                                    FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
-                                    WHERE 
-                                    Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
-                                                        FROM RFIDEquipmentBinding, ShiftTask
-                                                        WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
-                                                        ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}') AND
-                                    ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}' AND
-                                    Shift.Oid = ShiftTask.Shift AND
-                                    Date between Shift.StartDate AND Shift.EndDate
+        try:
+            if (len(ShiftInfo) > 0) and ((current_tpa[ip_addr][2].production_plan != (0,)) and 
+                (current_tpa[ip_addr][2].production_plan != 0)):
+                StartShift = ShiftInfo[0][1]
+                EndShift = ShiftInfo[0][2]
+                # Дельта времени смыкания по плану
+                plan_delta = timedelta(seconds=current_tpa[ip_addr][2].cycle)
 
-                                    ORDER BY Date ASC
-                                """
-            Closures = SQLManipulator.SQLExecute(sql_GetСlosures)
-            # Заполнение точками массива trend
-            for i in Closures:
-                # Если смыкание завершилось (status == 0), добавляется точка в массив
-                if i[1] == True:
-                    closure_time = i[0].strftime("%Y-%m-%d %H:%M:%S.%f")
-                    y += 1
-                    trend.append({"y": str(current_tpa[ip_addr][2].socket_count * y), "x": closure_time[:-3]})
-
-        #-------------PLAN
-        # Если сменное задание одно
-        if len(ShiftInfo) == 1:
-            # Записываем начало и конец смены
-            time = ShiftInfo[0][1]
-            end_shift = ShiftInfo[0][2]
-            # Массив и начальное значение
-            plan = [{"y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}]
-            for closure in range(ShiftInfo[0][3]):
-                time += timedelta(seconds=int(ShiftInfo[0][4]))
-                if time < end_shift:
-                    plan.append({"y": str(current_tpa[ip_addr][2].socket_count * closure), "x": time.strftime(
-                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                # Если время равно времени окончания смены, прибавить цикл и выйти из for
-                elif time == end_shift:
-                    plan.append({"y": str(current_tpa[ip_addr][2].socket_count * closure), "x": time.strftime(
-                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                    break
-                # Если время превышает время окончания смены, не прибавлять данный цикл
+                # Вытягиваем возможные сменные задания
+                shift_tasks = SQLManipulator.SQLExecute(
+                    f"""
+                        SELECT [ProductCount]
+                                ,[Cycle]
+                                ,[Product]
+                                ,[Specification]
+                                ,[SocketCount]
+                        FROM [MES_Iplast].[dbo].[ShiftTask]
+                        WHERE Equipment = '{current_tpa[ip_addr][0]}' AND
+                                [Shift] = '{current_tpa[ip_addr][2].shift_oid}'      
+                    """
+                )
+                # Определяем очередь сменных заданий
+                task_queue = []
+                pressform = ProductDataMonitoring.GetTpaPressFrom(
+                    current_tpa[ip_addr][0])
+                equipment_performance = ProductDataMonitoring.GetEquipmentPerformance(
+                    current_tpa[ip_addr][0], pressform)
+                if equipment_performance == None:
+                    total_socket_count = shift_tasks[0][4]
                 else:
-                    # Пустая точка на конце смены, чтобы график был отрисован до ее конца
-                    plan.append({"y": None, "x": end_shift.strftime(
-                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                    break
-        # Если сменных заданий несколько
-        elif len(ShiftInfo) > 1:
-            # Записываем начало и конец смены
-            time = ShiftInfo[0][1]
-            end_shift = ShiftInfo[0][2]
-            # Переменная для подсчета суммы общего времени на производство
-            shift_times = 0
-            # Переменная для подсчета кол-ва сменных заданий с разными продуктами
-            product_count = 0
-            # Подсчет времени на все сменные задания и кол-ва сменных заданий с разными продуктами
-            for shift_task in range(0, len(ShiftInfo)-1):
-                shift_times += int(ShiftInfo[shift_task][3])*int(ShiftInfo[shift_task][4])
-                if ShiftInfo[shift_task][6] == ShiftInfo[shift_task][6]:
-                    product_count += 1
-            # Расчитываем оставшееся время на простои
-            if shift_times >= 43200:
-                downtime = 0
-            else:
-                downtime = 43200 - shift_times
-            # Массив и начальное значение
-            plan = [{"y": "0", "x": time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}]
-            closure_summ = 0
-            # Перебираем сменное задание
-            for shift_task in range(0, len(ShiftInfo)):
-                for closure in range(1, ShiftInfo[shift_task][3]+1):
-                    closure_summ += 1
-                    time += timedelta(seconds=int(ShiftInfo[shift_task][4]))
-                    if time < end_shift:
-                        plan.append({"y": closure_summ, "x": time.strftime(
-                            "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                    elif time == end_shift:
-                        plan.append({"y": closure_summ, "x": time.strftime(
-                            "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                        break
-                    else:  
-                        # Если время превышает время окончания смены, не прибавлять данный цикл
-                        break
-                if ShiftInfo[shift_task][6] != ShiftInfo[shift_task][6]:
-                    closure_summ -= 1
-                    time += timedelta(seconds=(product_count-1))
-            plan.append({"y": None, "x": end_shift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]})
-        socketio.emit('receiveTrendPlanData',data=json.dumps({ip_addr:{'plan':plan,'trend':trend}},ensure_ascii=False, indent=4))
+                    total_socket_count = equipment_performance[4]
 
+                insert_flag = False
+                for i in range(0, len(shift_tasks)):
+                    insert_flag = False
+                    empty_slots = total_socket_count
+                    if len(task_queue) == 0:
+                        if shift_tasks[i][4] <= total_socket_count:
+                            task_queue.append([shift_tasks[i]])
+                        continue
+                    else:
+                        for task in task_queue:
+                            if len(task) == 1:
+                                if ((shift_tasks[i][0] == task[0][0]) and
+                                    (shift_tasks[i][1] == task[0][1]) and
+                                    (shift_tasks[i][2] == task[0][2]) and
+                                    (shift_tasks[i][4] == task[0][4]) and
+                                    (empty_slots != 0) and 
+                                    (task[0][4] != total_socket_count)):
+                                    if (shift_tasks[i][4] <= empty_slots):
+                                        empty_slots -= int(shift_tasks[i][4])
+                                        task.append(shift_tasks[i])
+                                        insert_flag = True
+                                    break
+                        if insert_flag == False:
+                            if shift_tasks[i][4] <= total_socket_count:
+                                task_queue.append([shift_tasks[i]])
+
+                # Масив занимаемого времени выполнения сменных заданий           
+                time_to_every_task = []
+                # Переменные для нахождения переналадок
+                delta_between = None 
+                # Переменные для временного хранения времени
+                time_start = StartShift 
+                time_end = StartShift
+                # Сумма смыканий по всем сменкам (сумма плана всех сменок)
+                all_closer_summ = 0
+
+                # Вычисляем время затрачиваемое на каждое сменное задание
+                for task in task_queue:
+                    task_delta = timedelta(seconds=0)
+                    one_cycle = timedelta(seconds=task[0][1])
+                    for i in range(0, int(task[0][0])):
+                        task_delta += one_cycle
+                    time_to_every_task.append(task_delta)
+                    
+                # Формирование плана
+                FromStartDate = StartShift # начало смены
+                # Начальная точка графика
+                plan.append({"y": '0', "x": FromStartDate.strftime(
+                    "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+                
+                # Флаг выхода из цикла когда сумма даты и дельты превышает конец
+                cycle_exit_flag = False
+                # План последнего сменного задания
+                last_plan = 0
+                # Счетчик смыканий
+                count = 0
+                for task in task_queue:
+                    # Цикл на одно смыкание
+                    plan_delta = timedelta(seconds=task[0][1])
+                    sockets = 0
+                    if len(task) > 0:
+                        for tk in task:
+                            sockets += tk[4]
+                    else:
+                        sockets = task[4]
+                    # Формируем точки складывая дельту и дату после каждого смыкания
+                    for plan_clouser in range(last_plan, last_plan + task[0][0]):
+                        count += 1
+                        FromStartDate += plan_delta
+                        plan.append({"y": plan_clouser, "x": FromStartDate.strftime(
+                            "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+                        if EndShift <= FromStartDate: 
+                            cycle_exit_flag = True                  
+                            break
+                    if cycle_exit_flag:
+                        # Убераем то что вошло в ночную смену
+                        if (EndShift < FromStartDate):
+                            plan = plan[:-1]
+                            plan[len(plan)-1]['x'] = EndShift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                            plan[len(plan)-1]['y'] = count
+                        break 
+                    last_plan = last_plan + task[0][0] 
+
+                #Определяем время начала производства
+                start_production = SQLManipulator.SQLExecute(
+                    f"""
+                        SELECT [StartDate]
+                        FROM [MES_Iplast].[dbo].[ProductionData]
+                        WHERE ShiftTask = '{current_tpa[ip_addr][2].shift_task_oid[0]}'
+                    """
+                )                
+                # Получаем совершённые смыкания
+                offset = ProductDataMonitoring.offsetlist[current_tpa[ip_addr][0]]
+                sql = f"""
+                    SELECT RCD.[Oid]
+                        ,[Controller]
+                        ,[Label]
+                        ,[Date]
+                        ,RCD.[Cycle]
+                        ,[Status]
+                        ,Shift.Note
+                    FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
+                    WHERE 
+                    Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
+                                        FROM RFIDEquipmentBinding, ShiftTask
+                                        WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
+                                        ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}') AND
+                    ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}' AND
+                    Shift.Oid = ShiftTask.Shift AND
+                    Date between Shift.StartDate AND Shift.EndDate AND
+                    Status = 1
+                    ORDER BY Date ASC
+                """
+                clousers = SQLManipulator.SQLExecute(sql)
+                if len(clousers) > 0:
+                    clousers = tuple(clousers)
+                    count = 0
+                    for close in clousers:
+                        count += 1*current_tpa[ip_addr][2].socket_count
+                        trend.append({"x":str(close[3].strftime(
+                            "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y":count})
+                    socketio.emit('receiveTrendPlanData',data=json.dumps({ip_addr:{'plan':plan,'trend':trend}},ensure_ascii=False, indent=4))
+        except Exception as err:
+            app.logger.error(f"[{datetime.now()}] {err}")
 
 # Метод создания пользователя для сессии при прикладываении пропуска.
 # Отправляет устройству на котором прикладывается пропуск команду

@@ -226,6 +226,7 @@ class ShiftTaskLoader(BaseObjectModel):
         shift_name = None
         start_date = None
         end_date = None
+        
         # Проверяем длинну списка сменных заданий
         if len(self.shift_task_list) == 0:
             # Если заданий нет

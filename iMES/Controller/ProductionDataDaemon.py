@@ -26,6 +26,7 @@ class ProductionDataDaemon(BaseObjectModel):
         # Запуск бесконечного цикла с определенной переодичностью заданной методом sleep()
         while True:
             # Перебор всех ТПА
+            self.GetCurrentShift()
             for tpanum in range(0,len(self.tpalist)):
                 try:
                     # Проверяем наличие сменных заданий у ТПА
@@ -201,6 +202,7 @@ class ProductionDataDaemon(BaseObjectModel):
             WHERE
                 Equipment = '{equipment}' AND
                 ShiftTask.Product = Product.Oid AND
+                Shift = '{shift}' AND
                 SH.Oid = '{shift}'
         """
         offset = 0
