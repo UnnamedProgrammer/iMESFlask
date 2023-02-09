@@ -129,7 +129,7 @@ class DirectumIntegration():
                         if (i == 1):
                             # Создаём фрейм в котором будем отображать документ
                             if (dtype == 'visual_instructions'):
-                                frame_html = f""" <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                                frame_html = f""" <link href="{{ url_for('static', filename='/css/bootstrap.css') }}" rel="stylesheet">
                                         <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
                                         <div class="container">
                                             <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
@@ -154,7 +154,7 @@ class DirectumIntegration():
                                         </div>
                                     """
                             elif dtype == "normative_documetation":
-                                frame_html = f""" <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                                frame_html = f""" <link href="{{ url_for('static', filename='/css/bootstrap.css') }}" rel="stylesheet">
                                         <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
                                         <div class="container">
                                             <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
@@ -233,7 +233,7 @@ class DirectumIntegration():
                     # Создаём фрейм в котором будем отображать html файл документа
                     if (dtype == 'visual_instructions'):
                         frame_html = f"""
-                                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                                        <link href="{{ url_for('static', filename='/css/bootstrap.css') }}" rel="stylesheet">
                                         <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
                                         <div class="container">
                                             <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
@@ -258,7 +258,7 @@ class DirectumIntegration():
                                         </div>
                                     """
                     elif dtype == "normative_documetation":
-                        frame_html = f""" <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                        frame_html = f""" <link href="{{ url_for('static', filename='/css/bootstrap.css') }}" rel="stylesheet">
                                 <link rel="stylesheet" href="{{{{ url_for('static', filename='/css/style.css') }}}}">
                                 <div class="container">
                                     <div class="view-header primary">{self.DirectumGetDocumentName(DocumentId)}</div>
