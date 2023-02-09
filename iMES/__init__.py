@@ -98,7 +98,7 @@ def UpdateTpa():
     while True:
         for ip in current_tpa.keys():
             current_tpa[ip][2].Check_Downtime(current_tpa[ip][0])
-
+        sleep(30)
 
 UpdateTpaThread = Thread(target=UpdateTpa, args=())
 UpdateTpaThread.start()
