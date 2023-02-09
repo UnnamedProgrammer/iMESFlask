@@ -37,7 +37,7 @@ def Norm_Documentation():
                 doc_name = Directum.DirectumGetDocumentName(doc_id)
                 Directum.DirectumGetDocument(doc_id, "normative_documetation")
                 doc_names.append(doc_name)
-                doc_links.append(f"/operator/NormDocumentation/id={doc_id}")
+                doc_links.append(f"/NormDocumentation/id={doc_id}")
     return render_template("operator/NormDocumentation.html", current_tpa=current_tpa[ip_addr],
                                                               device_tpa=TpaList[request.remote_addr],
                                                               doc_names=doc_names,

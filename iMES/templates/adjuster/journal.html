@@ -41,9 +41,9 @@
                                     <input class="big-checkbox" type="checkbox" id="{{ loop.index0 }}" disabled>
                                 </td>
                                 <td class="align-middle red">Простой</td>
-                                <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d %H:%M:%S') }}</td>
+                                <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d-%H:%M:%S') }}</td>
                                 {% if downtime[3] != None %}
-                                    <td class="align-middle" id="idleTimeEnd">{{ downtime[3] }}</td>
+                                    <td class="align-middle" id="idleTimeEnd">{{ downtime[3].strftime('%Y.%m.%d-%H:%M:%S') }}</td>
                                 {% else %}
                                     <td class="align-middle" id="idleTimeEnd"></td>
                                 {% endif %}
@@ -60,17 +60,17 @@
                                     <input class="big-checkbox" type="checkbox" id="{{ loop.index0 }}">
                                 </td>
                                 <td class="align-middle red">Простой</td>
-                                <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d %H:%M:%S') }}</td>
+                                <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d-%H:%M:%S') }}</td>
                                 {% if downtime[3] != None %}
-                                    <td class="align-middle" id="idleTimeEnd">{{ downtime[3] }}</td>
+                                    <td class="align-middle" id="idleTimeEnd">{{ downtime[3].strftime('%Y.%m.%d-%H:%M:%S') }}</td>
                                 {% else %}
                                     <td class="align-middle" id="idleTimeEnd"></td>
                                 {% endif %}
                                 <td class="align-middle"></td>
                                 <td class="align-middle"></td>
                                 <td class="align-middle"></td>
-                                <td class="nopadding table__button">
-                                    <a type="button" class="btn__table btn__table_dark"><b>Причина</b></a>
+                                <td class="nopadding table__button" id="idleReason">
+                                    <a type="button" class="btn__table btn__table_dark" id="buttonReason"><b>Причина</b></a>
                                 </td>
                             </tr>
                         {% endif %}
@@ -127,90 +127,89 @@
         });
     }
 
-    let checkboxes = document.querySelectorAll('input[type=checkbox]')
-    let checkedArr = []
-    let endDateValue = null
-
     const tbody = document.querySelector('#journalTable tbody');
+    let checked = [];
+    let idle_data = []
+
     tbody.addEventListener('click', function (e) {
         const cell = e.target.closest('td:last-child');
         if (!cell) {return;}
         const row = cell.parentElement;
+        console.log(row.cells)
         let idleOid = row.cells[0].id // Получение ID первой ячейки (он же Oid простоя)
-        console.log(row.cells[0].classList.contains('idle-entered'))
-        if (!row.cells[0].classList.contains('idle-entered')) {
-            window.location.href='/adjuster/journal/idleEnter?oid='+idleOid
+        let start = row.cells[2].innerText
+        let end = row.cells[3].innerText
+        let all_idles = JSON.stringify(idle_data)
+        if (idle_data.length > 0) {
+            window.location.href=`/adjuster/journal/idleEnter?oid=${idle_data[idle_data.length-1]['Oid']}&start_date=${idle_data[idle_data.length-1]['Start_date']}&end_date=${idle_data[0]['End_date']}&idles=${all_idles}`
         } else {
-            window.location.href='/adjuster/journal/idleView?oid='+idleOid
+            window.location.href=`/adjuster/journal/idleEnter?oid=${idleOid}&start_date=${start}&end_date=${end}&idles=${all_idles}`
         } 
     });
-
+    // Выделение строк в таблице простоев для объединения
     $('input:checkbox').click(function(){
-       
-        if ($(this).is(':checked')) {
-            $(this).closest('tr').addClass('green'); // Красит выбранную строку в зеленый
+        // Опустошаем массив выбранных элементов
+        checked.length = 0
+        idle_data.length = 0
+        // Если нажали на чекбокс и он выделился галкой
+        if ($(this).is(':checked'))
+        {
+            // Заносим все строки с галкой в массив
+            $('input:checkbox:checked').each(function() {
+                checked.push(Number(this.id))
+                idle_data.push({'Oid':$(this).closest('td:first-child').attr('id'),
+                                'Start_date':$(this).closest('tr').children('#idleTimeStart').text(),
+                                'End_date':$(this).closest('tr').children('#idleTimeEnd').text()})
+            })
+            // Выделяем выделенную строку зелёным
+            $(this).closest('tr').addClass('green');
 
-            $.each($('input[type=checkbox]:checked'), function(){ // Перебор всех отмеченных чекбоксов
-                if (checkedArr.includes(this)) { // Если отмеченный, уже есть в массиве - пропуск
-                    return
-                } else {
-                    checkedArr.push(this) // Иначе добавляет в массив
-                }
-
-                for(const elem of checkboxes) { // Перебор всех имеющихся чекбоксов
-
-                    // Если не отмеченный чекбокс (элемент), находится между отмеченных. То отмечаем его и перекрашиваем в зеленый
-                    if (elem.id > checkedArr[0].id && elem.id < checkedArr[checkedArr.length-1].id) {
-                        $(elem).closest('tr').addClass('green');
-                        $(elem).prop("checked", true);
-
-                        // Удаление ячейки начала и конца промежуточных простоев 
-                        $(elem).closest('tr').children('#idleTimeStart').remove()
-                        $(elem).closest('tr').children('#idleTimeEnd').remove()
-
-                        // Удаление последней чейки с кнопкой, в промежуточных простоях
-                        $(elem).closest('tr').children().last().remove()
+            // Если выделено больше одной записи
+            if (checked.length > 1)
+            {
+                // Выделяем записи в диапазон между первой и последней галкой
+                $('input:checkbox').each(function() {
+                    if ((Number(this.id) >= checked[0]) && (Number(this.id) <= checked[checked.length-1]))
+                    {
+                        $(this).prop('checked', true)
+                        $(this).closest('tr').addClass('green')
                     }
-
-                    // Если выбранный элемент последний
-                    if (elem.id == checkedArr[checkedArr.length-1].id) {
-                        // Если выбранных чеек большей одной
-                        if(checkedArr.length > 1) {
-                            $(elem).closest('tr').children('#idleTimeStart').remove()
-
-                            // Если ячейка конец простоя, не пустой, то присваеваем его значение в переменную endDateValue
-                            // а так же чистим ячейки конца простоя и кнопки
-                            if($(elem).closest('tr').children()[2].innerHTML.trim() != '') {
-                                endDateValue = $(elem).closest('tr').children()[2].innerHTML
-                                $(elem).closest('tr').children('#idleTimeEnd').remove()
-                                $(elem).closest('tr').children().last().remove()
-                            // Если чейка конец простоя, пустой, то просто удаляем две ячейки
-                            } else {
-                                $(elem).closest('tr').children('#idleTimeEnd').remove()
-                                $(elem).closest('tr').children().last().remove()
-                            }
+                })
+                // Обновляем массив выделенных строк
+                checked.length = 0
+                idle_data.length = 0
+                $('input:checkbox:checked').each(function() {
+                    checked.push(Number(this.id))
+                    idle_data.push({'Oid':$(this).closest('td:first-child').attr('id'),
+                                    'Start_date':$(this).closest('tr').children('#idleTimeStart').text(),
+                                    'End_date':$(this).closest('tr').children('#idleTimeEnd').text()})
+                })  
+                // Объеденяем ячейки 
+                $('input:checkbox').each(function() {
+                    if ((Number(this.id) >= checked[0]) && (Number(this.id) <= checked[checked.length-1]))
+                    {
+                        if (Number(this.id) != checked[0])
+                        {
+                            $(this).closest('tr').children('#idleTimeStart').html($(this).html().replace($(this).text(),''));
+                            $(this).closest('tr').children('#idleTimeEnd').html($(this).html().replace($(this).text(),''));
+                            $(this).closest('tr').children('#idleReason').children('#buttonReason').remove()
+                        }
+                        else
+                        {
+                            $(this).closest('tr').children('#idleTimeStart').attr('rowspan',checked.length)
+                            $(this).closest('tr').children('#idleTimeEnd').attr('rowspan',checked.length)
+                            $(this).closest('tr').children('#idleReason').attr('rowspan',checked.length)
                         }
                     }
-                }
-
-                let startDate = $(checkedArr[0]).closest('tr').children('#idleTimeStart')
-                let endDate = $(checkedArr[0]).closest('tr').children('#idleTimeEnd')
-                let buttonCell = $(checkedArr[0]).closest('tr').children().last()
-                
-                if(checkedArr.length > 1) {
-                    $(startDate).attr('rowspan', $('input[type=checkbox]:checked').length);
-                    $(endDate).attr('rowspan', $('input[type=checkbox]:checked').length);
-                    $(buttonCell).attr('rowspan', $('input[type=checkbox]:checked').length);
-                    endDate.innerHTML = endDateValue
-                } else {
-                    if($(checkedArr[0]).closest('tr').children()[3].innerHTML.trim() != '') {
-                        endDateValue = $(checkedArr[0]).closest('tr').children()[3].innerHTML
-                    }
-                }
-            });
-
-        } else {
+                })  
+            }
+            
+        }
+        else
+        {
+            // Если сняли галку то обновляем страницу
             $(this).closest('tr').removeClass('green');
+            location.href="/adjuster/journal"
         }
     }); 
 </script>

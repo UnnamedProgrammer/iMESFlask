@@ -22,10 +22,6 @@ urllib3.disable_warnings()
 @app.route("/")
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
-    current_tpa[ip_addr][2].data_from_shifttask()
-    current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
-    current_tpa[ip_addr][2].Check_pressform()
-    show_notify = False
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
@@ -97,8 +93,11 @@ def GetPlan(data):
     ip_addr = request.remote_addr
     plan =[]
     trend = []
+    start_request = datetime.now()
     # Начало и конец смены
-    if (current_tpa[ip_addr][2].shift_oid != ''):
+    if ((current_tpa[ip_addr][2].shift_oid != '') and 
+        (current_tpa[ip_addr][2].production_plan != (0,)) and
+        (current_tpa[ip_addr][2].production_plan != 0)):
         sql_GetShiftInfo = f"""
                     SELECT 
                         ShiftTask.Oid,
@@ -117,8 +116,7 @@ def GetPlan(data):
                 """
         ShiftInfo = SQLManipulator.SQLExecute(sql_GetShiftInfo)
         try:
-            if (len(ShiftInfo) > 0) and ((current_tpa[ip_addr][2].production_plan != (0,)) and 
-                (current_tpa[ip_addr][2].production_plan != 0)):
+            if (len(ShiftInfo) > 0):
                 StartShift = ShiftInfo[0][1]
                 EndShift = ShiftInfo[0][2]
                 # Дельта времени смыкания по плану
@@ -230,15 +228,7 @@ def GetPlan(data):
                             plan[len(plan)-1]['y'] = count
                         break 
                     last_plan = last_plan + task[0][0] 
-
-                #Определяем время начала производства
-                start_production = SQLManipulator.SQLExecute(
-                    f"""
-                        SELECT [StartDate]
-                        FROM [MES_Iplast].[dbo].[ProductionData]
-                        WHERE ShiftTask = '{current_tpa[ip_addr][2].shift_task_oid[0]}'
-                    """
-                )                
+              
                 # Получаем совершённые смыкания
                 offset = ProductDataMonitoring.offsetlist[current_tpa[ip_addr][0]]
                 sql = f"""
@@ -721,8 +711,6 @@ def UpdateMainWindowData(data):
     ip_addr = request.remote_addr
     errors = []
     current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
-    current_tpa[ip_addr][2].Check_Downtime(current_tpa[ip_addr][2].tpa)
-    current_tpa[ip_addr][2].Check_pressform()
     current_tpa[ip_addr][2].data_from_shifttask()
     if current_tpa[ip_addr][2].shift != '':
         shift = current_tpa[ip_addr][2].shift.split('(')[0][:-1]

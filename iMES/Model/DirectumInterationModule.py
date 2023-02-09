@@ -167,7 +167,7 @@ class DirectumIntegration():
                                                 <div class="row">
                                                     <div class="col">
                                                         <button type="button" class="btn btn__menu btn__menu_wide btn__menu_height160 primary"
-                                                            onclick="location.href='/operator/NormDocumentation/Accept/id={DocumentId}'">
+                                                            onclick="location.href='/NormDocumentation/Accept/id={DocumentId}'">
                                                             Ознакомиться
                                                         </button>
                                                     </div>
@@ -271,7 +271,7 @@ class DirectumIntegration():
                                         <div class="row">
                                             <div class="col">
                                                 <button type="button" class="btn btn__menu btn__menu_wide btn__menu_height160 primary"
-                                                    onclick="location.href='/operator/NormDocumentation/Accept/id={DocumentId}'">
+                                                    onclick="location.href='/NormDocumentation/Accept/id={DocumentId}'">
                                                     Ознакомиться
                                                 </button>
                                             </div>

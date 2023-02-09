@@ -54,6 +54,9 @@ def adjusterJournal():
 @login_required
 def adjusterIdleEnter():
     idleOid = request.args.getlist('oid')
+    start = request.args.getlist('start_date')
+    end = request.args.getlist('end_date')
+    idles = request.args.getlist('idles')
     ip_addr = request.remote_addr
         
     # Получение данных о простое

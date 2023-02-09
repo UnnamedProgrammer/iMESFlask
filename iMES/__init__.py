@@ -1,7 +1,9 @@
 import configparser
 import logging
 import os
+from time import sleep
 from datetime import datetime
+from threading import Thread
 
 from flask_socketio import SocketIO
 from flask import Flask
@@ -91,6 +93,16 @@ for device in Devices:
     current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],
                                 TpaList[device[0]][0]['Name'],
                                 TpaList[device[0]][0]['Controller']]
+
+def UpdateTpa():
+    while True:
+        for ip in current_tpa.keys():
+            current_tpa[ip][2].Check_Downtime(current_tpa[ip][0])
+
+
+UpdateTpaThread = Thread(target=UpdateTpa, args=())
+UpdateTpaThread.start()
+
 # Импорт роутингов
 from iMES.View.operator import operator, visualInstructions, update_shift_task, norm_documentation
 from iMES.View.navbar_footer import navbar_footer

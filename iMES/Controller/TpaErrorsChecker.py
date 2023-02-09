@@ -33,7 +33,9 @@ class TpaErrorsChecker(BaseObjectModel):
         fail_list = self.SQLExecute(f"""
             SELECT [Oid], StartDate 
             FROM [MES_Iplast].[dbo].[DowntimeFailure]
-            WHERE Creator = '{self.system_user}' AND Equipment = '{self.tpaoid}'
+            WHERE Creator = '{self.system_user}' AND 
+                  Equipment = '{self.tpaoid}' AND
+                  EndDate IS NULL
         """)
         if len(fail_list) > 0:
             self.current_downtime_oids.clear()
