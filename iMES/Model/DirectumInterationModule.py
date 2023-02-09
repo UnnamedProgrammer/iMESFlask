@@ -136,7 +136,7 @@ class DirectumIntegration():
                                             <div class="d-flex justify-content-center">
                                                 <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
                                                     class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&show"
-                                                    style="height: 1024px; width: 1280px"></iframe>
+                                                    style="height: 615px; width: 1280px"></iframe>
                                             </div>
                                             <div class="view-1">
                                                 <div class="row">
@@ -161,7 +161,7 @@ class DirectumIntegration():
                                             <div class="d-flex justify-content-center">
                                                 <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
                                                     class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&show"
-                                                    style="height: 1024px; width: 1280px"></iframe>
+                                                    style="height: 615px; width: 1280px"></iframe>
                                             </div>
                                             <div class="view-1">
                                                 <div class="row">
@@ -240,7 +240,7 @@ class DirectumIntegration():
                                             <div class="d-flex justify-content-center">
                                                 <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
                                                     class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&show"
-                                                    style="height: 1024px; width: 1280px"></iframe>
+                                                    style="height: 615px; width: 1280px"></iframe>
                                             </div>
                                             <div class="view-1">
                                                 <div class="row">
@@ -265,7 +265,7 @@ class DirectumIntegration():
                                     <div class="d-flex justify-content-center">
                                         <iframe id="contentContainer" onload="autoResizeFrame(this);" name="previewFrame" frameborder="0"
                                             class="previewContent previewContent_shown" src="/operator/visualinstructions/ddoc={DocumentId}&show"
-                                            style="height: 1024px; width: 1280px"></iframe>
+                                            style="height: 615px; width: 1280px"></iframe>
                                     </div>
                                     <div class="view-1">
                                         <div class="row">
