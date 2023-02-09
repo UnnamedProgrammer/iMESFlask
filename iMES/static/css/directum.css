@@ -9,3 +9,21 @@ div {
     border: solid 1px #ddd;
     background-color: white;
 }
+
+.custom-scroll::-webkit-scrollbar{
+    width: 80px;
+    height: 60px;
+}
+.custom-scroll::-webkit-scrollbar-thumb{
+    height: 100px;
+    background-color: #254063;
+}
+
+.custom-scroll::-webkit-scrollbar-track{
+    border-width: 0;
+}
+
+.custom-scroll::-webkit-scrollbar-track:hover{
+    border-left:solid 1px #aaa;
+    background-color:#eee;
+}

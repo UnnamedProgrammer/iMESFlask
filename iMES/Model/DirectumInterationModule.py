@@ -111,7 +111,7 @@ class DirectumIntegration():
                                     <head>
                                         <meta http-equiv="X-UA-Compatible" content="IE=edge">
                                     </head>
-                                    <body>
+                                    <body class="custom-scroll">
                                 """
                     # Создаём папку документа
                     os.mkdir(f"iMES/templates/Directum/doc_{DocumentId}")
