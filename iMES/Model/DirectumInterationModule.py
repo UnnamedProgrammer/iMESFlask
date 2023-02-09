@@ -173,7 +173,7 @@ class DirectumIntegration():
                                                     </div>
                                                     <div class="col">
                                                         <button class="btn btn__menu btn__menu_wide btn__menu_height160 secondary"
-                                                            onclick="location.href='/operator'">
+                                                            onclick="location.href='/NormDocumentation'">
                                                             Выход
                                                         </button>
                                                     </div>
@@ -277,7 +277,7 @@ class DirectumIntegration():
                                             </div>
                                             <div class="col">
                                                 <button class="btn btn__menu btn__menu_wide btn__menu_height160 secondary"
-                                                    onclick="location.href='/operator'">
+                                                    onclick="location.href='/NormDocumentation'">
                                                     Выход
                                                 </button>
                                             </div>

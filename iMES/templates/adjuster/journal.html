@@ -131,7 +131,8 @@
     let checked = [];
     let idle_data = []
 
-    tbody.addEventListener('click', function (e) {
+    $('#buttonReason').bind('click',function (e) {
+        console.log(this.id)
         const cell = e.target.closest('td:last-child');
         if (!cell) {return;}
         const row = cell.parentElement;

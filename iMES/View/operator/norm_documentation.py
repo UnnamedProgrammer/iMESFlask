@@ -70,7 +70,7 @@ def AcceptDoc(id):
                 WHERE [User] = '{current_user.id}' AND Document = '{doc_oid[0][0]}'   
             """
         )
-    return redirect("NormDocumentation")
+    return redirect("/NormDocumentation")
 
 @app.route("/NormDocumentation/Archive")
 @login_required
