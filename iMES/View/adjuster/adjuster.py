@@ -57,10 +57,9 @@ def adjusterIdleEnter():
     idles = request.args.getlist('idles')
     idleOid = request.args.getlist('oid')[0]
     start = datetime.strptime(request.args.getlist('start_date')[0], '%Y.%m.%d-%H:%M:%S')
-    if end != '':
+    end = None
+    if request.args.getlist('end_date')[0] != '':
         end = datetime.strptime(request.args.getlist('end_date')[0], '%Y.%m.%d-%H:%M:%S')
-    else:
-        end = None
     ip_addr = request.remote_addr
         
     downtimeData = [idleOid, start, end, idles]
