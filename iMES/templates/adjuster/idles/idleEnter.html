@@ -26,8 +26,8 @@
     {% set existing_defect = somedata[8] %}
 
 
-    {% if downtimeData[0][3] != None %}
-        {% set idleTime = downtimeData[0][3] - downtimeData[0][2] %}
+    {% if downtimeData[3] != None %}
+        {% set idleTime = downtimeData[2] - downtimeData[1] %}
     {% endif %}
 
     <div class="notice notice-error" style="display: none;">
@@ -38,11 +38,12 @@
         <div class="view-body_idleEnter">
             <form action="" class="idle-form" id="idleEnterForm">
                 <div class="idle-form__body mt-2">
-                    <input type="hidden" id="idleOid" value="{{downtimeData[0][0]}}">
+                    <input type="hidden" id="idleOid" value="{{downtimeData[0]}}">
+                    <input type="hidden" id="idles" value="{{downtimeData[3]}}">
                     <div class="row">
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Прошло времени</span>
-                            <input type="hidden" id="idleTime" data-startdate="{{ downtimeData[0][2] }}" data-enddate="{{ downtimeData[0][3] }}">
+                            <input type="hidden" id="idleTime" data-startdate="{{ downtimeData[1] }}" data-enddate="{{ downtimeData[2] }}">
                             <input type="text" class="form-control form-control_idle" value="{{ idleTime }}" placeholder="Время простоя" readonly>
                         </div>
                         <div class="input-group mb-2 input-group_double">
@@ -71,7 +72,10 @@
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Комментарий</span>
                         <input type="text" class="form-control form-control_idle idle-data use-keyboard-input" id="idleNote" value="" placeholder="Введите комментарий...">
                     </div>
-
+                    <div class="input-group mb-2">
+                        <span class="input-group-text input-group-text_idle input-group-text_blue">Годные смыкания</span>
+                        <input type="text" class="form-control form-control_idle idle-data" id="idleValidClousersData" value="" onclick="numberModalControl(event)" placeholder="Введите годные смыкания...">
+                    </div>
                     <div class="idle-form__body_waste mt-4">
                         <div class="row p-1">
                             <div class="col">
@@ -621,7 +625,8 @@
         $('#idleEnterForm').submit(function(e) {
             e.preventDefault();
             let idleOid = document.querySelector('#idleOid').value
-
+            let idles = document.querySelector('#idles').value
+            let validClousers = document.querySelector('#idleValidClousersData').value
             let inputData = [],
             idleData = {},
             wasteData = [],
@@ -666,7 +671,9 @@
                 "idleTakenMeasures": inputData[4],
                 "idleNote" : inputData[5],
                 "idleStart" : idleStart,
-                "idleEnd" : idleEnd
+                "idleEnd" : idleEnd,
+                "idles": idles,
+                "validClousers": validClousers 
             }
 
             for (let i = 0; i < enteredData.length; i++) {

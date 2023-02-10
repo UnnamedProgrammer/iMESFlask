@@ -128,7 +128,7 @@ class TpaErrorsChecker(BaseObjectModel):
             ORDER BY Date DESC
         """
         last_closure_date = self.SQLExecute(sql)
-        if len(last_closure_date) > 0:
+        if (len(last_closure_date) > 0):
             last_closure_date = last_closure_date[0][0]
             current_date = datetime.now()
             seconds = (current_date - last_closure_date).total_seconds()
@@ -145,6 +145,7 @@ class TpaErrorsChecker(BaseObjectModel):
                         SET EndDate = '{datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}'
                         WHERE Oid = '{self.current_downtime_oids[0]}'
                     """)
+                    self.current_downtime_oids.remove(self.current_downtime_oids[0])
                 return True
         else:
             return False

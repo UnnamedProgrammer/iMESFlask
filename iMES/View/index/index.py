@@ -831,10 +831,14 @@ def GetStickerInfo(data):
 
 @socketio.on(message='GetNotify')
 def SendNotify(data):
-    ip_addr = request.remote_addr
-    if ((current_user.ReadingAllDocs == False) and
-        (current_user.Showed_notify == False)):
-        socketio.emit("ShowNotify", json.dumps(
-            {ip_addr: ''}, ensure_ascii=False, indent=4))
-        current_user.Showed_notify = True
+    try:
+        ip_addr = request.remote_addr
+        if (current_user.id != None):
+            if ((current_user.ReadingAllDocs == False) and
+                (current_user.Showed_notify == False)):
+                socketio.emit("ShowNotify", json.dumps(
+                    {ip_addr: ''}, ensure_ascii=False, indent=4))
+                current_user.Showed_notify = True
+    except:
+        pass
        

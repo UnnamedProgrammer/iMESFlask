@@ -18,11 +18,17 @@ function numberModalControl(event){
     numberModal.classList.toggle('hidden');
     display.textContent = '';
     let buttonID = event.target.id;
+    let lastID = ''
     for(let k of key){
         k.onclick = function(){
             display.classList.remove('outline-red')
             display.textContent += k.textContent;
         }
+    }
+    if (buttonID == 'idleValidClousersData')
+    {
+        lastID = enter.id
+        enter.id = 'idleValidClousersData'
     }
     // При нажатии клавиши "Ввод" переносит значение из строки ввода в строку со значением
     // Строка в которую будут вносится введенные данные должна иметь ID кнопки отрытия окна +Data, вида: exmapleData (например, wasteData)
@@ -91,6 +97,12 @@ function numberModalControl(event){
             else if(event.target.tagName == 'INPUT')
             {
                 event.target.value = display.textContent;
+            }
+
+            else if(enter.id == 'idleValidClousersData')
+            {
+                event.target.value = display.textContent;
+                enter.id = lastID
             }
 
             else

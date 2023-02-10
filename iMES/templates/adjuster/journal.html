@@ -40,7 +40,7 @@
                                 <td class="align-middle idle-entered" id="{{ downtime[0] }}">
                                     <input class="big-checkbox" type="checkbox" id="{{ loop.index0 }}" disabled>
                                 </td>
-                                <td class="align-middle red">Простой</td>
+                                <td class="align-middle red" id="idletype">Простой</td>
                                 <td class="align-middle" id="idleTimeStart">{{ downtime[2].strftime('%Y.%m.%d-%H:%M:%S') }}</td>
                                 {% if downtime[3] != None %}
                                     <td class="align-middle" id="idleTimeEnd">{{ downtime[3].strftime('%Y.%m.%d-%H:%M:%S') }}</td>
@@ -51,7 +51,7 @@
                                 <td class="align-middle"></td>
                                 <td class="align-middle">{{ downtime[9] }} {{ downtime[10] }} {{ downtime[11] }}</td>
                                 <td class="nopadding table__button">
-                                    <a type="button" class="btn__table btn__table_primary bold"><b>Подробнее</b></a>
+                                    <a type="button" class="btn__table btn__table_primary bold" onclick="Detail(event)"><b>Подробнее</b></a>
                                 </td>
                             </tr>
                         {% else %}
@@ -70,7 +70,7 @@
                                 <td class="align-middle"></td>
                                 <td class="align-middle"></td>
                                 <td class="nopadding table__button" id="idleReason">
-                                    <a type="button" class="btn__table btn__table_dark" id="buttonReason"><b>Причина</b></a>
+                                    <a type="button" class="btn__table btn__table_dark" id="buttonReason" onclick="Reason(event)"><b>Причина</b></a>
                                 </td>
                             </tr>
                         {% endif %}
@@ -131,12 +131,10 @@
     let checked = [];
     let idle_data = []
 
-    $('#buttonReason').bind('click',function (e) {
-        console.log(this.id)
-        const cell = e.target.closest('td:last-child');
+    function Reason (event) {
+        const cell = event.target.closest('td:last-child');
         if (!cell) {return;}
         const row = cell.parentElement;
-        console.log(row.cells)
         let idleOid = row.cells[0].id // Получение ID первой ячейки (он же Oid простоя)
         let start = row.cells[2].innerText
         let end = row.cells[3].innerText
@@ -146,7 +144,19 @@
         } else {
             window.location.href=`/adjuster/journal/idleEnter?oid=${idleOid}&start_date=${start}&end_date=${end}&idles=${all_idles}`
         } 
-    });
+    }
+
+    function Detail (event)
+    {
+        const cell = event.target.closest('td:last-child');
+        if (!cell) {return;}
+        const row = cell.parentElement;
+        let idleOid = row.cells[0].id
+        let start = row.cells[2].innerText
+        let end = row.cells[3].innerText
+        window.location.href=`/adjuster/journal/idleView?oid=${idleOid}&start_date=${start}&end_date=${end}` 
+    }
+
     // Выделение строк в таблице простоев для объединения
     $('input:checkbox').click(function(){
         // Опустошаем массив выбранных элементов
@@ -186,21 +196,34 @@
                                     'End_date':$(this).closest('tr').children('#idleTimeEnd').text()})
                 })  
                 // Объеденяем ячейки 
-                $('input:checkbox').each(function() {
-                    if ((Number(this.id) >= checked[0]) && (Number(this.id) <= checked[checked.length-1]))
+                $('input:checkbox:checked').each(function() {
+                    if (Number(this.id) == checked[0])
                     {
-                        if (Number(this.id) != checked[0])
-                        {
-                            $(this).closest('tr').children('#idleTimeStart').html($(this).html().replace($(this).text(),''));
-                            $(this).closest('tr').children('#idleTimeEnd').html($(this).html().replace($(this).text(),''));
-                            $(this).closest('tr').children('#idleReason').children('#buttonReason').remove()
-                        }
-                        else
-                        {
-                            $(this).closest('tr').children('#idleTimeStart').attr('rowspan',checked.length)
-                            $(this).closest('tr').children('#idleTimeEnd').attr('rowspan',checked.length)
-                            $(this).closest('tr').children('#idleReason').attr('rowspan',checked.length)
-                        }
+                        let first_row = this
+                        $(this).closest('tr').children('#idleTimeStart').html($(this).html().replace($(this).text(),''));
+                        $('input:checkbox:checked').each(function() {
+                            if (Number(this.id) == checked[checked.length-1])
+                            {
+                                $(first_row).closest('tr').children(
+                                    '#idleTimeStart').html(
+                                        $(first_row).html().replace(
+                                            $(first_row).text(),
+                                            $(this).closest('tr').children(
+                                            '#idleTimeStart').text())
+                                            );
+                            }
+                        })
+                        $(this).closest('tr').children('#idleTimeStart').attr('rowspan',checked.length)
+                        $(this).closest('tr').children('#idleTimeEnd').attr('rowspan',checked.length)
+                        $(this).closest('tr').children('#idleReason').attr('rowspan',checked.length)
+                        $(this).closest('tr').children('#idleReason').closest('td').children('#buttonReason').children('b').text('Объединить')
+                    }
+                    if (Number(this.id) != checked[0])
+                    {
+                        $(this).closest('tr').children('#idleTimeEnd').remove()
+                        $(this).closest('tr').children('#idleTimeStart').remove()
+                        $(this).closest('tr').children('#idleReason').remove()
+
                     }
                 })  
             }

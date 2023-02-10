@@ -1,5 +1,5 @@
 from iMES import app
-from flask import request
+from flask import request, redirect
 from iMES import current_tpa
 from iMES import socketio
 from flask_login import login_required, current_user
@@ -7,6 +7,7 @@ from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
 from iMES.Model.SQLManipulator import SQLManipulator
 from iMES import user_dict
 import json
+from datetime import datetime
 
 # Метод возвращает окно наладчика
 
@@ -53,20 +54,13 @@ def adjusterJournal():
 @app.route('/adjuster/journal/idleEnter')
 @login_required
 def adjusterIdleEnter():
-    idleOid = request.args.getlist('oid')
-    start = request.args.getlist('start_date')
-    end = request.args.getlist('end_date')
     idles = request.args.getlist('idles')
+    idleOid = request.args.getlist('oid')[0]
+    start = datetime.strptime(request.args.getlist('start_date')[0], '%Y.%m.%d-%H:%M:%S')
+    end = datetime.strptime(request.args.getlist('end_date')[0], '%Y.%m.%d-%H:%M:%S')
     ip_addr = request.remote_addr
         
-    # Получение данных о простое
-    sql_GetDowntimeData = f"""  SELECT [Oid],[Equipment],[StartDate],[EndDate],[DowntimeType],
-                                        [MalfunctionCause],[MalfunctionDescription],[TakenMeasures],
-                                        [Note],[CreateDate],[Creator]
-                                    FROM [MES_Iplast].[dbo].[DowntimeFailure]
-                                    WHERE [Oid] = '{idleOid[0]}'
-                                    ORDER BY [StartDate] DESC """
-    downtimeData = SQLManipulator.SQLExecute(sql_GetDowntimeData)
+    downtimeData = [idleOid, start, end,idles]
     
     # Получение типа простоев
     sql_GetDowntimeType = f""" SELECT [Oid],[Name],[Status],[SyncId]
@@ -139,13 +133,30 @@ def adjusterIdleEnter():
                                         AND [ProductWaste].[Downtime] IS NULL """
     existing_defect = SQLManipulator.SQLExecute(sql_GetExistingDefect)
     
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleEnter.html', [downtimeData, downtimeType, malfunctionCause, malfunctionDescription, takenMeasures, all_wastes, existing_wastes, current_product, existing_defect])
+    return CheckRolesForInterface('Наладчик', 
+                                  'adjuster/idles/idleEnter.html', [
+                                  downtimeData, 
+                                  downtimeType, 
+                                  malfunctionCause, 
+                                  malfunctionDescription, 
+                                  takenMeasures, 
+                                  all_wastes, 
+                                  existing_wastes, 
+                                  current_product, 
+                                  existing_defect
+                                  ])
 
 
 # Ввод данных о фиксации простоя в БД
 @socketio.on('idleEnterFixing')
 def idleEnterFixing(data):
     ip_addr = request.remote_addr
+    idles_data = data['idles'][2:-2]
+    idles = json.loads(idles_data)
+    formated_endDate = datetime.strptime(data['idleEnd'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S')
+    validClosures = data['validClousers']
+    if validClosures == '':
+        validClosures = '0'
     # Добавление новой записи в DowntimeFailure (зафиксированный простой)
     SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
                                     SET [DowntimeType] = '{data['idleType']}',
@@ -154,7 +165,9 @@ def idleEnterFixing(data):
                                         [TakenMeasures] = '{data['idleTakenMeasures']}',
                                         [Note] = '{data['idleNote']}',
                                         [CreateDate] = GETDATE(),
-                                        [Creator] = '{data['creatorOid']}'
+                                        [Creator] = '{data['creatorOid']}',
+                                        [EndDate] = '{formated_endDate}',
+                                        [ValidClosures] = {validClosures}
                                     WHERE [Oid] = '{data['idleOid']}' """)
     
     # Добавление нового отхода и привязки к простою
@@ -197,17 +210,26 @@ def idleEnterFixing(data):
                 SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]
                                                 SET [Downtime] = '{data['idleOid']}'
                                                 WHERE [Oid] = '{data['existingDefect'][i]}' """)
-    
+    for idle in idles:
+        if idle['Oid'] != data['idleOid']:
+            SQLManipulator.SQLExecute(
+                f"""
+                DELETE FROM DowntimeFailure 
+                    WHERE Oid = '{idle['Oid']}' 
+                """
+            )
     socketio.emit("IdleEntered", data=json.dumps({ip_addr: ''}),ensure_ascii=False, indent=4)
 
 @app.route('/adjuster/journal/idleView')
 @login_required
 def adjusterIdleView():
     idleOid = request.args.getlist('oid')
-    
+    start_date = request.args.getlist('start_date')
+    start_date = request.args.getlist('end_date')
+
     sql_GetIdleData = f""" SELECT   [DF].[Oid],[DF].[StartDate], [DF].[EndDate], [Type].[Name],
                                     [Cause].[Name] AS [Cause], [Desc].[Name] AS [Desc], [TakenMeasures].[Name], [Note],                             
-                                    [Employee].[FirstName],[Employee].[LastName],[Employee].[MiddleName]
+                                    [Employee].[FirstName],[Employee].[LastName],[Employee].[MiddleName],[DF].[ValidClosures]
                             FROM [MES_Iplast].[dbo].[DowntimeFailure] AS [DF]
                             LEFT JOIN [MES_Iplast].[dbo].[DowntimeType] AS [Type] ON [DF].[DowntimeType] = [Type].[Oid]
                             LEFT JOIN [MES_Iplast].[dbo].[MalfunctionCause] AS [Cause] ON [DF].[MalfunctionCause] = [Cause].[Oid]
@@ -229,6 +251,21 @@ def adjusterIdleView():
     idleWastes = SQLManipulator.SQLExecute(sql_GetIdleWastes)
     
     return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleView.html', [idleData, idleWastes])
+
+@app.route('/adjuster/journal/save_idle')
+@login_required
+def save_idle_comment():
+    idleOid = request.args.getlist('oid')[0]
+    comment = request.args.getlist('comment')[0]
+    SQLManipulator.SQLExecute(
+        f"""
+            UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
+            SET [Note] = '{idleOid}',
+            WHERE [Oid] = '{comment}'
+    
+        """
+    )
+    return redirect('/adjuster/journal')
 
 # Сырье до конца выпуска
 @app.route('/adjuster/RawMaterials')
