@@ -461,6 +461,25 @@ class ProductionDataDaemon(BaseObjectModel):
                     average_cycle += cycle_request[num][4] + cycle_request[num+1][4]
                 except:
                     average_cycle = average_cycle / num
+            
+            # Прибавляем к факту выпуска годные из простоев
+            get_idle_val_clausers = self.SQLExecute(
+                f"""
+                    SELECT TOP(50) DF.[Oid]
+                            ,DF.[StartDate]
+                            ,DF.[EndDate]
+                            ,DF.[ValidClosures]
+                    FROM [MES_Iplast].[dbo].[DowntimeFailure] AS DF, [Shift] AS SH
+                    WHERE Equipment = '{tpaoid}' AND
+                            DF.EndDate IS NOT NULL AND
+                            DF.[ValidClosures] != 0 AND
+                            SH.Oid = '{ShiftOid}' AND
+                            DF.StartDate >= SH.StartDate
+                """
+            )
+            if len(get_idle_val_clausers):
+                for val_clausers in get_idle_val_clausers:
+                    count += int(val_clausers[3])
             # Проверяем статусы записи
             # Если статус 1 то обновляем значения
             if (production_data[3] == 1):

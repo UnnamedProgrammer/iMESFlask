@@ -155,22 +155,35 @@ def idleEnterFixing(data):
     ip_addr = request.remote_addr
     idles_data = data['idles'][2:-2]
     idles = json.loads(idles_data)
-    formated_endDate = datetime.strptime(data['idleEnd'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S')
     validClosures = data['validClousers']
     if validClosures == '':
         validClosures = '0'
-    # Добавление новой записи в DowntimeFailure (зафиксированный простой)
-    SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
-                                    SET [DowntimeType] = '{data['idleType']}',
-                                        [MalfunctionCause] = '{data['idleCause']}',
-                                        [MalfunctionDescription] = '{data['idleDescription']}',
-                                        [TakenMeasures] = '{data['idleTakenMeasures']}',
-                                        [Note] = '{data['idleNote']}',
-                                        [CreateDate] = GETDATE(),
-                                        [Creator] = '{data['creatorOid']}',
-                                        [EndDate] = '{formated_endDate}',
-                                        [ValidClosures] = {validClosures}
-                                    WHERE [Oid] = '{data['idleOid']}' """)
+    if data['idleEnd'] != '':
+        formated_endDate = datetime.strptime(data['idleEnd'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S')
+        # Добавление новой записи в DowntimeFailure (зафиксированный простой)
+        SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
+                                        SET [DowntimeType] = '{data['idleType']}',
+                                            [MalfunctionCause] = '{data['idleCause']}',
+                                            [MalfunctionDescription] = '{data['idleDescription']}',
+                                            [TakenMeasures] = '{data['idleTakenMeasures']}',
+                                            [Note] = '{data['idleNote']}',
+                                            [CreateDate] = GETDATE(),
+                                            [Creator] = '{data['creatorOid']}',
+                                            [EndDate] = '{formated_endDate}',
+                                            [ValidClosures] = {validClosures}
+                                        WHERE [Oid] = '{data['idleOid']}' """)
+    else:
+        SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
+                                SET [DowntimeType] = '{data['idleType']}',
+                                    [MalfunctionCause] = '{data['idleCause']}',
+                                    [MalfunctionDescription] = '{data['idleDescription']}',
+                                    [TakenMeasures] = '{data['idleTakenMeasures']}',
+                                    [Note] = '{data['idleNote']}',
+                                    [CreateDate] = GETDATE(),
+                                    [Creator] = '{data['creatorOid']}',
+                                    [EndDate] = NULL,
+                                    [ValidClosures] = {validClosures}
+                                WHERE [Oid] = '{data['idleOid']}' """)
     
     # Добавление нового отхода и привязки к простою
     idle_key_list = list(data.keys())
@@ -226,8 +239,6 @@ def idleEnterFixing(data):
 @login_required
 def adjusterIdleView():
     idleOid = request.args.getlist('oid')
-    start_date = request.args.getlist('start_date')
-    start_date = request.args.getlist('end_date')
 
     sql_GetIdleData = f""" SELECT   [DF].[Oid],[DF].[StartDate], [DF].[EndDate], [Type].[Name],
                                     [Cause].[Name] AS [Cause], [Desc].[Name] AS [Desc], [TakenMeasures].[Name], [Note],                             
@@ -262,8 +273,8 @@ def save_idle_comment():
     SQLManipulator.SQLExecute(
         f"""
             UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
-            SET [Note] = '{idleOid}',
-            WHERE [Oid] = '{comment}'
+            SET [Note] = '{comment}'
+            WHERE [Oid] = '{idleOid}'
     
         """
     )
