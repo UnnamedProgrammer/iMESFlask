@@ -97,7 +97,9 @@ def GetPlan(data):
     # Начало и конец смены
     if ((current_tpa[ip_addr][2].shift_oid != '') and 
         (current_tpa[ip_addr][2].production_plan != (0,)) and
-        (current_tpa[ip_addr][2].production_plan != 0)):
+        (current_tpa[ip_addr][2].production_plan != 0) and
+        (current_tpa[ip_addr][2].tpa != '') and
+        (current_tpa[ip_addr][2].shift_oid != '')):
         sql_GetShiftInfo = f"""
                     SELECT 
                         ShiftTask.Oid,
