@@ -132,11 +132,21 @@ class TpaErrorsChecker(BaseObjectModel):
             last_closure_date = last_closure_date[0][0]
             current_date = datetime.now()
             seconds = (current_date - last_closure_date).total_seconds()
+            fails_without_reason = self.SQLExecute(
+                f"""SELECT [Oid], StartDate 
+                    FROM [MES_Iplast].[dbo].[DowntimeFailure]
+                    WHERE Creator = '{self.system_user}' AND 
+                        Equipment = '{self.tpaoid}' AND
+                        [MalfunctionCause] IS NULL
+                    ORDER BY StartDate DESC
+                """
+            )
+            if len(fails_without_reason) > 0:
+                if not self.__is_message_in_errors(error=self.error_string_const):
+                    self.__add_error_message(self.error_string_const,fails_without_reason[0][1]) 
             if seconds >= 400:
                 if not self.__is_downtime_created(last_closure_date):
-                    if self.__create_downtime(last_closure_date):
-                        if not self.__is_message_in_errors(error=self.error_string_const):
-                            self.__add_error_message(self.error_string_const,last_closure_date) 
+                    self.__create_downtime(last_closure_date)
                 return False
             else:
                 if len(self.current_downtime_oids) > 0:

@@ -179,15 +179,19 @@ class ShiftTaskLoader(BaseObjectModel):
                                 isActive = 0
                                 if specification_1C['IsActive'] == "Да":
                                     isActive = 1
-                                insert_specsql = f"""                            
-                                    INSERT INTO ProductSpecification 
-                                        (Oid, Code, [Name], Product, UseFactor,IsActive) 
-                                    VALUES (NEWID(),'{spec1C_code}','{specification_1C['Spec']}',
-                                        '{product[0][0]}',{float(specification_1C['UseFactor'])},
-                                        {isActive})              
-                                    """
-                                self.app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
-                                self.SQLExecute(insert_specsql)
+                                try:
+                                    insert_specsql = f"""                            
+                                        INSERT INTO ProductSpecification 
+                                            (Oid, Code, [Name], Product, UseFactor,IsActive) 
+                                        VALUES (NEWID(),'{spec1C_code}','{specification_1C['Spec']}',
+                                            '{product[0][0]}',{float(specification_1C['UseFactor'])},
+                                            {isActive})              
+                                        """
+                                    self.app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
+                                    self.SQLExecute(insert_specsql)
+                                except:
+                                    self.app.logger.error(
+                                        f"Cпецификация {ShiftTask.Specification} уже есть в базе данных, поиск был по записи {ShiftTask.Specification}")
                                 break
                         self.app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
                         specification = self.SQLExecute(get_spec_sql)
