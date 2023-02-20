@@ -103,6 +103,40 @@ def UpdateTpa():
 UpdateTpaThread = Thread(target=UpdateTpa, args=())
 UpdateTpaThread.start()
 
+tpasresultapi = []
+sqltpa = f"""
+        SELECT Equip.[Oid]
+            ,Equip.[Name]
+        FROM [MES_Iplast].[dbo].[Equipment] as Equip, RFIDEquipmentBinding AS REB 
+        WHERE NomenclatureGroup IS NOT NULL AND
+                Area = 'A0DCF91A-6196-4BDE-8541-B76FBCB9F7AC' AND
+                REB.Equipment = Equip.Oid
+        """
+TpaListApi = BaseObjectModel.SQLExecute(sqltpa)
+for tpa in TpaListApi:
+    controller = TpaController(app,tpa[0])
+    tpasresultapi.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False,'Controller':controller})
+
+def reload_tpa(tpa):
+    while True:
+        threads = []
+        for t in tpa:
+            thr = Thread(target=thread_state, args=(t,))
+            thr2 = Thread(target=t['Controller'].data_from_shifttask, args=())
+            threads.append(thr)
+            threads.append(thr2)
+        for tr in threads:
+            tr.start()
+        for tr in threads:
+            tr.join()
+        threads.clear()
+        sleep(30)
+
+def thread_state(t):
+    t['Controller'].state = t['Controller'].Check_Downtime(t['Oid'])
+
+reload_tpa_Thread = Thread(target=reload_tpa, args=(tpasresultapi,))
+reload_tpa_Thread.start()        
 # Импорт роутингов
 from iMES.View.operator import operator, visualInstructions, update_shift_task, norm_documentation
 from iMES.View.navbar_footer import navbar_footer
@@ -112,3 +146,4 @@ from iMES.View.index import index
 from iMES.View.menu.bind_press_form import bind_press_form
 from iMES.View.UnloadTo1C import UnloadTo1C
 from iMES.View.GetNormDocumentation import GetNormDocumentation
+from iMES.View.api import mes_ns_api

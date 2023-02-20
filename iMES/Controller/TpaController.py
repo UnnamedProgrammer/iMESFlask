@@ -11,3 +11,4 @@ class TpaController(TpaErrorsChecker,ShiftTaskDataGrubber):
         TpaErrorsChecker.__init__(self,_app,_TpaOid)
         self.Controller = self
         self.tpa = _TpaOid
+        self.state = False

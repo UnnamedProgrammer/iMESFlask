@@ -1,5 +1,5 @@
 from iMES.Model.BaseObjectModel import BaseObjectModel
-
+from numba import njit
 
 class ShiftTaskDataGrubber(BaseObjectModel):
     """
@@ -9,7 +9,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
     def __init__(self,_app) -> None:
         BaseObjectModel.__init__(self,_app)
         self.tpa = ''
-        self.pressform = self.update_pressform()
+        self.pressform = 'Не определена'
         self.production_plan = (0,)
         self.cycle = 0
         self.cycle_fact = 0
@@ -38,6 +38,8 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.WorkCenter = ""
         self.socket_count = ""
         self.TpaNomenclatureCode = ""
+        self.sync_oid = ""
+        self.state = False
 
     def update_pressform(self):
         # Проверка прессформы
@@ -71,6 +73,7 @@ class ShiftTaskDataGrubber(BaseObjectModel):
 
     # Метод получения данных из сменного задания
     def data_from_shifttask(self):
+        self.pressform = self.update_pressform()
         sql = f"""
             SELECT [ShiftTask].[Oid]
                 ,[Shift].Note
@@ -123,6 +126,17 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 self.TpaNomenclatureCode = ""
         else:
             self.TpaNomenclatureCode = ""
+        
+        sync_id = self.SQLExecute(
+            f"""
+                SELECT [SyncId]
+                FROM [MES_Iplast].[dbo].[Equipment]
+                WHERE Oid = '{self.tpa}'
+            """
+        )
+        if len(sync_id) > 0:
+            self.sync_oid = sync_id[0][0]
+
         #---------------------------------------------------
         # Простая передача из БД в поля класса
         if len(data) > 0:
