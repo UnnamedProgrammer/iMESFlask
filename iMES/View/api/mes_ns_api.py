@@ -1,11 +1,5 @@
-from concurrent.futures import thread
-from flask import request
-from iMES import app, TpaList
-from iMES.Model.BaseObjectModel import BaseObjectModel
-from iMES.Controller.TpaController import TpaController
+from iMES import app
 import json 
-from datetime import datetime
-from threading import Thread
 from iMES import tpasresultapi
 import time
 
@@ -15,12 +9,9 @@ def tpainfo():
 
 
 def build_tpa_data(tpas: list):
-    now1 = time.perf_counter()
     tpadata = []
     for tpa in tpasresultapi:
         update_tpa(tpa, tpadata)
-    now2 = time.perf_counter()
-    print(now2-now1)
     return tpadata
 
 def update_tpa(tpa, tpadata):

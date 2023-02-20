@@ -1,5 +1,4 @@
 from iMES.Model.BaseObjectModel import BaseObjectModel
-from numba import njit
 
 class ShiftTaskDataGrubber(BaseObjectModel):
     """
