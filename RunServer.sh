@@ -30,6 +30,7 @@ then
             echo "bs4" >> requirements.txt
             echo "eventlet==0.30.2" >> requirements.txt
             echo "gunicorn==20.1.0" >> requirements.txt
+            echo "flask_cors" >> requirements.txt
         fi
         if ! test -f "mesenv"
         then

@@ -8,6 +8,7 @@ from threading import Thread
 from flask_socketio import SocketIO
 from flask import Flask
 from flask_login import LoginManager
+from flask_cors import CORS
 from engineio.payload import Payload
 
 from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
@@ -46,6 +47,7 @@ app.config['SECRET_KEY'] = 'secret!'
 from iMES.Model.BaseObjectModel import BaseObjectModel
 Initiator = BaseObjectModel(app)
 socketio = SocketIO(app, async_mode='threading',ping_interval=120)
+cors = CORS(app)
 
 # Запуск демонов
 ShiftTaskMonitoring = ShiftTaskDaemon(app)
