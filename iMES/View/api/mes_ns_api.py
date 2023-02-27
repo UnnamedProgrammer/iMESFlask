@@ -1,4 +1,3 @@
-from numpy import average
 from iMES import app
 import json
 from iMES import tpasresultapi
