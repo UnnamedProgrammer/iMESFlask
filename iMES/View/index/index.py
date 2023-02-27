@@ -48,6 +48,7 @@ def index():
                 for key in user_dict.keys():
                     if user_dict[key].CardNumber == CardNumber:
                         is_authorized = True
+                        login_user(user_dict[key])
                 if not is_authorized:
                     from iMES import host, port
                     session = requests.Session()
@@ -66,7 +67,7 @@ def index():
                             if user_dict[key].CardNumber == CardNumber:
                                 login_user(user_dict[key])            
         else:
-            return "Undefinded user, access denied"
+            return "Undefinded device, access denied."
     # Рендерим страницу
     return render_template("index.html",
                            device_tpa=device_tpa,
