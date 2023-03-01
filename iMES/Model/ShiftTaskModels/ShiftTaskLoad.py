@@ -294,14 +294,15 @@ class ShiftTaskLoader(BaseObjectModel):
             self.InsertShiftTask(getshift[0][0], self.shift_task_list, get_tasks_flag=get_task_flag)
         else:
             if shift == 0:
+                more_one_day = datetime.timedelta(hours=12)
                 start_date = datetime.datetime(datetime.datetime.now().year,
                                                datetime.datetime.now().month,
                                                datetime.datetime.now().day,
                                                7, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
-                end_date = datetime.datetime(datetime.datetime.now().year,
+                end_date = (datetime.datetime(datetime.datetime.now().year,
                                              datetime.datetime.now().month,
                                              datetime.datetime.now().day,
-                                             19, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
+                                             19, 0, 0) + more_one_day).strftime("%Y-%m-%d %H:%M:%S")
                 insertshiftsql = f"""
                 set language english
                 INSERT INTO [Shift] (Oid,StartDate,EndDate,Note) 
@@ -312,14 +313,15 @@ class ShiftTaskLoader(BaseObjectModel):
                 """
                 self.SQLExecute(insertshiftsql)
             elif shift == 1:
+                more_one_day = datetime.timedelta(hours=12)
                 start_date = datetime.datetime(datetime.datetime.now().year,
                                                datetime.datetime.now().month,
                                                datetime.datetime.now().day,
                                                19, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
-                end_date = datetime.datetime(datetime.datetime.now().year,
+                end_date = (datetime.datetime(datetime.datetime.now().year,
                                              datetime.datetime.now().month,
                                              datetime.datetime.now().day+1,
-                                             7, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
+                                             7, 0, 0) + more_one_day).strftime("%Y-%m-%d %H:%M:%S")
                 insertshiftsql = f"""
                 set language english
                 INSERT INTO [Shift] (Oid,StartDate,EndDate,Note) 
