@@ -181,21 +181,27 @@ def get_graph_data_by_ctpa(current_tpa: TpaController, ip_addr=None):
                     count = 0
                     # Перебираем простои если есть вхождение смыкания в простой
                     # То после конца простоя указываем годные
-                    for close in clousers:
-                        idle_catch = False
-                        for idle in idles_db:
-                            if idle[0] not in checked_idles:
-                                if StartShift <= idle[2] <= EndShift:
-                                    if close[3] >= idle[2]:
-                                        count += int(idle[3]) * \
-                                                 current_tpa.socket_count
-                                        trend.append(
-                                            {"x": str(close[3].strftime(
-                                                "%Y-%m-%d %H:%M:%S.%f"))[:-3],
-                                             "y": count})
-                                        idle_catch = True
-                                        checked_idles.append(idle[0])
-                        if idle_catch is True:
+                    if len(idles_db) > 0:
+                        for close in clousers:
+                            idle_catch = False
+                            for idle in idles_db:
+                                if idle[0] not in checked_idles:
+                                    if StartShift <= idle[2] <= EndShift:
+                                        if close[3] >= idle[2]:
+                                            count += int(idle[3]) * \
+                                                    current_tpa.socket_count
+                                            trend.append(
+                                                {"x": str(close[3].strftime(
+                                                    "%Y-%m-%d %H:%M:%S.%f"))[:-3],
+                                                "y": count})
+                                            idle_catch = True
+                                            checked_idles.append(idle[0])
+                            if idle_catch is True:
+                                count += 1 * current_tpa.socket_count
+                                trend.append({"x": str(close[3].strftime(
+                                    "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y": count})
+                    else:
+                        for close in clousers:
                             count += 1 * current_tpa.socket_count
                             trend.append({"x": str(close[3].strftime(
                                 "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y": count})
