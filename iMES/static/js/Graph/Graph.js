@@ -123,7 +123,7 @@ function UpdateGraph()
         () => {
             socket.emit('getTrendPlanData','')
         },
-        3000
+        30000
     );
 }
 
