@@ -317,7 +317,7 @@ class ShiftTaskLoader(BaseObjectModel):
                 start_date = datetime.datetime(datetime.datetime.now().year,
                                                datetime.datetime.now().month,
                                                datetime.datetime.now().day,
-                                               19, 0, 0).strftime("%Y-%m-%d %H:%M:%S")
+                                               19, 0, 0)
                 
                 end_date = start_date + shift_delta
                 start_date = start_date.strftime("%Y-%m-%d %H:%M:%S")
