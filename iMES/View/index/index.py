@@ -94,11 +94,8 @@ def GetPlan(data):
     ip_addr = request.remote_addr
     plan =[]
     trend = []
-    start_request = datetime.now()
     # Начало и конец смены
     if ((current_tpa[ip_addr][2].shift_oid != '') and 
-        (current_tpa[ip_addr][2].production_plan != (0,)) and
-        (current_tpa[ip_addr][2].production_plan != 0) and
         (current_tpa[ip_addr][2].tpa != '') and
         (current_tpa[ip_addr][2].shift_oid != '')):
         sql_GetShiftInfo = f"""
@@ -122,8 +119,6 @@ def GetPlan(data):
             if (len(ShiftInfo) > 0):
                 StartShift = ShiftInfo[0][1]
                 EndShift = ShiftInfo[0][2]
-                # Дельта времени смыкания по плану
-                plan_delta = timedelta(seconds=current_tpa[ip_addr][2].cycle)
 
                 # Вытягиваем возможные сменные задания
                 shift_tasks = SQLManipulator.SQLExecute(
@@ -177,21 +172,27 @@ def GetPlan(data):
 
                 # Масив занимаемого времени выполнения сменных заданий           
                 time_to_every_task = []
-                # Переменные для нахождения переналадок
-                delta_between = None 
-                # Переменные для временного хранения времени
-                time_start = StartShift 
-                time_end = EndShift
 
-                #<<<!!!! ЗАДЕЙСТВОВАТЬ ПОСЛЕ СОВЕЩАНИЯ ПО ПЕРЕНАЛАДКЕ !!!!>>>>
-                # Вычисляем время затрачиваемое на каждое сменное задание
-                # for task in task_queue:
-                #     task_delta = timedelta(seconds=0)
-                #     one_cycle = timedelta(seconds=task[0][1])
-                #     for i in range(0, int(task[0][0])):
-                #         task_delta += one_cycle
-                #     time_to_every_task.append(task_delta)
-                
+                # Время окончания сменного задания
+                task_start = SQLManipulator.SQLExecute(
+                    f"""
+                        SELECT TOP(1) [StartDate]
+                        FROM [MES_Iplast].[dbo].[Shift]
+                        ORDER BY StartDate DESC
+                    """)
+                if len(task_start) > 0:
+                    task_start = task_start[0][0]
+
+                #Вычисляем время затрачиваемое на каждое сменное задание
+                start = task_start
+                for task in task_queue:
+                    one_cycle = timedelta(seconds=task[0][1])
+                    end = None
+                    for i in range(0, int(task[0][0])):
+                        task_start += one_cycle
+                        end = task_start
+                    time_to_every_task.append([start, end, task[0][4]])
+                    start = end
                     
                 # Формирование плана
                 FromStartDate = StartShift # начало смены
@@ -241,14 +242,14 @@ def GetPlan(data):
                         ,RCD.[Cycle]
                         ,[Status]
                         ,Shift.Note
-                    FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, ShiftTask, Shift 
+                    FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, Shift 
                     WHERE 
                     Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
-                                        FROM RFIDEquipmentBinding, ShiftTask
-                                        WHERE ShiftTask.Equipment = RFIDEquipmentBinding.Equipment and 
-                                        ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}') AND
-                    ShiftTask.Oid = '{current_tpa[ip_addr][2].shift_task_oid[0]}' AND
-                    Shift.Oid = ShiftTask.Shift AND
+                                        FROM RFIDEquipmentBinding
+                                        WHERE RFIDEquipmentBinding.Equipment = '{ current_tpa[ip_addr][2].tpa }') AND
+                    Shift.Oid = (SELECT TOP(1) [Oid]
+                                    FROM [MES_Iplast].[dbo].[Shift]
+                                    ORDER BY StartDate DESC) AND
                     Date between Shift.StartDate AND Shift.EndDate AND
                     Status = 1
                     ORDER BY Date ASC
@@ -266,7 +267,9 @@ def GetPlan(data):
                         WHERE Equipment = '{current_tpa[ip_addr][2].tpa}' AND
                                 DF.EndDate IS NOT NULL AND
                                 DF.[ValidClosures] != 0 AND
-                                SH.Oid = '{current_tpa[ip_addr][2].shift_oid}' AND
+                                SH.Oid = (SELECT TOP(1) [Oid]
+                                    FROM [MES_Iplast].[dbo].[Shift]
+                                    ORDER BY StartDate DESC) AND
                                 DF.StartDate >= SH.StartDate
                     """
                 )
@@ -299,9 +302,12 @@ def GetPlan(data):
                                     "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y":count})
                     else:
                         for close in clousers:
-                            count += 1 * current_tpa[ip_addr][2].socket_count
-                            trend.append({"x": str(close[3].strftime(
-                                "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y": count})
+                            for task_time in time_to_every_task:
+                                if task_time[0] <= close[3] <= task_time[1]:
+                                    count += 1 * task_time[2]
+                                    trend.append({"x": str(close[3].strftime(
+                                        "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y": count})
+                                    continue
                 socketio.emit('receiveTrendPlanData',
                                data=json.dumps({ip_addr:
                                                {'plan':plan,

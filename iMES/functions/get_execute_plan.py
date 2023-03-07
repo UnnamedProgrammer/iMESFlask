@@ -21,6 +21,6 @@ def get_execute_plan(current_tpa: TpaController):
         old_diff_time = datetime.now() - get_last_closure[0][3]
         end_date = (
             datetime.now() + timedelta(minutes=float(minutes_to_plan_end))) - old_diff_time
-        return end_date
+        return str(end_date - datetime.now())
     except:
         return ""

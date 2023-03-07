@@ -51,7 +51,8 @@ def tpa_data():
                         "plan_cycle": tpa['Controller'].cycle,
                         "fact_cycle": tpa['Controller'].cycle_fact,
                         "plan_weight": tpa['Controller'].plan_weight,
-                        "average_weight": tpa['Controller'].average_weight
+                        "average_weight": tpa['Controller'].average_weight,
+                        "tpa_syncid": tpa['Controller'].sync_oid
                     }]
                 else:
                     data = [{
@@ -67,7 +68,8 @@ def tpa_data():
                         "plan_cycle": tpa['Controller'].cycle,
                         "fact_cycle": tpa['Controller'].cycle_fact,
                         "plan_weight": list(tpa['Controller'].plan_weight),
-                        "average_weight": list(tpa['Controller'].average_weight)
+                        "average_weight": list(tpa['Controller'].average_weight),
+                        "tpa_syncid": tpa['Controller'].sync_oid
                     }]
                 return data
         return {'error': 'Неизвестный идентификатор.'}
