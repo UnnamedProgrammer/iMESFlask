@@ -10,6 +10,8 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_cors import CORS
 from engineio.payload import Payload
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.engine import URL
 
 from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
 from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
@@ -41,6 +43,20 @@ config.read("iMES/config.cfg")
 host = config["Host-data"]["ip_address"]
 port = int(config["Host-data"]["port"])
 
+# Соединение с бд
+connection_url = URL.create(
+    "mssql+pyodbc",
+    username="terminal",
+    password="xAlTeS3dGrh7",
+    host="192.168.107.43",
+    port=1433,
+    database="MES_Iplast",
+    query={
+        "driver": "ODBC Driver 18 for SQL Server",
+        "TrustServerCertificate": "yes",
+    },
+)
+
 # Создание объектов 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -48,6 +64,7 @@ from iMES.Model.BaseObjectModel import BaseObjectModel
 Initiator = BaseObjectModel(app)
 socketio = SocketIO(app, async_mode='threading',ping_interval=120)
 cors = CORS(app)
+db = SQLAlchemy(app)
 
 # Запуск демонов
 ShiftTaskMonitoring = ShiftTaskDaemon(app)
@@ -138,7 +155,8 @@ def thread_state(t):
     t['Controller'].state = t['Controller'].Check_Downtime(t['Oid'])
 
 reload_tpa_Thread = Thread(target=reload_tpa, args=(tpasresultapi,))
-reload_tpa_Thread.start()        
+reload_tpa_Thread.start()
+
 # Импорт роутингов
 from iMES.View.operator import operator, visualInstructions, update_shift_task, norm_documentation
 from iMES.View.navbar_footer import navbar_footer
