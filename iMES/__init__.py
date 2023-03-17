@@ -1,4 +1,5 @@
 import configparser
+import imp
 import logging
 import os
 from time import sleep
@@ -11,13 +12,16 @@ from flask_login import LoginManager
 from flask_cors import CORS
 from engineio.payload import Payload
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import select
 from sqlalchemy.engine import URL
 
+# Контроллеры iMES
 from iMES.Controller.ShiftTaskDaemon import ShiftTaskDaemon
 from iMES.Controller.ProductionDataDaemon import ProductionDataDaemon
 from iMES.Controller.UserCountController import UserCountController
 from iMES.Model.UserModel import UserModel
 from iMES.Controller.TpaController import TpaController
+
 
 # Максимальное число обрабатываемых пакетов за раз
 Payload.max_decode_packets = 1000
@@ -60,11 +64,21 @@ connection_url = URL.create(
 # Создание объектов 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
+app.config['SQLALCHEMY_DATABASE_URI']=connection_url
+app.config['SECRET_KEY'] = 'ded06adc-f231-4c99-8932-42b2e2592ba2'
+
 from iMES.Model.BaseObjectModel import BaseObjectModel
 Initiator = BaseObjectModel(app)
 socketio = SocketIO(app, async_mode='threading',ping_interval=120)
 cors = CORS(app)
 db = SQLAlchemy(app)
+
+
+# Модели БД
+from iMES.Model.DataBaseModels.DeviceModel import Device
+from iMES.Model.DataBaseModels.EquipmentModel import Equipment
+from iMES.Model.DataBaseModels.RFIDEquipmentBindingModel import RFIDEquipmentBinding
+from iMES.Model.DataBaseModels.Relation_DeviceEquipmentModel import Relation_DeviceEquipment
 
 # Запуск демонов
 ShiftTaskMonitoring = ShiftTaskDaemon(app)
@@ -85,56 +99,50 @@ UserController = UserCountController()
 current_tpa = {}
 TpaList = {}
 
+# Переменные для API
+tpasresultapi = []
+tpasapi = None
+
 # Инициализация списка и словаря с ТПА
-sqldevices = """
-                SELECT[DeviceId]
-                FROM [MES_Iplast].[dbo].[Device]
-            """
-Devices = Initiator.SQLExecute(sqldevices)
-# Проход по всем ТПА, задание начальных значенией, и присвоение
+Devices = None
+with app.app_context():
+    Devices = Device.query.all()
+
+# Проход по всем ТПА, задание начальных значений, и присвоение
 # класса-контроллера для ТПА
 for device in Devices:
-    sqltpa = f"""
-                SELECT [Equipment].[Oid],[Equipment].[Name]
-                FROM [MES_Iplast].[dbo].[Relation_DeviceEquipment], Equipment, Device 
-                WHERE 	Device.DeviceId = '{device[0]}' AND
-                        Equipment.Oid = Relation_DeviceEquipment.Equipment AND
-                        Device.Oid = Relation_DeviceEquipment.Device
-              """
-    tpas = Initiator.SQLExecute(sqltpa)
+    with app.app_context():
+        tpas = Equipment.query.where(
+            Relation_DeviceEquipment.Device == device.Oid).where(
+                Equipment.Oid == Relation_DeviceEquipment.Equipment).all()
+        tpasresult = []
+        for tpa in tpas:
+            controller = TpaController(app,tpa.Oid)
+            tpasresult.append({'Oid': str(tpa.Oid).upper(), 'Name': tpa.Name, 'WorkStatus':False,'Controller':controller})
 
-    tpasresult = []
-    for tpa in tpas:
-        controller = TpaController(app,tpa[0])
-        tpasresult.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False,'Controller':controller})
+        TpaList[device.DeviceId] = tpasresult
+        current_tpa[device.DeviceId] = [TpaList[device.DeviceId][0]['Oid'],
+                                    TpaList[device.DeviceId][0]['Name'],
+                                    TpaList[device.DeviceId][0]['Controller']]
 
-    TpaList[device[0]] = tpasresult
-    current_tpa[device[0]] = [TpaList[device[0]][0]['Oid'],
-                                TpaList[device[0]][0]['Name'],
-                                TpaList[device[0]][0]['Controller']]
+# Создание списка ТПА для API mes-ns
+with app.app_context():
+    tpasapi = Equipment.query.where(
+        Equipment.NomenclatureGroup is not None).where(
+            Equipment.Area == 'A0DCF91A-6196-4BDE-8541-B76FBCB9F7AC').where(
+                RFIDEquipmentBinding.Equipment == Equipment.Oid).where(
+                    Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D'
+                ).all()
+
+    for tpa in tpasapi:
+        controller = TpaController(app,str(tpa.Oid).upper())
+        tpasresultapi.append({'Oid': tpa.Oid, 'Name': tpa.Name, 'WorkStatus':False,'Controller':controller})
 
 def UpdateTpa():
     while True:
         for ip in current_tpa.keys():
             current_tpa[ip][2].Check_Downtime(current_tpa[ip][0])
         sleep(30)
-
-UpdateTpaThread = Thread(target=UpdateTpa, args=())
-UpdateTpaThread.start()
-
-tpasresultapi = []
-sqltpa = f"""
-        SELECT Equip.[Oid]
-            ,Equip.[Name]
-        FROM [MES_Iplast].[dbo].[Equipment] as Equip, RFIDEquipmentBinding AS REB 
-        WHERE NomenclatureGroup IS NOT NULL AND
-                Area = 'A0DCF91A-6196-4BDE-8541-B76FBCB9F7AC' AND
-                REB.Equipment = Equip.Oid
-        """
-TpaListApi = BaseObjectModel.SQLExecute(sqltpa)
-for tpa in TpaListApi:
-    controller = TpaController(app,tpa[0])
-    tpasresultapi.append({'Oid': tpa[0], 'Name': tpa[1], 'WorkStatus':False,'Controller':controller})
 
 def reload_tpa(tpa):
     while True:
@@ -154,6 +162,8 @@ def reload_tpa(tpa):
 def thread_state(t):
     t['Controller'].state = t['Controller'].Check_Downtime(t['Oid'])
 
+UpdateTpaThread = Thread(target=UpdateTpa, args=())
+UpdateTpaThread.start()
 reload_tpa_Thread = Thread(target=reload_tpa, args=(tpasresultapi,))
 reload_tpa_Thread.start()
 

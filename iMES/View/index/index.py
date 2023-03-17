@@ -1,11 +1,10 @@
 from asyncio.log import logger
-import time
 from iMES import socketio
 from iMES import app
 from iMES import UserController
 from flask import redirect, render_template, request
 from flask_login import login_required, login_user, logout_user, current_user
-from iMES import login_manager, ProductDataMonitoring
+from iMES import login_manager, ProductDataMonitoring, db
 from iMES.Model.SQLManipulator import SQLManipulator
 import json
 from iMES import TpaList, current_tpa, user_dict
@@ -15,6 +14,10 @@ from requests.adapters import HTTPAdapter,Retry
 import requests, urllib3
 
 from iMES.Model.UserModel import UserModel
+
+# Модули БД
+from iMES.Model.DataBaseModels.DeviceTypeModel import DeviceType
+from iMES.Model.DataBaseModels.DeviceModel import Device
 # Метод возвращающий главную страницу
 
 urllib3.disable_warnings()
@@ -26,46 +29,45 @@ def index():
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
         device_tpa = TpaList[ip_addr]
+
         # Запрос определяющий тип устройства клиента из бд, веб или терминал
-        sql_GetDeviceType = f"""SELECT DeviceType.[Name]
-                            FROM Device, DeviceType
-                            WHERE Device.DeviceId = '{ip_addr}' AND
-                                    Device.DeviceType = DeviceType.Oid
-                            """
-        device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
-        if len(device_type) > 0:
-            # Если устройство является веб то находим пользователя привязаннаго за устройством
-            # И автоматически авторизуем его по его номеру карты
-            if device_type == "Веб":
-                sql_GetCardNumber = f"""
-                            SELECT [User].CardNumber
-                            FROM [User],Device WHERE 
-                            Device.DeviceId = '{ip_addr}' AND
-                            Device.[Name] = [User].UserName
-                        """
-                CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
-                is_authorized = False
-                for key in user_dict.keys():
-                    if user_dict[key].CardNumber == CardNumber:
-                        is_authorized = True
-                        login_user(user_dict[key])
-                if not is_authorized:
-                    from iMES import host, port
-                    session = requests.Session()
-                    retry = Retry(connect=3,backoff_factor=0.5)
-                    adapter = HTTPAdapter(max_retries=retry)
-                    session.mount('http://', adapter)
-                    session.mount('https://', adapter)
-                    headers={
-                    'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-                    }
-                    r = session.get(
-                        f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
-                    if r.status_code == 200:
-                        for key in list(user_dict.keys()):
-                            if user_dict[key].CardNumber == CardNumber:
-                                login_user(user_dict[key])            
+        device_type = db.session.query(DeviceType).where(
+            Device.DeviceId == ip_addr).where(
+                DeviceType.Oid == Device.DeviceType).one_or_none()
+
+        # Если устройство является веб то находим пользователя привязаннаго за устройством
+        # И автоматически авторизуем его по его номеру карты
+        if device_type.Name == 'Веб':
+            print(current_user)
+            sql_GetCardNumber = f"""
+                        SELECT [User].CardNumber
+                        FROM [User],Device WHERE 
+                        Device.DeviceId = '{ip_addr}' AND
+                        Device.[Name] = [User].UserName
+                    """
+            CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
+            is_authorized = False
+            for key in user_dict.keys():
+                if user_dict[key].CardNumber == CardNumber:
+                    is_authorized = True
+                    login_user(user_dict[key])
+            if not is_authorized:
+                from iMES import host, port
+                session = requests.Session()
+                retry = Retry(connect=3,backoff_factor=0.5)
+                adapter = HTTPAdapter(max_retries=retry)
+                session.mount('http://', adapter)
+                session.mount('https://', adapter)
+                headers={
+                'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+                }
+                r = session.get(
+                    f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
+                if r.status_code == 200:
+                    for key in list(user_dict.keys()):
+                        if user_dict[key].CardNumber == CardNumber:
+                            login_user(user_dict[key])            
         else:
             return "Undefinded device, access denied."
     # Рендерим страницу
