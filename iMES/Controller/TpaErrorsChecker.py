@@ -79,7 +79,7 @@ class TpaErrorsChecker():
     def __create_downtime(self,date) -> None:
         with self.app_link.app_context():
             time = date.strftime('%Y-%m-%dT%H:%M:%S')
-            if len(self.system_user) > 0:
+            if self.system_user is not None:
                 downtime_type = (db.session.query(DowntimeType.Oid)
                                                 .select_from(DowntimeType)
                                                 .where(DowntimeType.Name == 'Не задан')
