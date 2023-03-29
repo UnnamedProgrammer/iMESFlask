@@ -18,10 +18,10 @@ def tpa_graph():
         tpa_oid = tpa_oid[0]
         finded_tpa = None
         for tpa in tpasresultapi:
-            if tpa['Controller'].tpa == tpa_oid:
+            if tpa[2].tpa == tpa_oid:
                 finded_tpa = tpa
         if finded_tpa is not None:
-            return get_graph_data_by_ctpa(finded_tpa['Controller'])
+            return get_graph_data_by_ctpa(finded_tpa[2])
         else:
             return {'error': 'Неизвестный идентификатор.'}
     else:
@@ -34,42 +34,42 @@ def tpa_data():
     if len(tpa_oid) > 0:
         tpa_oid = tpa_oid[0]
         for tpa in tpasresultapi:
-            if tpa['Controller'].tpa == tpa_oid:
-                MesState = tpa['Controller'].state
-                pressform = tpa['Controller'].pressform
-                if isinstance(tpa['Controller'].production_plan, int):
+            if tpa[2].tpa == tpa_oid:
+                MesState = tpa[2].state
+                pressform = tpa[2].pressform
+                if isinstance(tpa[2].production_plan, int):
                     data = [{
-                        "Oid": tpa['Controller'].tpa,
-                        "Name": tpa['Name'],
+                        "Oid": tpa[2].tpa,
+                        "Name": tpa[1],
                         "MESState": MesState,
                         "EAMState": None,
-                        "ExecPlan": get_execute_plan(tpa['Controller']),
+                        "ExecPlan": get_execute_plan(tpa[2]),
                         "PressForm": pressform,
-                        "Product": tpa['Controller'].product,
-                        "Plan": tpa['Controller'].production_plan,
-                        "Fact": tpa['Controller'].product_fact,
-                        "plan_cycle": tpa['Controller'].cycle,
-                        "fact_cycle": tpa['Controller'].cycle_fact,
-                        "plan_weight": tpa['Controller'].plan_weight,
-                        "average_weight": tpa['Controller'].average_weight,
-                        "tpa_syncid": tpa['Controller'].sync_oid
+                        "Product": tpa[2].product,
+                        "Plan": tpa[2].production_plan,
+                        "Fact": tpa[2].product_fact,
+                        "plan_cycle": tpa[2].cycle,
+                        "fact_cycle": tpa[2].cycle_fact,
+                        "plan_weight": tpa[2].plan_weight,
+                        "average_weight": tpa[2].average_weight,
+                        "tpa_syncid": tpa[2].sync_oid
                     }]
                 else:
                     data = [{
-                        "Oid": tpa['Controller'].tpa,
-                        "Name": tpa['Name'],
+                        "Oid": tpa[2].tpa,
+                        "Name": tpa[1],
                         "MESState": MesState,
                         "EAMState": None,
-                        "ExecPlan": get_execute_plan(tpa['Controller']),
+                        "ExecPlan": get_execute_plan(tpa[2]),
                         "PressForm": pressform,
-                        "Product": list(tpa['Controller'].product),
-                        "Plan": list(tpa['Controller'].production_plan),
-                        "Fact": list(tpa['Controller'].product_fact),
-                        "plan_cycle": tpa['Controller'].cycle,
-                        "fact_cycle": tpa['Controller'].cycle_fact,
-                        "plan_weight": list(tpa['Controller'].plan_weight),
-                        "average_weight": list(tpa['Controller'].average_weight),
-                        "tpa_syncid": tpa['Controller'].sync_oid
+                        "Product": list(tpa[2].product),
+                        "Plan": list(tpa[2].production_plan),
+                        "Fact": list(tpa[2].product_fact),
+                        "plan_cycle": tpa[2].cycle,
+                        "fact_cycle": tpa[2].cycle_fact,
+                        "plan_weight": list(tpa[2].plan_weight),
+                        "average_weight": list(tpa[2].average_weight),
+                        "tpa_syncid": tpa[2].sync_oid
                     }]
                 return data
         return {'error': 'Неизвестный идентификатор.'}
@@ -85,29 +85,29 @@ def build_tpa_info():
 
 
 def update_tpa(tpa, tpadata):
-    MesState = tpa['Controller'].state
-    pressform = tpa['Controller'].pressform
+    MesState = tpa[2].state
+    pressform = tpa[2].pressform
     if MesState is True:
         state = 'В работе'
     else:
         state = 'В простое'
-    if isinstance(tpa['Controller'].product_fact, tuple):
-        fact = tpa['Controller'].product_fact[0]
+    if isinstance(tpa[2].product_fact, tuple):
+        fact = tpa[2].product_fact[0]
     else:
-        fact = tpa['Controller'].product_fact
-    if isinstance(tpa['Controller'].production_plan, tuple):
-        plan = tpa['Controller'].production_plan[0]
+        fact = tpa[2].product_fact
+    if isinstance(tpa[2].production_plan, tuple):
+        plan = tpa[2].production_plan[0]
     else:
-        plan = tpa['Controller'].production_plan
+        plan = tpa[2].production_plan
     tpadata.append(
         {
-            'TpaOid': tpa['Controller'].tpa,
+            'TpaOid': tpa[2].tpa,
             'Name': tpa['Name'],
             'EamState': None,
             'MesState': state,
             'PressForm': pressform,
             'fact': str(fact),
             'plan': str(plan),
-            'sync_id': tpa['Controller'].sync_oid
+            'sync_id': tpa[2].sync_oid
         }
     )

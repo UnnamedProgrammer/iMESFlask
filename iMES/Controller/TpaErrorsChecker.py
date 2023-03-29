@@ -20,8 +20,8 @@ class TpaErrorsChecker():
         self.block_downtime: bool = False
         self.tpaoid: str = _tpaoid
         self.current_downtime_oids: list = []
-        self.system_user = (db.session.query(User.Oid).where(User.UserName == 'mes.system').all())
-        if len(self.system_user) > 0:
+        self.system_user = (db.session.query(User.Oid).where(User.UserName == 'mes.system').one_or_none())
+        if self.system_user is not None:
             self.system_user = self.system_user[0][0]
         else:
             self.system_user = None
