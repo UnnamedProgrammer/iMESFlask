@@ -1,4 +1,4 @@
-from iMES import app, socketio, host, port, current_tpa, TpaList
+from iMES import app, socketio, host, port, TpaList
 import iMES.daemons
 from datetime import datetime
 from tqdm import tqdm
@@ -19,4 +19,4 @@ if __name__ == "__main__":
     app.logger.info(f"[{datetime.now()}] Запуск диспетчера по обновлению оборудования.")
     iMES.daemons.UpdateTpaThread.start()
     app.logger.info(f"[{datetime.now()}] Запуск сервера.")
-    socketio.run(app, host='192.168.168.63', port=port, allow_unsafe_werkzeug=True)
+    socketio.run(app, host=host, port=port, allow_unsafe_werkzeug=True)
