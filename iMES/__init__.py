@@ -61,7 +61,7 @@ app.config['SECRET_KEY'] = 'ded06adc-f231-4c99-8932-42b2e2592ba2'
 
 socketio = SocketIO(app, async_mode='threading',ping_interval=120)
 cors = CORS(app)
-db = SQLAlchemy(app, session_options={'autocommit': True})
+db = SQLAlchemy(app)
 
 # Подключение менеджера авторизации
 login_manager = LoginManager()
