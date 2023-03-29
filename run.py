@@ -1,4 +1,4 @@
-from iMES import app, socketio, host, port, TpaList
+from iMES import app, socketio, host, port, TpaList, tpasresultapi
 import iMES.daemons
 from datetime import datetime
 from tqdm import tqdm
@@ -16,7 +16,12 @@ if __name__ == "__main__":
             tpa[2].Check_Downtime(tpa[0])
             tpa[2].update_pressform()
             tpa[2].data_from_shifttask()
+    for tpa in tpasresultapi:
+            tpa[2].Check_Downtime(tpa[0])
+            tpa[2].update_pressform()
+            tpa[2].data_from_shifttask()
     app.logger.info(f"[{datetime.now()}] Запуск диспетчера по обновлению оборудования.")
     iMES.daemons.UpdateTpaThread.start()
+    iMES.daemons.UpdateMESNSThread.start()
     app.logger.info(f"[{datetime.now()}] Запуск сервера.")
     socketio.run(app, host=host, port=port, allow_unsafe_werkzeug=True)

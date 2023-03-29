@@ -141,7 +141,7 @@ class TpaErrorsChecker():
                     return False
                 else:
                     if len(self.current_downtime_oids) > 0:
-                        df = db.session.query(DowntimeFailure).where(DowntimeFailure.Oid == self.self.current_downtime_oids[0]).one_or_none()
+                        df = db.session.query(DowntimeFailure).where(DowntimeFailure.Oid == self.current_downtime_oids[0]).one_or_none()
                         if df is not None:
                             df.EndDate = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
                             db.session.commit()

@@ -39,16 +39,17 @@ with app.app_context():
             current_tpa[device.DeviceId] = TpaList[device.DeviceId][0]
 
     # Создание списка ТПА для API mes-ns
-        tpasapi = Equipment.query.where(
-            Equipment.NomenclatureGroup is not None).where(
-                Equipment.Area == 'A0DCF91A-6196-4BDE-8541-B76FBCB9F7AC').where(
-                    RFIDEquipmentBinding.Equipment == Equipment.Oid).where(
-                        Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D'
-                    ).all()
+        tpasapi = (db.session.query(Equipment)
+                                    .select_from(Equipment, RFIDEquipmentBinding)
+                                    .where(Equipment.NomenclatureGroup != None)
+                                    .where(Equipment.Area == 'A0DCF91A-6196-4BDE-8541-B76FBCB9F7AC')
+                                    .where(Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D')
+                                    .where(RFIDEquipmentBinding.Equipment == Equipment.Oid)
+                                    .all())
 
-        for tpa in tpasapi:
-            controller = TpaController(app,str(tpa.Oid).upper(), db)
-            tpasresultapi.append([str(tpa.Oid), tpa.Name, controller, False])
+    for tpa in tpasapi:
+        controller = TpaController(app,str(tpa.Oid).upper(), db)
+        tpasresultapi.append([str(tpa.Oid), tpa.Name, controller, False])
 
 def UpdateTpa():
     while True:
@@ -59,4 +60,13 @@ def UpdateTpa():
                 tpa[2].data_from_shifttask()
         sleep(30)
 
+def UpdateTpaMESNS():
+    while True:
+        for tpa in tpasresultapi:
+            tpa[2].Check_Downtime(tpa[0])
+            tpa[2].update_pressform()
+            tpa[2].data_from_shifttask()
+        sleep(30) 
+
 UpdateTpaThread = Thread(target=UpdateTpa, args=())
+UpdateMESNSThread = Thread(target=UpdateTpaMESNS, args=())

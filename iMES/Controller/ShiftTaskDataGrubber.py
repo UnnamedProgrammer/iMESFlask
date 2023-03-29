@@ -91,6 +91,9 @@ class ShiftTaskDataGrubber():
     def data_from_shifttask(self):
         with app.app_context():
             self.pressform = self.update_pressform()
+            self.sync_oid = db.session.query(Equipment.SyncId).where(Equipment.Oid == self.tpa).one_or_none()
+            if self.sync_oid != None:
+                self.sync_oid = self.sync_oid[0]
             production_data = (db.session.query(ProductionData)
                                             .select_from(ProductionData, ShiftTask)
                                             .where(ProductionData.Status == 1)

@@ -41,7 +41,7 @@ def tpa_data():
                     data = [{
                         "Oid": tpa[2].tpa,
                         "Name": tpa[1],
-                        "MESState": MesState,
+                        "MESState": tpa[2].Check_Downtime(tpa[0]),
                         "EAMState": None,
                         "ExecPlan": get_execute_plan(tpa[2]),
                         "PressForm": pressform,
@@ -52,13 +52,13 @@ def tpa_data():
                         "fact_cycle": tpa[2].cycle_fact,
                         "plan_weight": tpa[2].plan_weight,
                         "average_weight": tpa[2].average_weight,
-                        "tpa_syncid": tpa[2].sync_oid
+                        "tpa_syncid": str(tpa[2].sync_oid)
                     }]
                 else:
                     data = [{
                         "Oid": tpa[2].tpa,
                         "Name": tpa[1],
-                        "MESState": MesState,
+                        "MESState": tpa[2].Check_Downtime(tpa[0]),
                         "EAMState": None,
                         "ExecPlan": get_execute_plan(tpa[2]),
                         "PressForm": pressform,
@@ -69,7 +69,7 @@ def tpa_data():
                         "fact_cycle": tpa[2].cycle_fact,
                         "plan_weight": list(tpa[2].plan_weight),
                         "average_weight": list(tpa[2].average_weight),
-                        "tpa_syncid": tpa[2].sync_oid
+                        "tpa_syncid": str(tpa[2].sync_oid)
                     }]
                 return data
         return {'error': 'Неизвестный идентификатор.'}
@@ -85,7 +85,7 @@ def build_tpa_info():
 
 
 def update_tpa(tpa, tpadata):
-    MesState = tpa[2].state
+    MesState = tpa[2].Check_Downtime(tpa[0])
     pressform = tpa[2].pressform
     if MesState is True:
         state = 'В работе'
@@ -108,6 +108,6 @@ def update_tpa(tpa, tpadata):
             'PressForm': pressform,
             'fact': str(fact),
             'plan': str(plan),
-            'sync_id': tpa[2].sync_oid
+            'sync_id': str(tpa[2].sync_oid)
         }
     )
