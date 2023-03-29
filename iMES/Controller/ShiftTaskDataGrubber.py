@@ -1,12 +1,22 @@
-from iMES.Model.BaseObjectModel import BaseObjectModel
+from iMES.Model.DataBaseModels.EquipmentModel import Equipment
+from iMES.Model.DataBaseModels.NomenclatureGroupModel import NomenclatureGroup
+from iMES.Model.DataBaseModels.ProductModel import Product
+from iMES.Model.DataBaseModels.ProductionDataModel import ProductionData
+from iMES.Model.DataBaseModels.RFIDClosureDataModel import RFIDClosureData
+from iMES.Model.DataBaseModels.RFIDEquipmentBindingModel import RFIDEquipmentBinding
+from iMES import db, app
+from iMES.Model.DataBaseModels.ShiftModel import Shift
+from iMES.Model.DataBaseModels.ShiftTaskModel import ShiftTask
+from iMES.Model.DataBaseModels.ProductSpecificationModel import ProductSpecification
+from iMES.Model.DataBaseModels.ProductWasteModel import ProductWaste
+from sqlalchemy import func
 
-class ShiftTaskDataGrubber(BaseObjectModel):
+class ShiftTaskDataGrubber():
     """
         Класс отвечающий за хранение данных по выполняемому на данный момент
         сменному задания на определённом ТПА
     """
-    def __init__(self,_app) -> None:
-        BaseObjectModel.__init__(self,_app)
+    def __init__(self,_app, _db) -> None:
         self.tpa = ''
         self.pressform = 'Не определена'
         self.production_plan = (0,)
@@ -39,239 +49,172 @@ class ShiftTaskDataGrubber(BaseObjectModel):
         self.TpaNomenclatureCode = ""
         self.sync_oid = ""
         self.state = False
+        self.db = _db
+        self.app = _app
 
     def update_pressform(self):
         # Проверка прессформы
-        if self.tpa != '':
-            sql = f"""
-                SELECT TOP (1) Equipment.Name, RFIDClosureData.Date, Equipment.Oid
-                FROM [MES_Iplast].[dbo].[RFIDClosureData], RFIDEquipmentBinding, Equipment 
-                WHERE 
-                Controller = (SELECT RFIDEquipment 
-                                FROM RFIDEquipmentBinding 
-                                WHERE Equipment = '{self.tpa}') AND
-                RFIDEquipmentBinding.RFIDEquipment = RFIDClosureData.Label AND
-                Equipment.Oid = RFIDEquipmentBinding.Equipment
-                ORDER BY Date DESC
-                """
-            pf = self.SQLExecute(sql)
-            if len(pf) > 0:
-                if pf[0][0] == None or pf == () or pf == []:
-                    pressform = 'Метка не привязана к прессформе'
+        with self.app.app_context():
+            if self.tpa != '':
+                pf = None
+                controller = self.db.session.query(RFIDEquipmentBinding).where(
+                    RFIDEquipmentBinding.Equipment == self.tpa).first()
+                if controller is not None:
+                    pf = (self.db.session.query(Equipment.Name, 
+                                        RFIDClosureData.Date, 
+                                        Equipment.Oid)
+                                        .select_from(Equipment, RFIDClosureData, RFIDEquipmentBinding)
+                                        .where(RFIDClosureData.Controller == controller.RFIDEquipment)
+                                        .where(RFIDEquipmentBinding.RFIDEquipment == RFIDClosureData.Label)
+                                        .where(Equipment.Oid == RFIDEquipmentBinding.Equipment)
+                                        .order_by(RFIDClosureData.Date.desc())
+                                        .first()
+                                        )
                 else:
-                    pressform = pf[0][0]
-                    self.pressform_oid = pf[0][2]
+                    pf = []
+                if pf is not None:
+                    if len(pf) == 0:
+                        pressform = 'Метка не привязана к прессформе'
+                    else:
+                        pressform = pf[0]
+                        self.pressform_oid = pf[2]
+                else:
+                    pressform = 'Не определена'
+                    self.pressform_oid = ""
+                return pressform
             else:
                 pressform = 'Не определена'
-                self.pressform_oid = ""
-            return pressform
-        else:
-            pressform = 'Не определена'
-            return pressform
+                return pressform
     
 
     # Метод получения данных из сменного задания
     def data_from_shifttask(self):
-        self.pressform = self.update_pressform()
-        sql = f"""
-            SELECT [ShiftTask].[Oid]
-                ,[Shift].Note
-                ,[Equipment]
-                ,[Ordinal]
-                ,[Product].Name
-                ,[Specification]
-                ,[Traits]
-                ,[ExtraTraits]
-                ,[PackingScheme]
-                ,[PackingCount]
-                ,[SocketCount]
-                ,[ProductCount]
-                ,[Cycle]
-                ,[Weight]
-                ,[ProductURL]
-                ,[PackingURL]
-                ,[Traits]
-                ,[ExtraTraits]
-                ,[Product]
-                ,[Shift].Oid
-                ,[WorkCenter]
-                ,[SocketCount]
-            FROM [MES_Iplast].[dbo].[ShiftTask], Product, Shift WHERE 
-            [ShiftTask].Equipment = '{self.tpa}' AND
-            Shift.Oid = (SELECT TOP(1) Oid FROM Shift ORDER BY StartDate DESC ) AND
-            ShiftTask.Product = Product.Oid AND EXISTS
-            (SELECT * FROM ProductionData WHERE ProductionData.ShiftTask = ShiftTask.Oid AND Status = 1)
-        """
-        data = self.SQLExecute(sql)
-                    # Получение номенклатурной группы ТПА
-        equipngroup = self.SQLExecute(
-            f"""
-                SELECT [NomenclatureGroup]
-                    FROM [MES_Iplast].[dbo].[Equipment] 
-                    WHERE Oid = '{self.tpa}'   
-            """
-        )
-        if len(equipngroup) > 0:
-            nomenclature = self.SQLExecute(
-                f"""
-                    SELECT [Code]
-                        FROM [MES_Iplast].[dbo].[NomenclatureGroup] 
-                        WHERE Oid ='{equipngroup[0][0]}'
-                """
-            )
-            if len(nomenclature) > 0:
-                self.TpaNomenclatureCode = nomenclature[0][0]
-            else:
-                self.TpaNomenclatureCode = ""
-        else:
-            self.TpaNomenclatureCode = ""
-        
-        sync_id = self.SQLExecute(
-            f"""
-                SELECT [SyncId]
-                FROM [MES_Iplast].[dbo].[Equipment]
-                WHERE Oid = '{self.tpa}'
-            """
-        )
-        if len(sync_id) > 0:
-            self.sync_oid = sync_id[0][0]
-
-        #---------------------------------------------------
-        # Простая передача из БД в поля класса
-        if len(data) > 0:
-            st_oid = []
-            product_list = []
-            production_plan = []
-            plan_weight = []
-            traits = []
-            specs = []
-            traits_operator = []
-            product_oids = []
-            spec_names = []
-            for shift_task in data:
-                st_oid.append(shift_task[0])
-                product_list.append(shift_task[4])
-                production_plan.append(shift_task[11])
-                plan_weight.append(f"{float(shift_task[13]):.{2}f}")
-                traits_operator.append(shift_task[6])
-                product_oids.append(shift_task[18])
-                self.cycle = shift_task[12]
-                self.shift = shift_task[1]
-                purls = shift_task[15].split(",")
-                for i in range(0, len(purls)):
-                    self.PackingURL = purls[i][36:].replace(" ", "")
+        with app.app_context():
+            self.pressform = self.update_pressform()
+            production_data = (db.session.query(ProductionData)
+                                            .select_from(ProductionData, ShiftTask)
+                                            .where(ProductionData.Status == 1)
+                                            .where(ShiftTask.Equipment == self.tpa)
+                                            .where(ProductionData.ShiftTask == ShiftTask.Oid)
+                                            .order_by(ProductionData.StartDate.desc())
+                                            .first())
+            if production_data:
+                data = db.session.query(ShiftTask).where(ShiftTask.Oid == production_data.ShiftTask).all()                                                 
+                # Получение номенклатурной группы ТПА
+                equipngroup = db.session.query(Equipment).where(Equipment.Oid == self.tpa).one_or_none()     
+                if equipngroup is not None:
+                    nomenclature = db.session.query(NomenclatureGroup).where(
+                        NomenclatureGroup.Oid == equipngroup.NomenclatureGroup).one_or_none()
+                    if nomenclature is not None:
+                        self.TpaNomenclatureCode = nomenclature.Code
+                    else:
+                        self.TpaNomenclatureCode = ""
                 else:
-                     self.PackingURL = purls[i][36:]
-                self.PackingScheme = shift_task[8]
-                self.shift_oid = shift_task[19]
-                spec_code = self.SQLExecute(f"""
-                    SELECT [Code]
-                        FROM [MES_Iplast].[dbo].[ProductSpecification]
-                        WHERE Oid = '{shift_task[5]}'
-                """)
-                if len(spec_code) > 0:
-                    specs.append((spec_code[0][0])[2:])
-                    spec_names_sql = self.SQLExecute(f"""
-                        SELECT [Name]
-                        FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{spec_code[0][0]}'                             
-                    """)
-                    if len(spec_names_sql) > 0:
-                        spec_names.append(spec_names_sql[0][0])
+                    self.TpaNomenclatureCode = ""
 
-            self.specifications = specs            
-            self.shift_task_oid = st_oid
-            self.product = tuple(product_list)
-            self.production_plan = tuple(production_plan)
-            self.plan_weight = tuple(plan_weight)
-            self.traits = tuple(traits_operator)
-            self.product_oids = tuple(product_oids)
-            self.specName = tuple(spec_names)
-            self.WorkCenter = shift_task[20]
-            self.socket_count = shift_task[21]
-            for i in range(0,len(data)):
-                traits.append([self.product[i],
-                               f"{data[i][16]} {data[i][17]}",
-                               self.production_plan[i],
-                               self.cycle,
-                               self.plan_weight[i]])
-            self.shift_tasks_traits = tuple(traits)
-        else:
-            self.shift_task_oid = ()
-            self.product = 'Нет сменного задания'
-            self.production_plan = 0
-            self.cycle = 0
-            self.plan_weight = 0
-            get_shift_data = self.SQLExecute("""
-            SELECT TOP (1) Oid,[Note]
-            FROM [MES_Iplast].[dbo].[Shift] ORDER BY StartDate DESC            
-            """)
-            self.shift = get_shift_data[0][1]
-            self.shift_oid = get_shift_data[0][0]
+                #---------------------------------------------------
+                # Простая передача из БД в поля класса
+                if data is not None:
+                    st_oid = []
+                    product_list = []
+                    production_plan = []
+                    plan_weight = []
+                    traits = []
+                    specs = []
+                    traits_operator = []
+                    product_oids = []
+                    spec_names = []
+                    for shift_task in data:
+                        st_oid.append(shift_task.Oid)
+                        product = db.session.query(Product).where(Product.Oid == shift_task.Product).one_or_none()
+                        if product is not None:
+                            product_list.append(product.Name)
+                        production_plan.append(shift_task.ProductCount)
+                        plan_weight.append(f"{float(shift_task.Weight):.{2}f}")
+                        traits_operator.append(shift_task.Traits)
+                        product_oids.append(shift_task.Product)
+                        self.cycle = shift_task.Cycle
+                        shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+                        self.shift = shift.Note
+                        purls = shift_task.PackingURL.split(",")
+                        for i in range(0, len(purls)):
+                            self.PackingURL = purls[i][36:].replace(" ", "")
+                        else:
+                            self.PackingURL = purls[i][36:]
+                        self.PackingScheme = shift_task.PackingScheme
+                        self.shift_oid = shift_task.Shift
+                        spec_code = db.session.query(ProductSpecification).where(
+                            ProductSpecification.Oid == shift_task.Specification).one_or_none()
+                        if spec_code is not None:
+                            specs.append((spec_code.Code)[2:])
+                            spec_names.append(spec_code.Name)
 
-        if self.shift_task_oid != None and len(self.shift_task_oid) > 0:
-            production_data = []
-            for task_oid in self.shift_task_oid:
-                production_data_sql = f"""
-                    SELECT
-                        [CountFact]
-                        ,[CycleFact]
-                        ,[WeightFact]
-                        ,[StartDate]
-                        ,[EndDate]
-                    FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid} AND Status = 1'
-                """
-                result = self.SQLExecute(production_data_sql)
-                production_data.append(result)
-            if len(production_data) > 0:
-                product_fact = []
-                for pd in production_data:
-                    pd = pd[0]
-                    self.StartDate = pd[3]
-                    self.EndDate = pd[4]
-                    if pd[0] == None:               
-                        product_fact = [0]
-                    else:
-                        product_fact.append(pd[0])
-                    if pd[1] == None:
-                        self.cycle_fact = 0
-                    else:
-                        self.cycle_fact = f"{float(pd[1]):.{1}f}"
-                self.product_fact = tuple(product_fact)
-                self.ProductCount = len(self.product)
-        average_weight = []
-        wastes = []
-        defectives = []
-        for task_oid in self.shift_task_oid:
-            get_production_data_sql = f"""
-                SELECT TOP(1) [Oid]
-                FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{task_oid}'
-            """
-            production_data_oid = self.SQLExecute(get_production_data_sql)
-            if len(production_data_oid) > 0:
-                production_data_oid = production_data_oid[0][0]
-                average_weight_sql = f"""
-                    SELECT SUM(Weight)/COUNT(Weight)
-                    FROM [MES_Iplast].[dbo].[ProductWeight] 
-                    WHERE ProductionData = '{production_data_oid}'
-                """
-                wastes_sql = f"""
-                    SELECT SUM([Weight])
-                    FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
-                    AND Type = 0
-                """
-                defectives_sql = f"""
-                    SELECT SUM([Count])
-                    FROM [MES_Iplast].[dbo].[ProductWaste] WHERE ProductionData = '{production_data_oid}'
-                    AND Type = 1
-                """
-                average_weight_result = self.SQLExecute(average_weight_sql)
-                wastes_result = self.SQLExecute(wastes_sql)
-                defectives_result = self.SQLExecute(defectives_sql)
-                if len(average_weight_result) > 0:
-                    if (average_weight_result[0][0] != None):
-                        average_weight.append(f"{float(average_weight_result[0][0]):.{2}f}")
-                    else:
-                        average_weight.append(f"{0.00:.{2}f}")
+                    self.specifications = specs            
+                    self.shift_task_oid = st_oid
+                    self.product = tuple(product_list)
+                    self.production_plan = tuple(production_plan)
+                    self.plan_weight = tuple(plan_weight)
+                    self.traits = tuple(traits_operator)
+                    self.product_oids = tuple(product_oids)
+                    self.specName = tuple(spec_names)
+                    self.WorkCenter = shift_task.WorkCenter
+                    self.socket_count = shift_task.SocketCount
+                    for i in range(0,len(data)):
+                        traits.append([self.product[i],
+                                    f"{data[i].Traits} {data[i].ExtraTraits}",
+                                    self.production_plan[i],
+                                    self.cycle,
+                                    self.plan_weight[i]])
+                    self.shift_tasks_traits = tuple(traits)
+                else:
+                    self.shift_task_oid = ()
+                    self.product = 'Нет сменного задания'
+                    self.production_plan = 0
+                    self.cycle = 0
+                    self.plan_weight = 0
+                    self.shift = shift.Note
+                    self.shift_oid = shift.Oid
+
+                if self.shift_task_oid != None and len(self.shift_task_oid) > 0:
+                    product_data = []
+                    product_data.append([production_data.CountFact, 
+                                            production_data.CycleFact, 
+                                            production_data.WeightFact,
+                                            production_data.StartDate,
+                                            production_data.EndDate])
+                    if len(product_data) > 0:
+                        product_fact = []
+                        for pd in product_data:
+                            self.StartDate = pd[3]
+                            self.EndDate = pd[4]
+                            if pd[0] == None:               
+                                product_fact = [0]
+                            else:
+                                product_fact.append(pd[0])
+                            if pd[1] == None:
+                                self.cycle_fact = 0
+                            else:
+                                self.cycle_fact = f"{float(pd[1]):.{1}f}"
+                        self.product_fact = tuple(product_fact)
+                        self.ProductCount = len(self.product)
+                average_weight = []
+                wastes = []
+                defectives = []
+                average_weight_result = None
+                if production_data is not None:
+                    average_weight_result = production_data.WeightFact
+                wastes_result = (db.session.query(func.sum(ProductWaste.Weight))
+                                            .where(ProductWaste.ProductionData == production_data.Oid)
+                                            .where(ProductWaste.Type == 0)
+                                            .all())
+                defectives_result = (db.session.query(func.sum(ProductWaste.Count))
+                                            .where(ProductWaste.ProductionData == production_data.Oid)
+                                            .where(ProductWaste.Type == 1)
+                                            .all())
+                if average_weight_result is not None:
+                    average_weight.append(f"{float(average_weight_result):.{2}f}")
+                else:
+                    average_weight.append(f"{0.00:.{2}f}")
                 if len(wastes_result) > 0:
                     if (wastes_result[0][0] != None):
                         wastes.append(f"{float(wastes_result[0][0]):.{0}f}")
@@ -285,15 +228,13 @@ class ShiftTaskDataGrubber(BaseObjectModel):
                 else:
                     defectives.append(0)
 
-        self.wastes = tuple(wastes)
-        self.average_weight = tuple(average_weight)
-        self.defectives = tuple(defectives)
-        sql_controller = self.SQLExecute(f"""
-            SELECT [RFIDEquipment]
-            FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding]
-            WHERE Equipment = '{self.tpa}'
-            """)
-        if len(sql_controller) > 0:
-            self.controller = sql_controller[0][0]
-        else:
-            self.controller = 'Empty'
+                self.wastes = tuple(wastes)
+                self.average_weight = tuple(average_weight)
+                self.defectives = tuple(defectives)
+                controller = db.session.query(RFIDEquipmentBinding.RFIDEquipment).where(
+                    RFIDEquipmentBinding.Equipment == self.tpa
+                ).all()
+                if len(controller) > 0:
+                    self.controller = str(controller[0][0])
+                else:
+                    self.controller = 'Empty'

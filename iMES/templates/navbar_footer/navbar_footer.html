@@ -9,13 +9,13 @@
     <a class="btn btn__navbar-footer primary" href="/logoutWithoutDeleteRoles">
         <p><span class="icon-close"></span>ВЫХОД</p>
     </a>
-    {% if current_user.savedrole == False%}
+    {% if current_user.Roles['SavedRoles'] == None %}
     <a class="btn btn__navbar-footer btn__navbar-footer_exit primary" href="/exitwithsave">
         <span class="icon-save me-2"></span>
         <p>ЗАПОМНИТЬ<br>МЕНЯ(ВЫХОД)</p>
     </a>
     {% endif %}
-    {% if current_user.savedrole == True%}
+    {% if current_user.Roles['SavedRoles'] != None %}
     <a class="btn btn__navbar-footer btn__navbar-footer_exit primary" href="/logout">
         <p>ОТВЯЗАТЬ<br>СЕБЯ</p>
     </a>

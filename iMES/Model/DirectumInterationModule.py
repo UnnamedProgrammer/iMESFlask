@@ -3,7 +3,7 @@ import json
 import os
 from bs4 import BeautifulSoup
 from iMES import app
-
+from datetime import datetime
 
 class DirectumIntegration():
     """
@@ -63,10 +63,8 @@ class DirectumIntegration():
             else:
                 app.logger.critical(f"Ошибка: Статус запроса [{post_request.status_code}]")
                 return False
-        except:
-            app.logger.error(f"Авторизация [{post_request.status_code}]. Проблема.")
-            app.logger.error(
-                "Ошибка: 'Неизвестная ошибка при загрузке ответа в виде JSON.'")
+        except Exception as error:
+            app.logger.error(f"[{datetime.now()}] <DirectumIntegration->Authorization()> {str(error)} КОД ОТВЕТА: [{post_request.status_code}].")
             return False
         return 'Не удалось авторизоваться в СЭД "Directum"'
 

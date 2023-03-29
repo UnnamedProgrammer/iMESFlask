@@ -23,7 +23,7 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
     </script>
-    <input type="hidden" id="current_user" value="{{ current_user }}">
+    <input type="hidden" id="current_user" value="{{ current_user.get_name() }}">
     {% block navbar %} {% endblock %}
     <div class="notice notice-error" style="display: none;">
         Ошибка!
@@ -32,15 +32,15 @@
         <div class="row">
             <div class="col-2">
                 {% for tpa in device_tpa %}
-                    {% if tpa['Oid'] == current_tpa[0]%}
-                        {% if tpa['WorkStatus'] == True %}
-                            <div class="card height120 shadow green">
+                    {% if tpa[0] == current_tpa[0]%}
+                        {% if tpa[3] == True %}
+                            <div class="card height120 shadow green" id="card_tpa">
                                 <div class="card-body" style="padding: 0.9rem 1.25rem">
                                     <p class="card-text text-center" id="ttpa" data-oid="{{ current_tpa[0] }}">{{ current_tpa[1] }}</p>
                                 </div>
                             </div>
                         {% else %}
-                            <div class="card height120 shadow red">
+                            <div class="card height120 shadow red" id="card_tpa">
                                 <div class="card-body" style="padding: 0.9rem 1.25rem">
                                     <p class="card-text text-center" id="ttpa" data-oid="{{ current_tpa[0] }}">{{ current_tpa[1] }}</p>
                                 </div>
@@ -695,6 +695,8 @@
                         if(tab.dataset.oid == tabs_status['CurrentTpa'])
                         {
                             tab.className = "nav-link nav_tpa nav_green active"
+                            tpa_card = document.querySelectorAll("#card_tpa")
+                            tpa_card.className = "card height120 shadow green"
                         }
                         break
                     }
@@ -704,6 +706,8 @@
                         if(tab.dataset.oid == tabs_status['CurrentTpa'])
                         {
                             tab.className = "nav-link nav_tpa nav_red active"
+                            tpa_card = document.querySelectorAll("#card_tpa")
+                            tpa_card.className = "card height120 shadow red"
                         }
                     }
                 }

@@ -11,20 +11,20 @@ function ChangeAndClearStorage(event)
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav font-3">
                     {% for tpa in device_tpa %}
-                        {% if tpa['Oid'] == current_tpa[0]%}
+                        {% if tpa[0] == current_tpa[0] %}
                             <li class="nav-item">
-                                {% if tpa['WorkStatus'] == True %}
-                                    <button class="nav-link nav_tpa nav_green active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="ChangeAndClearStorage(event)">{{ tpa['Name'] }}</button>
+                                {% if tpa[3] == True %}
+                                    <button class="nav-link nav_tpa nav_green active" data-oid="{{ tpa[0] }}" data-name="{{ tpa[1] }}" onClick="ChangeAndClearStorage(event)">{{ tpa[1] }}</button>
                                 {% else %}
-                                    <button class="nav-link nav_tpa nav_red active" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="ChangeAndClearStorage(event)">{{ tpa['Name'] }}</button>
+                                    <button class="nav-link nav_tpa nav_red active" data-oid="{{ tpa[0] }}" data-name="{{ tpa[1] }}" onClick="ChangeAndClearStorage(event)">{{ tpa[1] }}</button>
                                 {% endif %}
                             </li>
                         {% else %}
                             <li class="nav-item">
-                                {% if tpa['WorkStatus'] == True %}
-                                    <button class="nav-link nav_tpa nav_green" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="ChangeAndClearStorage(event)">{{ tpa['Name'] }}</button>
+                                {% if tpa[3] == True %}
+                                    <button class="nav-link nav_tpa nav_green" data-oid="{{ tpa[0] }}" data-name="{{ tpa[1] }}" onClick="ChangeAndClearStorage(event)">{{ tpa[1] }}</button>
                                 {% else %}
-                                    <button class="nav-link nav_tpa nav_red" data-oid="{{ tpa['Oid'] }}" data-name="{{ tpa['Name'] }}" onClick="ChangeAndClearStorage(event)">{{ tpa['Name'] }}</button>
+                                    <button class="nav-link nav_tpa nav_red" data-oid="{{ tpa[0] }}" data-name="{{ tpa[1] }}" onClick="ChangeAndClearStorage(event)">{{ tpa[1] }}</button>
                                 {% endif %}
                             </li>
                         {% endif %}    

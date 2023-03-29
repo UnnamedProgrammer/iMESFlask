@@ -2,12 +2,22 @@
 
 import requests
 import json
+from iMES.Model.DataBaseModels.EquipmentModel import Equipment
+from iMES.Model.DataBaseModels.EquipmentPerformanceModel import EquipmentPerformance
+from iMES.Model.DataBaseModels.NomenclatureGroupModel import NomenclatureGroup
+from iMES.Model.DataBaseModels.ProductModel import Product
+from iMES.Model.DataBaseModels.ProductSpecificationModel import ProductSpecification
+from iMES.Model.DataBaseModels.Relation_ProductPerformanceModel import Relation_ProductPerformance
+from iMES.Model.DataBaseModels.ShiftTaskModel import ShiftTask
 from iMES.Model.ShiftTaskModels.ShiftTaskModel import ShiftTaskModel
-from iMES.Model.BaseObjectModel import BaseObjectModel
+from iMES.Model.DataBaseModels.EquipmentTypeModel import EquipmentType
+from iMES.Model.DataBaseModels.ShiftModel import Shift
+from iMES import db
+from sqlalchemy import extract, insert
 import datetime
-import sys, pyodbc
+import sys
 
-class ShiftTaskLoader(BaseObjectModel):
+class ShiftTaskLoader():
     """
         Класс выгрузки сменного задания из 1С
         :param _nomenclature_group - Номенклатурная группа ТПА, для поиска
@@ -121,44 +131,37 @@ class ShiftTaskLoader(BaseObjectModel):
             f"Проверка наличия записей на которые ссылается сменное задание № {ShiftTask.Ordinal}:")
         self.app.logger.info(f"    Проверка наличия требуемых записей:")
         self.app.logger.info(f"        Проверка оборудования {ShiftTask.Equipment}")
-        equipment_sql = f"""
-            SELECT [Equipment].[Oid],
-                EquipmentType.[Name]
-            FROM [MES_Iplast].[dbo].[Equipment],EquipmentType WHERE 
-                [Equipment].NomenclatureGroup = (SELECT [Oid] 
-                                                FROM [NomenclatureGroup]
-                                                WHERE [NomenclatureGroup].Code = '{ShiftTask.Equipment}') AND
-                [Equipment].EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D' AND
-                EquipmentType.Oid = Equipment.EquipmentType
-        """
-        equipment = self.SQLExecute(equipment_sql)
+        equipment = (db.session.query(Equipment.Oid, 
+                                      EquipmentType.Name)
+                                      .select_from(Equipment, EquipmentType)
+                                      .where(Equipment.NomenclatureGroup == 
+                                          db.session.query(NomenclatureGroup.Oid)
+                                          .where(NomenclatureGroup.Code == ShiftTask.Equipment)
+                                          .one_or_none()[0])
+                                      .where(Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D')
+                                      .where(EquipmentType.Oid == Equipment.EquipmentType)
+                                      .all())
         if len(equipment) > 0:
             pass
         else:
             self.app.logger.warning(
-                f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о оборудовании {ShiftTask.Equipment} ")
+                f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись об оборудовании {ShiftTask.Equipment} ")
             return False
         if equipment[0][1] == "Термопластавтомат":
             self.app.logger.info(
                 f"        Термопластавтомат {ShiftTask.Equipment} найден")
             self.app.logger.info(
                 f"        Проверка продукта {ShiftTask.ProductCode}")
-            productsql = f"""
-                SELECT [Oid]
-                FROM [MES_Iplast].[dbo].[Product] WHERE Code = '{ShiftTask.ProductCode}'
-            """
             while True:
-                product = self.SQLExecute(productsql)
+                product = db.session.query(Product.Oid).where(
+                    Product.Code == ShiftTask.ProductCode).all()
                 if (len(product) > 0):
                     self.app.logger.info(
                         f"        Продукт {ShiftTask.ProductCode} найден")
                     self.app.logger.info(
                         f"        Проверка спецификации {ShiftTask.Specification}")
-                    get_spec_sql = f"""
-                            SELECT [Oid]
-                            FROM [MES_Iplast].[dbo].[ProductSpecification] WHERE Code = '{ShiftTask.Specification}'
-                        """
-                    specification = self.SQLExecute(get_spec_sql)
+                    specification = db.session.query(ProductSpecification.Oid).where(
+                        ProductSpecification.Code == ShiftTask.Specification).all()
                     if len(specification) > 0:
                         self.app.logger.info(
                             f"        Спецификация {ShiftTask.Specification} найдена")
@@ -180,21 +183,20 @@ class ShiftTaskLoader(BaseObjectModel):
                                 if specification_1C['IsActive'] == "Да":
                                     isActive = 1
                                 try:
-                                    insert_specsql = f"""                            
-                                        INSERT INTO ProductSpecification 
-                                            (Oid, Code, [Name], Product, UseFactor,IsActive) 
-                                        VALUES (NEWID(),'{spec1C_code}','{specification_1C['Spec']}',
-                                            '{product[0][0]}',{float(specification_1C['UseFactor'])},
-                                            {isActive})              
-                                        """
-                                    self.app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")
-                                    self.SQLExecute(insert_specsql)
+                                    self.app.logger.info(f"  Сохранение спецификации {ShiftTask.Specification} в базе данных")    
+                                    insert_spec = ProductSpecification()
+                                    insert_spec.Code = spec1C_code
+                                    insert_spec.Name = specification_1C['Spec']
+                                    insert_spec.Product = product[0][0]
+                                    insert_spec.UseFactor = float(specification_1C['UserFactor'])
+                                    insert_spec.isActive = isActive
+                                    db.session.add(insert_spec)
+                                    db.session.commit()
                                 except:
                                     self.app.logger.error(
-                                        f"Cпецификация {ShiftTask.Specification} уже есть в базе данных, поиск был по записи {ShiftTask.Specification}")
+                                        f"[{datetime.datetime.now()}] <CheckingRequiredValuesInTheDataBase> Cпецификация {ShiftTask.Specification} уже есть в базе данных, поиск был по записи {ShiftTask.Specification}")
                                 break
                         self.app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
-                        specification = self.SQLExecute(get_spec_sql)
                         if len(specification) > 0:
                             self.app.logger.info(
                                 f"        Спецификация {ShiftTask.Specification} найдена")
@@ -211,9 +213,12 @@ class ShiftTaskLoader(BaseObjectModel):
                         f"Ошибка: Сменное задание № {ShiftTask.Ordinal} - в базе данных отсутствует запись о продукте {ShiftTask.ProductCode} ")
                     self.app.logger.info(
                         f"Сменное задание № {ShiftTask.Ordinal} - вставка нового продукта {ShiftTask.ProductCode} в базу данных")
-                    self.SQLExecute(f"""
-                        INSERT INTO Product (Oid, Code, Name, Article) VALUES (NEWID(),'{ShiftTask.ProductCode}','{ShiftTask.Product}','{ShiftTask.Article}')                   
-                    """)
+                    new_product = Product()
+                    new_product.Code = ShiftTask.ProductCode
+                    new_product.Name = ShiftTask.Product
+                    new_product.Article = ShiftTask.Article
+                    db.session.add(new_product)
+                    db.session.commit()
                     self.app.logger.info(
                         f"Сменное задание № {ShiftTask.Ordinal} - Новый продукт {ShiftTask.ProductCode} добавлен в базу данных")
                     continue
@@ -225,7 +230,6 @@ class ShiftTaskLoader(BaseObjectModel):
     # Главный метод который создаёт записи сменных заданий
     def InsertToDataBase(self, get_task_flag = False, to_current_shift = False) -> bool:
         # Задаём начальные переменные
-        shiftsql = ""
         shift = self.Determine_Shift()
         shift_name = None
         start_date = None
@@ -242,53 +246,36 @@ class ShiftTaskLoader(BaseObjectModel):
             # указываем смену сменного задания
             shift_name = self.shift_task_list[0].Shift
         # Если день то ищем дневную дату смены
+        getshift = []
         if shift == 0:
-            shiftsql = """
-                SELECT [Oid]
-                    ,[StartDate]
-                    ,[EndDate]
-                    ,[Note]
-                FROM [MES_Iplast].[dbo].[Shift] WHERE 
-                    DATENAME(HOUR, [StartDate]) = 7 AND 
-                    DATENAME(YEAR, [StartDate]) = DATENAME(YEAR, GETDATE()) AND
-                    DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
-                    DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
-                        """
+            getshift = (db.session.query(Shift.Oid, Shift.Note)
+             .filter(extract('hour', Shift.StartDate) == 7)
+             .filter(extract('year', Shift.StartDate) == datetime.datetime.now().year)
+             .filter(extract('month', Shift.StartDate) == datetime.datetime.now().month)
+             .filter(extract('day', Shift.StartDate) == datetime.datetime.now().day).all())
         # Если ночь то ищем ночную дату смены
         elif shift == 1:
-            shiftsql = """
-                SELECT [Oid]
-                    ,[StartDate]
-                    ,[EndDate]
-                    ,[Note]
-                FROM [MES_Iplast].[dbo].[Shift] WHERE 
-                    DATENAME(HOUR, [StartDate]) = 19 AND 
-                    DATENAME(YEAR, [StartDate]) = DATENAME(YEAR, GETDATE()) AND
-                    DATENAME(MONTH, [StartDate]) = DATENAME(MONTH, GETDATE()) AND
-                    DATENAME(DAY, [StartDate]) = DATENAME(DAY, GETDATE())
-                        """
-        getshift = self.SQLExecute(shiftsql)
+            getshift = (db.session.query(Shift.Oid, Shift.Note)
+             .filter(extract('hour', Shift.StartDate) == 19)
+             .filter(extract('year', Shift.StartDate) == datetime.datetime.now().year)
+             .filter(extract('month', Shift.StartDate) == datetime.datetime.now().month)
+             .filter(extract('day', Shift.StartDate) == datetime.datetime.now().day).all())
         if len(getshift) > 0:
             pass
         elif to_current_shift:
             for i in range(0,len(self.shift_task_list)):
                 if self.shift_task_list[i].Cycle == '0':
-                    product = f"""
-                        SELECT [Oid]
-                            ,[Code]
-                            ,[Name]
-                            ,[Article]
-                        FROM [MES_Iplast].[dbo].[Product] 
-                        WHERE Code = '{self.shift_task_list[i].ProductCode}'    
-                    """
-                    product = self.SQLExecute(product)[0][0]
+                    product = (db.session.query(Product.Oid,
+                                               Product.Code,
+                                               Product.Name,
+                                               Product.Article)
+                                               .select_from(Product)
+                                               .where(Product.Code == self.shift_task_list[i].ProductCode)
+                                               .all()[0][0])
 
-                    sql = f"""
-                        SELECT [Cycle]
-                        FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
-                        WHERE Product = '{product}'
-                    """
-                    product_cycle = self.SQLExecute(sql)
+                    product_cycle = db.session.query(Relation_ProductPerformance.Cycle).where(
+                        Relation_ProductPerformance.Product == product
+                    ).all()
                     if bool(product_cycle):
                         self.shift_task_list[i].Cycle = str(product_cycle[0][0])
             self.InsertShiftTask(getshift[0][0], self.shift_task_list, get_tasks_flag=get_task_flag)
@@ -300,18 +287,19 @@ class ShiftTaskLoader(BaseObjectModel):
                                                datetime.datetime.now().day,
                                                7, 0, 0)
                 end_date = start_date + shift_delta
-                start_date = start_date.strftime("%Y-%m-%d %H:%M:%S")
-                end_date = end_date.strftime("%Y-%m-%d %H:%M:%S")
+                start_date = start_date.strftime("%Y-%m-%dT%H:%M:%S")
+                end_date = end_date.strftime("%Y-%m-%dT%H:%M:%S")
                 
-                insertshiftsql = f"""
-                set language english
-                INSERT INTO [Shift] (Oid,StartDate,EndDate,Note) 
-                VALUES (NEWID(),
-                        Cast('{start_date}' AS DATETIME),
-                        Cast('{end_date}' AS DATETIME),
-                        '{shift_name}')
-                """
-                self.SQLExecute(insertshiftsql)
+                insert_shift = Shift()
+                insert_shift.StartDate = start_date
+                insert_shift.EndDate = end_date
+                insert_shift.Note = shift_name
+                db.session.add(insert_shift)
+                db.session.commit()
+                getshift = db.session.query(
+                    Shift.Oid).select_from(
+                        Shift).where(Shift.StartDate == start_date).where(
+                            Shift.EndDate == end_date).all()
             elif shift == 1:
                 shift_delta = datetime.timedelta(hours=12)
                 start_date = datetime.datetime(datetime.datetime.now().year,
@@ -320,44 +308,39 @@ class ShiftTaskLoader(BaseObjectModel):
                                                19, 0, 0)
                 
                 end_date = start_date + shift_delta
-                start_date = start_date.strftime("%Y-%m-%d %H:%M:%S")
-                end_date = end_date.strftime("%Y-%m-%d %H:%M:%S")
+                start_date = start_date.strftime("%Y-%m-%dT%H:%M:%S")
+                end_date = end_date.strftime("%Y-%m-%dT%H:%M:%S")
 
-                insertshiftsql = f"""
-                set language english
-                INSERT INTO [Shift] (Oid,StartDate,EndDate,Note) 
-                VALUES (NEWID(),
-                        Cast('{start_date}' AS DATETIME),
-                        Cast('{end_date}' AS DATETIME),
-                        '{shift_name}')
-                """
-                self.SQLExecute(insertshiftsql)
+                insert_shift = Shift()
+                insert_shift.StartDate = start_date
+                insert_shift.EndDate = end_date
+                insert_shift.Note = shift_name
+                db.session.add(insert_shift)
+                db.session.commit()
+                getshift = db.session.query(
+                    Shift.Oid).select_from(
+                        Shift).where(Shift.StartDate == start_date).where(
+                            Shift.EndDate == end_date).all()
                 self.LoadEquipmentPerfomance(self.shift_task_list,self.data)
-        getshift = self.SQLExecute(shiftsql)
         # Определение цикла для прокдукта в сменном задании
         for i in range(0,len(self.shift_task_list)):
             if self.shift_task_list[i].Cycle == '0':
-                product = f"""
-                    SELECT [Oid]
-                        ,[Code]
-                        ,[Name]
-                        ,[Article]
-                    FROM [MES_Iplast].[dbo].[Product] 
-                    WHERE Code = '{self.shift_task_list[i].ProductCode}'    
-                """
-                product = self.SQLExecute(product)[0][0]
+                product = (db.session.query(Product.Oid,
+                            Product.Code,
+                            Product.Name,
+                            Product.Article)
+                            .select_from(Product)
+                            .where(Product.Code == self.shift_task_list[i].ProductCode)
+                            .all()[0][0])
 
-                sql = f"""
-                    SELECT [Cycle]
-                    FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
-                    WHERE Product = '{product}'
-                """
-                product_cycle = self.SQLExecute(sql)
+                product_cycle = db.session.query(Relation_ProductPerformance.Cycle).where(
+                    Relation_ProductPerformance.Product == product
+                ).all()
                 if bool(product_cycle):
                     self.shift_task_list[i].Cycle = str(product_cycle[0][0])
 
         if get_task_flag == False:        
-            self.InsertShiftTask(getshift, self.shift_task_list, get_tasks_flag=get_task_flag)
+            self.InsertShiftTask(getshift[0][0], self.shift_task_list, get_tasks_flag=get_task_flag)
             return
         else:     
             shift_task_list = self.InsertShiftTask(
@@ -426,77 +409,51 @@ class ShiftTaskLoader(BaseObjectModel):
                 else:
                     break
             task.Ordinal = task.Ordinal[null_count:]
-            shiftOid = shift[0][0]
+            shiftOid = shift
 
-            product = f"""
-                    SELECT [Oid]
-                        ,[Code]
-                        ,[Name]
-                        ,[Article]
-                    FROM [MES_Iplast].[dbo].[Product] 
-                    WHERE Code = '{task.ProductCode}'    
-                """
-            product = self.SQLExecute(product)[0][0]
+            product = (db.session.query(Product.Oid,
+                        Product.Code,
+                        Product.Name,
+                        Product.Article)
+                        .select_from(Product)
+                        .where(Product.Code == task.ProductCode)
+                        .all()[0][0])
 
-            equipment = f"""
-                    SELECT [Equipment].[Oid],
-                        EquipmentType.[Name]
-                    FROM [MES_Iplast].[dbo].[Equipment],EquipmentType WHERE 
-                        [Equipment].NomenclatureGroup = (
-                            SELECT [Oid] 
-                            FROM [NomenclatureGroup]
-                            WHERE [NomenclatureGroup].Code = '{task.Equipment}') AND
-                    [Equipment].EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D' AND
-                    EquipmentType.Oid = Equipment.EquipmentType
-                """
-            equipment_oid = self.SQLExecute(equipment)[0][0]
+            equipment_oid = (db.session.query(Equipment.Oid, 
+                                        EquipmentType.Name)
+                                        .select_from(Equipment, EquipmentType)
+                                        .where(Equipment.NomenclatureGroup == 
+                                            db.session.query(NomenclatureGroup.Oid)
+                                            .where(NomenclatureGroup.Code == task.Equipment)
+                                            .one_or_none()[0])
+                                        .where(Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D')
+                                        .where(EquipmentType.Oid == Equipment.EquipmentType)
+                                        .all()[0][0])
 
-            specification = f"""
-                    SELECT [Oid]
-                    FROM [MES_Iplast].[dbo].[ProductSpecification] 
-                    WHERE Code = '{task.Specification}'
-                """
-            specification = self.SQLExecute(specification)[0][0]
+
+            specification = db.session.query(ProductSpecification.Oid).where(
+                        ProductSpecification.Code == task.Specification).all()[0][0]   
             if not get_tasks_flag:
-                ShiftTaskInsertSQL = f"""
-                        INSERT INTO [ShiftTask] (
-                                Oid,
-                                [Shift],
-                                Equipment,
-                                Ordinal,
-                                Product,
-                                Specification,
-                                Traits,
-                                ExtraTraits,
-                                PackingScheme,
-                                PackingCount,
-                                SocketCount,
-                                ProductCount,
-                                Cycle,
-                                [Weight],
-                                ProductURL,
-                                PackingURL,
-                                WorkCenter)
-                        VALUES (NEWID(),
-                            '{shiftOid}',
-                            '{equipment_oid}',
-                            {task.Ordinal},
-                            '{product}',
-                            '{specification}',
-                            '{task.Traits}',
-                            '{task.ExtraTraits}',
-                            '{task.PackingScheme}',
-                            {task.PackingCount},
-                            {task.SocketCount},
-                            {task.ProductCount},
-                            {task.Cycle},
-                            {float(task.Weight.replace(',','.'))},
-                            '{task.ProductURL}',
-                            '{task.PackingURL}',
-                            '{task.WorkCenter}')
-                        """
-                self.app.logger.info("Вставка сменного задания №" + task.Ordinal)
-                self.SQLExecute(ShiftTaskInsertSQL)
+                self.app.logger.info("Вставка сменного задания №" + task.Ordinal)                
+                insert_new_shift_task = ShiftTask()
+                insert_new_shift_task.Shift = shiftOid
+                insert_new_shift_task.Equipment = equipment_oid
+                insert_new_shift_task.Ordinal = task.Ordinal
+                insert_new_shift_task.Product = product
+                insert_new_shift_task.Specification = specification
+                insert_new_shift_task.Traits = task.Traits
+                insert_new_shift_task.ExtraTraits = task.ExtraTraits
+                insert_new_shift_task.PackingScheme = task.PackingScheme
+                insert_new_shift_task.PackingCount = task.PackingCount
+                insert_new_shift_task.SocketCount = task.SocketCount
+                insert_new_shift_task.ProductCount = task.ProductCount
+                insert_new_shift_task.Cycle = task.Cycle
+                insert_new_shift_task.Weight = float(task.Weight.replace(',','.'))
+                insert_new_shift_task.ProductURL = task.ProductURL
+                insert_new_shift_task.PackingURL = task.PackingURL
+                insert_new_shift_task.WorkCenter = task.WorkCenter
+                db.session.add(insert_new_shift_task)
+                db.session.commit()
             else:
                 get_tasks_list.append(('NOID',
                                         shiftOid,
@@ -523,109 +480,80 @@ class ShiftTaskLoader(BaseObjectModel):
             for EP in jsondata["EquipmentPerformance"]:
                 if (EP["ProductCode"] == task.ProductCode):
                     for ep in EP["EquipmentPerformance"]:
-                        get_nomenclaturegroup_sql = f"""
-                            SELECT [Oid]
-                            FROM [MES_Iplast].[dbo].[NomenclatureGroup]
-                            WHERE Code = '{EP['NomenclatureGroupCode']}'
-                        """
-                        get_tpa_from_db_sql = f"""
-                            SELECT Equipment.Oid
-                            FROM [MES_Iplast].[dbo].[Equipment], NomenclatureGroup 
-                            WHERE NomenclatureGroup.Code = '{EP['NomenclatureGroupCode']}' AND
-                                  Equipment.NomenclatureGroup = NomenclatureGroup.Oid AND
-                                  EquipmentType = 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D'
-                        """
-                        get_rigequipment_sql = f"""
-                            SELECT [Oid]
-                            FROM [MES_Iplast].[dbo].[Equipment]
-                            WHERE Code = '{ep["EquipmentPerformance"]}'
-                        """
-                        main_equipment_oid = self.SQLExecute(get_tpa_from_db_sql)[0][0]
-                        nomenclaturegroup_oid = self.SQLExecute(get_nomenclaturegroup_sql)[0][0]
-                        rig_equipment_oid = self.SQLExecute(get_rigequipment_sql)[0][0]
+                        nomenclaturegroup_oid = (db.session.query(NomenclatureGroup.Oid)
+                                                                      .select_from(NomenclatureGroup)
+                                                                      .where(NomenclatureGroup.Code == EP['NomenclatureGroupCode'])
+                                                                      .all()[0][0])
+                        main_equipment_oid = (db.session.query(Equipment.Oid)
+                                                              .select_from(Equipment)
+                                                              .where(NomenclatureGroup.Code == EP['NomenclatureGroupCode'])
+                                                              .where(Equipment.NomenclatureGroup == NomenclatureGroup.Oid)
+                                                              .where(Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D')
+                                                              .all[0][0])
+                        rig_equipment_oid = (db.session.query(Equipment.Oid).where(Equipment.Code == ep["EquipmentPerformance"]).all()[0][0])
                         total_socket_count = ep["TotalSocketCount"]
 
-                        check_isexists_ep_sql = f"""
-                            SELECT [Oid]
-                            FROM [MES_Iplast].[dbo].[EquipmentPerformance]
-                            WHERE 
-                            NomenclatureGroup = '{nomenclaturegroup_oid}' AND
-                            MainEquipment = '{main_equipment_oid}' AND
-                            RigEquipment = '{rig_equipment_oid}' AND 
-                            TotalSocketCount = {int(total_socket_count)}
-                        """
-                        finded_ep = self.SQLExecute(check_isexists_ep_sql)
+                        finded_ep = (db.session.query(EquipmentPerformance.Oid)
+                                          .where(EquipmentPerformance.NomenclatureGroup == nomenclaturegroup_oid)
+                                          .where(EquipmentPerformance.MainEquipment == main_equipment_oid)
+                                          .where(EquipmentPerformance.RigEquipment == rig_equipment_oid)
+                                          .where(EquipmentPerformance.TotalSocketCount == int(total_socket_count))
+                                          .all())
                         if len(finded_ep) > 0:
-                            get_product = f"""
-                                SELECT [Oid]
-                                FROM [MES_Iplast].[dbo].[Product]
-                                WHERE Code = '{EP["ProductCode"]}'
-                            """
-                            product_oid = self.SQLExecute(get_product)[0][0]
-                            check_relation_product_ep_sql = f"""
-                                SELECT [EquipmentPerformance]
-                                FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
-                                WHERE EquipmentPerformance = '{finded_ep[0][0]}' AND
-                                Product = '{product_oid}' AND 
-                                SocketCount = {int(ep['SocketCount'])} AND
-                                Cycle = {float(ep['Cycle'].replace(',','.'))} 
-                            """
-                            relation_product_ep = self.SQLExecute(check_relation_product_ep_sql)
+                            product_oid = db.session.query(Product.Oid).where(Product.Code == EP["ProductCode"]).all()[0][0]
+                            relation_product_ep = (db.session.query(Relation_ProductPerformance.EquipmentPerformance)
+                                                                    .where(Relation_ProductPerformance.EquipmentPerformance == finded_ep[0][0])
+                                                                    .where(Relation_ProductPerformance.Product == product_oid)
+                                                                    .where(Relation_ProductPerformance.SocketCount == int(ep['SocketCount']))
+                                                                    .where(Relation_ProductPerformance.Cycle == float(ep['Cycle'].replace(',','.')))
+                                                                    .all())
                             if (len(relation_product_ep) > 0):
                                 continue
                             else:
                                 try:
-                                    insert_rel_ep_sql = f"""
-                                        INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
-                                        VALUES ('{finded_ep[0][0]}','{product_oid}',{int(ep['SocketCount'])},{float(ep['Cycle'].replace(',','.'))})
-                                    """
-                                    self.SQLExecute(insert_rel_ep_sql)
-                                except pyodbc.Error as error:
-                                    sqlstate = error.args[0]
-                                    if sqlstate == '23000':
-                                        self.app.logger.error(error.args[1])
+                                    new_rel_ep = Relation_ProductPerformance()
+                                    new_rel_ep.EquipmentPerformance = finded_ep[0][0]
+                                    new_rel_ep.Product = product_oid
+                                    new_rel_ep.SocketCount = int(ep['SocketCount'])
+                                    new_rel_ep.Cycle = float(ep['Cycle'].replace(',','.'))
+                                    db.session.add(new_rel_ep)
+                                    db.session.commit()
+                                except Exception as error:
+                                    self.app.logger.error(f"[{datetime.datetime.now()}] <LoadEquipmentPerfomance> {str(error)}")
                                     continue
                         else:
-                            get_product = f"""
-                                SELECT [Oid]
-                                FROM [MES_Iplast].[dbo].[Product]
-                                WHERE Code = '{EP["ProductCode"]}'
-                            """
                             product_oid = ""
-                            insert_ep_sql = f"""
-                                INSERT INTO EquipmentPerformance (Oid,NomenclatureGroup,MainEquipment,RigEquipment,TotalSocketCount)
-                                VALUES (NEWID(),'{nomenclaturegroup_oid}','{main_equipment_oid}','{rig_equipment_oid}',{int(total_socket_count)})
-                            """
-                            self.SQLExecute(insert_ep_sql)
-                            find_inserted_ep = f"""
-                                SELECT [Oid]
-                                FROM [MES_Iplast].[dbo].[EquipmentPerformance]
-                                WHERE 
-                                NomenclatureGroup = '{nomenclaturegroup_oid}' AND
-                                MainEquipment = '{main_equipment_oid}' AND
-                                RigEquipment = '{rig_equipment_oid}' AND 
-                                TotalSocketCount = {int(total_socket_count)}
-                            """
-                            ep_oid = self.SQLExecute(find_inserted_ep)
+                            new_ep = EquipmentPerformance()
+                            new_ep.NomenclatureGroup = nomenclaturegroup_oid
+                            new_ep.MainEquipment = main_equipment_oid
+                            new_ep.RigEquipment = rig_equipment_oid
+                            new_ep.TotalSocketCount = int(total_socket_count)
+                            db.session.add(new_ep)
+                            db.session.commit()
+                            ep_oid = (db.session.query(EquipmentPerformance.Oid)
+                                                                 .where(EquipmentPerformance.NomenclatureGroup == nomenclaturegroup_oid)
+                                                                 .where(EquipmentPerformance.MainEquipment == main_equipment_oid)
+                                                                 .where(EquipmentPerformance.RigEquipment == rig_equipment_oid)
+                                                                 .where(EquipmentPerformance.TotalSocketCount == int(total_socket_count))
+                                                                 .all())
                             if len(ep_oid) > 0:
                                 ep_oid = ep_oid[0][0]
                             else: continue
-                            product_oid = self.SQLExecute(get_product)[0][0]
-                            check_relation_product_ep_sql = f"""
-                                SELECT [EquipmentPerformance]
-                                FROM [MES_Iplast].[dbo].[Relation_ProductPerformance]
-                                WHERE EquipmentPerformance = '{ep_oid}' AND
-                                Product = '{product_oid}' AND 
-                                SocketCount = {int(ep['SocketCount'])} AND
-                                Cycle = {float(ep['Cycle'].replace(',','.'))} 
-                            """
-                            relation_product_ep = self.SQLExecute(check_relation_product_ep_sql)
+                            product_oid = db.session.quer(Product.Oid).where(Product.Code == EP["ProductCode"]).all()[0][0]
+                            relation_product_ep = (db.session.query(Relation_ProductPerformance.EquipmentPerformance)
+                                                                    .where(Relation_ProductPerformance.EquipmentPerformance == ep_oid)
+                                                                    .where(Relation_ProductPerformance.Product == product_oid)
+                                                                    .where(Relation_ProductPerformance.SocketCount == int(ep['SocketCount']))
+                                                                    .where(Relation_ProductPerformance.Cycle == float(ep['Cycle'].replace(',','.')))
+                                                                    .all())
                             if (len(relation_product_ep) > 0):
                                 continue
                             else:
-                                insert_rel_ep_sql = f"""
-                                    INSERT INTO [Relation_ProductPerformance] (EquipmentPerformance,Product,SocketCount,Cycle)
-                                    VALUES ('{ep_oid}','{product_oid}',{int(ep['SocketCount'])},{float(ep['Cycle'].replace(',','.'))})
-                                """
-                                self.SQLExecute(insert_rel_ep_sql)
+                                insert_rel_ep_sql = Relation_ProductPerformance()
+                                insert_rel_ep_sql.EquipmentPerformance = ep_oid
+                                insert_rel_ep_sql.Product = product_oid
+                                insert_rel_ep_sql.SocketCount = int(ep['SocketCount'])
+                                insert_rel_ep_sql.Cycle = float(ep['Cycle'].replace(',','.'))
+                                db.session.add(insert_rel_ep_sql)
+                                db.session.commit()
         

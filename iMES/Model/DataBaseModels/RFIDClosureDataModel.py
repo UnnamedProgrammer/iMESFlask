@@ -11,5 +11,5 @@ class RFIDClosureData(db.Model):
     Controller = mapped_column(ForeignKey('RFIDEquipment.Oid'), nullable=False)
     Label = mapped_column(ForeignKey('RFIDEquipment.Oid'), nullable=False)
     Date = db.Column(DATETIME, nullable=False)
-    Cycle = db.Column(INTEGER, nullabe=False)
+    Cycle = db.Column(INTEGER, nullable=False)
     Status = db.Column(BIT, nullable=False)

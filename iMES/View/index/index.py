@@ -1,23 +1,28 @@
-from asyncio.log import logger
-from iMES import socketio
-from iMES import app
-from iMES import UserController
+from iMES import app, login_manager, socketio, TpaList, current_tpa, db
 from flask import redirect, render_template, request
 from flask_login import login_required, login_user, logout_user, current_user
-from iMES import login_manager, ProductDataMonitoring, db
-from iMES.Model.SQLManipulator import SQLManipulator
+from iMES.daemons import ProductDataMonitoring
+from iMES.Model.DataBaseModels.DowntimeFailureModel import DowntimeFailure
+from iMES.Model.DataBaseModels.EmployeeModel import Employee
+from iMES.Model.DataBaseModels.EquipmentModel import Equipment
+from iMES.Model.DataBaseModels.ProductModel import Product
+from iMES.Model.DataBaseModels.ProductionDataModel import ProductionData
+from iMES.Model.DataBaseModels.RFIDClosureDataModel import RFIDClosureData
+from iMES.Model.DataBaseModels.RFIDEquipmentBindingModel import RFIDEquipmentBinding
+from iMES.Model.DataBaseModels.RoleModel import Role
+from iMES.Model.DataBaseModels.ShiftModel import Shift
+from iMES.Model.DataBaseModels.ShiftTaskModel import ShiftTask
+from iMES.Model.DataBaseModels.StickerInfoModel import StickerInfo
+from iMES.functions.redirect_by_role import redirect_by_role
 import json
-from iMES import TpaList, current_tpa, user_dict
-import requests
 from datetime import datetime, timedelta
-from requests.adapters import HTTPAdapter,Retry
-import requests, urllib3
-
-from iMES.Model.UserModel import UserModel
-
+import urllib3
 # Модули БД
 from iMES.Model.DataBaseModels.DeviceTypeModel import DeviceType
 from iMES.Model.DataBaseModels.DeviceModel import Device
+from iMES.Model.DataBaseModels.UserModel import User
+from iMES.Model.DataBaseModels.SavedRoleModel import SavedRole
+from iMES.Model.DataBaseModels.LastSavedRoleModel import LastSavedRole
 # Метод возвращающий главную страницу
 
 urllib3.disable_warnings()
@@ -26,6 +31,7 @@ urllib3.disable_warnings()
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
+    device_tpa = {}
     if ip_addr in TpaList.keys():
         # Выгружаем список привязанных ТПА к клиенту
         device_tpa = TpaList[ip_addr]
@@ -36,38 +42,18 @@ def index():
                 DeviceType.Oid == Device.DeviceType).one_or_none()
 
         # Если устройство является веб то находим пользователя привязаннаго за устройством
-        # И автоматически авторизуем его по его номеру карты
-        if device_type.Name == 'Веб':
-            print(current_user)
-            sql_GetCardNumber = f"""
-                        SELECT [User].CardNumber
-                        FROM [User],Device WHERE 
-                        Device.DeviceId = '{ip_addr}' AND
-                        Device.[Name] = [User].UserName
-                    """
-            CardNumber = SQLManipulator.SQLExecute(sql_GetCardNumber)[0][0]
-            is_authorized = False
-            for key in user_dict.keys():
-                if user_dict[key].CardNumber == CardNumber:
-                    is_authorized = True
-                    login_user(user_dict[key])
-            if not is_authorized:
-                from iMES import host, port
-                session = requests.Session()
-                retry = Retry(connect=3,backoff_factor=0.5)
-                adapter = HTTPAdapter(max_retries=retry)
-                session.mount('http://', adapter)
-                session.mount('https://', adapter)
-                headers={
-                'Referer': f'http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-                }
-                r = session.get(
-                    f"http://{host}:{str(port)}/Auth/PassNumber={CardNumber}/IP={request.remote_addr}",headers=headers,verify=False)
-                if r.status_code == 200:
-                    for key in list(user_dict.keys()):
-                        if user_dict[key].CardNumber == CardNumber:
-                            login_user(user_dict[key])            
+        # И автоматически авторизуем его по наименованию устройства
+        if device_type is not None:
+            if device_type.Name == 'Веб':
+                if not current_user.is_authenticated:        
+                    usr = db.session.query(User).where(
+                        Device.DeviceId == ip_addr).where(
+                            User.UserName == Device.Name).one_or_none()
+                    usr.get_roles(ip_addr)
+                    if usr is not None:
+                        login_user(usr)
+                    else:
+                        pass
         else:
             return "Undefinded device, access denied."
     # Рендерим страницу
@@ -80,19 +66,19 @@ def index():
 @app.route("/changeTpa", methods=["GET"])
 def ChangeTPA():
     ip_addr = request.remote_addr
+    need_tpa = request.args.getlist('oid')[0]
     for tpa in TpaList[ip_addr]:
-        if tpa['Oid'] == request.args.getlist('oid')[0]:
-            current_tpa[ip_addr] = [request.args.getlist('oid')[0], request.args.getlist('name')[0], tpa['Controller']]
+        current = str(tpa[0])
+        if current == need_tpa:
+            current_tpa[ip_addr] = tpa
             break
     return {}
 
 
 # Метод возвращающий данные о плане и факте выпускаемой продукции на графике
 # по запросу с сокета в файле Graph.js
-
-
 @socketio.on(message = "getTrendPlanData")
-def GetPlan(data):
+def GetGraphData(data):
     ip_addr = request.remote_addr
     plan =[]
     trend = []
@@ -100,41 +86,34 @@ def GetPlan(data):
     if ((current_tpa[ip_addr][2].shift_oid != '') and 
         (current_tpa[ip_addr][2].tpa != '') and
         (current_tpa[ip_addr][2].shift_oid != '')):
-        sql_GetShiftInfo = f"""
-                    SELECT 
-                        ShiftTask.Oid,
-                        Shift.StartDate,
-                        Shift.EndDate,
-                        ShiftTask.ProductCount,
-                        ShiftTask.Cycle,
-                        ShiftTask.Shift,
-                        ShiftTask.Product
-                    FROM
-                        Shift, ShiftTask
-                    WHERE
-                        Shift.Oid = ShiftTask.Shift and 
-                        ShiftTask.Equipment = '{current_tpa[ip_addr][2].tpa}' and 
-                        ShiftTask.Shift = '{current_tpa[ip_addr][2].shift_oid}'
-                """
-        ShiftInfo = SQLManipulator.SQLExecute(sql_GetShiftInfo)
+        ShiftInfo = (db.session.query(ShiftTask.Oid,
+                                     Shift.StartDate,
+                                     Shift.EndDate,
+                                     ShiftTask.ProductCount,
+                                     ShiftTask.Cycle,
+                                     ShiftTask.Shift,
+                                     ShiftTask.Product)
+                                     .select_from(ShiftTask, Shift)
+                                     .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
+                                     .where(ShiftTask.Shift == current_tpa[ip_addr][2].shift_oid)
+                                     .where(Shift.Oid == ShiftTask.Shift)
+                                     .all()
+                                     )
         try:
             if (len(ShiftInfo) > 0):
                 StartShift = ShiftInfo[0][1]
                 EndShift = ShiftInfo[0][2]
 
                 # Вытягиваем возможные сменные задания
-                shift_tasks = SQLManipulator.SQLExecute(
-                    f"""
-                        SELECT [ProductCount]
-                                ,[Cycle]
-                                ,[Product]
-                                ,[Specification]
-                                ,[SocketCount]
-                        FROM [MES_Iplast].[dbo].[ShiftTask]
-                        WHERE Equipment = '{current_tpa[ip_addr][0]}' AND
-                                [Shift] = '{current_tpa[ip_addr][2].shift_oid}'      
-                    """
-                )
+                shift_tasks = (db.session.query(ShiftTask.ProductCount,
+                                                ShiftTask.Cycle,
+                                                ShiftTask.Product,
+                                                ShiftTask.Specification,
+                                                ShiftTask.SocketCount)
+                                                .select_from(ShiftTask)
+                                                .where(ShiftTask.Equipment == current_tpa[ip_addr][0])
+                                                .where(ShiftTask.Shift == current_tpa[ip_addr][2].shift_oid)
+                                                .all())
                 # Определяем очередь сменных заданий
                 task_queue = []
                 pressform = ProductDataMonitoring.GetTpaPressFrom(
@@ -176,14 +155,10 @@ def GetPlan(data):
                 time_to_every_task = []
 
                 # Время окончания сменного задания
-                task_start = SQLManipulator.SQLExecute(
-                    f"""
-                        SELECT TOP(1) [StartDate]
-                        FROM [MES_Iplast].[dbo].[Shift]
-                        ORDER BY StartDate DESC
-                    """)
+                task_start = (db.session.query(Shift.StartDate)
+                                .order_by(Shift.StartDate.desc()).first())
                 if len(task_start) > 0:
-                    task_start = task_start[0][0]
+                    task_start = task_start[0]
 
                 #Вычисляем время затрачиваемое на каждое сменное задание
                 start = task_start
@@ -234,47 +209,38 @@ def GetPlan(data):
                             plan[len(plan)-1]['y'] = count
                         break 
                     last_plan = last_plan + task[0][0] 
-              
+                
                 # Получаем совершённые смыкания
-                sql = f"""
-                    SELECT RCD.[Oid]
-                        ,[Controller]
-                        ,[Label]
-                        ,[Date]
-                        ,RCD.[Cycle]
-                        ,[Status]
-                        ,Shift.Note
-                    FROM [MES_Iplast].[dbo].[RFIDClosureData] as RCD, Shift 
-                    WHERE 
-                    Controller = (SELECT RFIDEquipmentBinding.RFIDEquipment 
-                                        FROM RFIDEquipmentBinding
-                                        WHERE RFIDEquipmentBinding.Equipment = '{ current_tpa[ip_addr][2].tpa }') AND
-                    Shift.Oid = (SELECT TOP(1) [Oid]
-                                    FROM [MES_Iplast].[dbo].[Shift]
-                                    ORDER BY StartDate DESC) AND
-                    Date between Shift.StartDate AND Shift.EndDate AND
-                    Status = 1
-                    ORDER BY Date ASC
-                """
-                clousers = SQLManipulator.SQLExecute(sql)
-
+                clousers = (db.session.query(RFIDClosureData.Oid,
+                                            RFIDClosureData.Controller,
+                                            RFIDClosureData.Label,
+                                            RFIDClosureData.Date,
+                                            RFIDClosureData.Cycle,
+                                            RFIDClosureData.Status,
+                                            Shift.Note)
+                                            .select_from(RFIDClosureData, Shift)
+                                            .where(RFIDClosureData.Controller == \
+                                                db.session.query(RFIDEquipmentBinding.RFIDEquipment)
+                                                                    .select_from(RFIDEquipmentBinding)
+                                                                    .where(RFIDEquipmentBinding.Equipment == current_tpa[ip_addr][2].tpa).one_or_none()[0])
+                                            .where(Shift.Oid == db.session.query(Shift.Oid).order_by(Shift.StartDate.desc()).first()[0])
+                                            .where(RFIDClosureData.Date >= Shift.StartDate)
+                                            .where(RFIDClosureData.Date <= Shift.EndDate)
+                                            .where(RFIDClosureData.Status == 1)
+                                            .order_by(RFIDClosureData.Date.asc())
+                                            .all())
                 # Получаем временные промежутки простоев и годные смыкания
-                idles_db = SQLManipulator.SQLExecute(
-                    f"""
-                        SELECT TOP(50) DF.[Oid]
-                                ,DF.[StartDate]
-                                ,DF.[EndDate]
-                                ,DF.[ValidClosures]
-                        FROM [MES_Iplast].[dbo].[DowntimeFailure] AS DF, [Shift] AS SH
-                        WHERE Equipment = '{current_tpa[ip_addr][2].tpa}' AND
-                                DF.EndDate IS NOT NULL AND
-                                DF.[ValidClosures] != 0 AND
-                                SH.Oid = (SELECT TOP(1) [Oid]
-                                    FROM [MES_Iplast].[dbo].[Shift]
-                                    ORDER BY StartDate DESC) AND
-                                DF.StartDate >= SH.StartDate
-                    """
-                )
+                idles_db = (db.session.query(DowntimeFailure.Oid,
+                                            DowntimeFailure.StartDate,
+                                            DowntimeFailure.EndDate,
+                                            DowntimeFailure.ValidClosures)
+                                            .select_from(DowntimeFailure, Shift)
+                                            .where(DowntimeFailure.Equipment == current_tpa[ip_addr][2].tpa)
+                                            .where(DowntimeFailure.EndDate is not None)
+                                            .where(Shift.Oid == \
+                                                db.session.query(Shift.Oid).select_from(Shift).order_by(Shift.StartDate.desc()).first()[0])
+                                            .where(DowntimeFailure.StartDate >= Shift.StartDate)
+                                            .all())
                 idle_catch = False
                 checked_idles = []
                 trend.append({"y": '0', "x": StartShift.strftime(
@@ -289,15 +255,23 @@ def GetPlan(data):
                             idle_catch = False
                             for idle in idles_db:
                                 if idle[0] not in checked_idles:
-                                    if StartShift <= idle[2] and idle[2] <= EndShift:
-                                        if close[3] >= idle[2]:                                        
-                                            count += int(idle[3])*current_tpa[
-                                                ip_addr][2].socket_count
-                                            trend.append({"x":str(close[3].strftime(
-                                                "%Y-%m-%d %H:%M:%S.%f"))[:-3],
-                                                "y":count})
-                                            idle_catch = True
-                                            checked_idles.append(idle[0])
+                                    if StartShift <= idle[1] and idle[1] <= EndShift:
+                                        if close[3] >= idle[1]:
+                                            if idle[3] != None:                                      
+                                                count += int(idle[3])*current_tpa[
+                                                    ip_addr][2].socket_count
+                                                trend.append({"x":str(close[3].strftime(
+                                                    "%Y-%m-%d %H:%M:%S.%f"))[:-3],
+                                                    "y":count})
+                                                idle_catch = True
+                                                checked_idles.append(idle[0])
+                                            else:
+                                                count += 0
+                                                trend.append({"x":str(close[3].strftime(
+                                                    "%Y-%m-%d %H:%M:%S.%f"))[:-3],
+                                                    "y":count})
+                                                idle_catch = True
+                                                checked_idles.append(idle[0]) 
                             if idle_catch != True:
                                 count += 1*current_tpa[ip_addr][2].socket_count
                                 trend.append({"x":str(close[3].strftime(
@@ -310,451 +284,125 @@ def GetPlan(data):
                                     trend.append({"x": str(close[3].strftime(
                                         "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y": count})
                                     continue
-                socketio.emit('receiveTrendPlanData',
-                               data=json.dumps({ip_addr:
-                                               {'plan':plan,
-                                                'trend':trend}},
-                                                ensure_ascii=False,
-                                                indent=4))
+            socketio.emit('receiveTrendPlanData',
+                            data=json.dumps({ip_addr:
+                                            {'plan':plan,
+                                            'trend':trend}},
+                                            ensure_ascii=False,
+                                            indent=4))
         except Exception as err:
-            app.logger.error(f"[{datetime.now()}] {err}")
+            app.logger.error(f"[{datetime.now()}] <GetGraphData> {err}")
 
 # Метод создания пользователя для сессии при прикладываении пропуска.
 # Отправляет устройству на котором прикладывается пропуск команду
 # на переход по роутингу авторизации '/Auth'
+@app.route("/Auth/PassNumber=<string:cardnumber>")
+def Authorization(cardnumber):
+    ip_addr = request.remote_addr
+    socketio.emit('Auth', json.dumps({f'{ip_addr}':cardnumber}, ensure_ascii=False, indent=4))
+    return 'Authorization start'
 
-
-@app.route("/Auth/PassNumber=<string:passnumber>")
-def Authorization(passnumber):
-    try:
-        roles = []
-        user = UserModel()
-        # Определяем адресс клиента
-        terminal = request.remote_addr
-        # Запрос на информацию о клиенте по его номеру карты
-        sql = f"""
-        SELECT
-            EMPL.LastName
-            ,EMPL.FirstName
-            ,EMPL.MiddleName
-            ,USR.[UserName]
-            ,USR.[CardNumber]
-            ,RL.Name
-            ,ITF.Name
-            ,USR.[Oid]
-        FROM [MES_Iplast].[dbo].[User] as USR,
-            [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
-            [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
-            [MES_Iplast].[dbo].[Interface] as ITF,
-            [MES_Iplast].[dbo].[Role] as RL,
-            [MES_Iplast].[dbo].[Employee] as EMPL
-        WHERE RUR.[User] = USR.Oid AND 
-            RRI.[Role] = RUR.[Role] AND
-            ITF.Oid = RRI.Interface AND
-            RL.Oid = RUR.Role AND
-            EMPL.Oid = USR.[Employee] AND
-            USR.[CardNumber] = '{passnumber}'
-            """
-        # Отправляем запрос
-        data = SQLManipulator.SQLExecute(sql)
-        # Если записей с таким номером пропуска нет выводим ошибку
-        if (len(data) == 0):
-            return 'User undefinded'
-        else:
-            # Прибавляем к счетчику пользователей 1 для задания ID пользователяUserController.CountUsers += 1
-            UserController.CountUsers += 1
-            # Помещаем данные о клиенте в список для удобства
-            userdata = list(data[0])
-            # Помещаем в начало спика ID
-            userdata.insert(0, UserController.CountUsers)
-            # Запрос на сохраненные роли пользователя
-            sqlLastRole = f"""
-                    SELECT [Role].[Name],[Role].Oid
-                    FROM [SavedRole],[User],[Role] 
-                    WHERE [User].CardNumber = '{userdata[5]}' AND
-                        [SavedRole].[User] = [User].Oid AND
-                        [SavedRole].[Role] = [Role].Oid
-                    """
-            LastRole = SQLManipulator.SQLExecute(sqlLastRole)
-            if(LastRole != []):
-                user.role = {0: LastRole[0][0]}
-                roles = LastRole
-            else:
-                sqlUserRoles = f"""
-                    SELECT [Role].[Name],[Role].Oid
-                    FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
-                    WHERE [User].CardNumber = '{userdata[5]}' AND 
-                        [Relation_UserRole].[User] = [User].Oid AND
-                        [Relation_UserRole].[Role] = [Role].Oid
-                """
-                roles = SQLManipulator.SQLExecute(sqlUserRoles)
-                user.role = {}
-                for i in range(0, len(roles)):
-                    user.role[i] = roles[i][0]
-            sqlCheckSavedRole = f"""
-                    DECLARE @device uniqueidentifier
-                    DECLARE @user uniqueidentifier
-                    SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{terminal}')
-                    SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{userdata[4]}')
-                    SELECT [Role].[Name] AS Роль
-                    FROM Employee, [Role], LastSavedRole, SavedRole, [User]
-
-                    WHERE LastSavedRole.Device = @device AND
-                        SavedRole.Oid = LastSavedRole.SavedRole AND
-                        SavedRole.[Role] = [Role].Oid AND
-                        [User].Oid = SavedRole.[User] AND
-                        Employee.Oid = [User].Employee AND
-                        [User].Oid = @user
-                """
-            try:
-                SavedRole = SQLManipulator.SQLExecute(sqlCheckSavedRole)[0][0]
-            except:
-                SavedRole = ''
-                pass
-            if SavedRole != '' or len(SavedRole) > 0:
-                user.role = SavedRole
-                user.savedrole = True
-            else:
-                user.savedrole = False
-            # Добавляем данные в экземпляр пользователя
-            user.id = userdata[8]
-            user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
-            user.username = userdata[4]
-            user.CardNumber = userdata[5]
-            user.interfaces = userdata[7]
-            packet = {terminal: f'{user.CardNumber}'}
-            for key in list(user_dict.keys()):
-                if user_dict[key].CardNumber == user.CardNumber:
-                    user_dict.pop(key)
-            user_dict[str(user.id)] = user
-
-            # Проверка на непрочитанные документы нормативной документации
-            Docs = []
-            for role in roles:               
-                NewDocs = SQLManipulator.SQLExecute(
-                    f"""
-                        SELECT Documentation.Oid FROM Documentation, Relation_DocumentationRole
-                        WHERE [Role] = '{role[1]}' AND
-                        NOT EXISTS
-                        (
-                            SELECT DocumentReadStatus.Document FROM DocumentReadStatus
-                            WHERE [User] = '{user.id}'
-                        )
-                    """
-                )
-                if len(NewDocs) > 0:               
-                    Docs.append(NewDocs[0][0])  
-
-            Docs = list(set(Docs))
-            for doc in Docs:
-                SQLManipulator.SQLExecute(
-                    f"""
-                        INSERT INTO DocumentReadStatus 
-                            (Oid, [User], Document, [Status], ReadDate)
-                        VALUES (NEWID(), '{user.id}', '{doc}', 0, NULL)   
-                    """
-                )
-            
-            NoReadDocs = SQLManipulator.SQLExecute(
-                f"""
-                    SELECT [Oid]
-                    FROM [MES_Iplast].[dbo].[DocumentReadStatus]
-                    WHERE [User]='{user.id}' AND Status = 0
-                """
-            )
-            if len(NoReadDocs) > 0:
-                user.ReadingAllDocs = False
-            else:
-                user.ReadingAllDocs = True
-
-            for key in list(user_dict.keys()):
-                if user_dict[key].CardNumber == user.CardNumber:
-                    user_dict.pop(key)
-            user_dict[str(user.id)] = user  
-
-            # Отправляем в сокет сообщение о успешной авторизации
-            socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
-        return 'Authorization successful'
-    except:
-        logger.exception()
-
-# Метод предназначенный для авторизации без пропуска по запросу
-# Большинство операций аналогичны методу авторизации с пропуском
-
-
-@app.route("/Auth/PassNumber=<string:passnumber>/IP=<string:ipaddress>")
-def AuthorizationWhithoutPass(passnumber, ipaddress):
-    user = UserModel()
-    roles = []
-    terminal = ipaddress
-    sql = f"""
-    SELECT
-         EMPL.LastName
-        ,EMPL.FirstName
-        ,EMPL.MiddleName
-        ,USR.[UserName]
-        ,USR.[CardNumber]
-        ,RL.Name
-        ,ITF.Name
-        ,USR.Oid
-    FROM [MES_Iplast].[dbo].[User] as USR,
-        [MES_Iplast].[dbo].[Relation_UserRole] as RUR,
-        [MES_Iplast].[dbo].[Relation_RoleInterface] as RRI,
-        [MES_Iplast].[dbo].[Interface] as ITF,
-        [MES_Iplast].[dbo].[Role] as RL,
-        [MES_Iplast].[dbo].[Employee] as EMPL
-    WHERE RUR.[User] = USR.Oid AND 
-        RRI.[Role] = RUR.[Role] AND
-        ITF.Oid = RRI.Interface AND
-        RL.Oid = RUR.Role AND
-        EMPL.Oid = USR.[Employee] AND
-        USR.[CardNumber] = '{passnumber}'
-        """
-
-    data = SQLManipulator.SQLExecute(sql)
-    if (len(data) == 0):
-        return 'User undefinded'
-    else:
-        UserController.CountUsers += 1
-        userdata = list(data[0])
-        userdata.insert(0, UserController.CountUsers)
-        sqlLastRole = f"""
-                SELECT [Role].[Name], [Role].Oid
-                FROM [SavedRole],[User],[Role] 
-                WHERE [User].CardNumber = '{userdata[5]}' AND
-                    [SavedRole].[User] = [User].Oid AND
-                    [SavedRole].[Role] = [Role].Oid
-                """
-        LastRole = SQLManipulator.SQLExecute(sqlLastRole)
-        if(LastRole != []):
-            user.role = {0: LastRole[0][0]}
-            roles = LastRole
-        else:
-            sqlUserRoles = f"""
-                SELECT [Role].[Name], [Role].Oid
-                FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role]  
-                WHERE [User].CardNumber = '{userdata[5]}' AND 
-                    [Relation_UserRole].[User] = [User].Oid AND
-                    [Relation_UserRole].[Role] = [Role].Oid
-            """
-            roles = SQLManipulator.SQLExecute(sqlUserRoles)
-            user.role = {}
-            for i in range(0, len(roles)):
-                user.role[i] = roles[i][0]
-        sqlCheckSavedRole = f"""
-                DECLARE @device uniqueidentifier
-                DECLARE @user uniqueidentifier
-                SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{terminal}')
-                SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{userdata[4]}')
-                SELECT [Role].[Name] AS Роль
-                FROM Employee, [Role], LastSavedRole, SavedRole, [User]
-
-                WHERE LastSavedRole.Device = @device AND
-                    SavedRole.Oid = LastSavedRole.SavedRole AND
-                    SavedRole.[Role] = [Role].Oid AND
-                    [User].Oid = SavedRole.[User] AND
-                    Employee.Oid = [User].Employee AND
-                    [User].Oid = @user
-            """
-        try:
-            SavedRole = SQLManipulator.SQLExecute(sqlCheckSavedRole)[0][0]
-        except:
-            SavedRole = ''
-            pass
-        if SavedRole != '' or len(SavedRole) > 0:
-            user.role = SavedRole
-            user.savedrole = True
-        else:
-            user.savedrole = False
-        user.id = userdata[8]
-        user.name = f"{userdata[1]} {userdata[2]} {userdata[3]}"
-        user.username = userdata[4]
-        user.CardNumber = userdata[5]
-        user.interfaces = userdata[7]
-        packet = {terminal: f'{user.CardNumber}'}  
-
-        # Проверка на новые документы нормативной документации
-        Docs = []
-        for role in roles:               
-            NewDocs = SQLManipulator.SQLExecute(
-                f"""
-                    SELECT Documentation.Oid FROM Documentation, Relation_DocumentationRole
-                    WHERE [Role] = '{role[1]}' AND
-                    NOT EXISTS
-                    (
-                        SELECT DocumentReadStatus.Document FROM DocumentReadStatus
-                        WHERE [User] = '{user.id}'
-                    )
-                """
-            )
-            if len(NewDocs) > 0:               
-                Docs.append(NewDocs[0][0])  
-
-        Docs = list(set(Docs))
-        for doc in Docs:
-            SQLManipulator.SQLExecute(
-                f"""
-                    INSERT INTO DocumentReadStatus 
-                        (Oid, [User], Document, [Status], ReadDate)
-                    VALUES (NEWID(), '{user.id}', '{doc}', 0, NULL)   
-                """
-            )
-        
-        NoReadDocs = SQLManipulator.SQLExecute(
-            f"""
-                SELECT [Oid]
-                FROM [MES_Iplast].[dbo].[DocumentReadStatus]
-                WHERE [User]='{user.id}' AND Status = 0
-            """
-        )
-        if len(NoReadDocs) > 0:
-            user.ReadingAllDocs = False
-        else:
-            user.ReadingAllDocs = True
-
-        for key in list(user_dict.keys()):
-            if user_dict[key].CardNumber == user.CardNumber:
-                user_dict.pop(key)
-        user_dict[str(user.id)] = user  
-
-        socketio.emit('Auth', json.dumps(packet, ensure_ascii=False, indent=4))
-    return 'Authorization successful'
-
-# Метод загружающий пользователя по его ID в сессии при запросе login_manager'a
-
-
+# Метод загружающий пользователя по его Oid в сессии при запросе login_manager'a
 @login_manager.user_loader
-def load_user(_id):
-    if str(_id) in user_dict:
-        return user_dict[str(_id)]
+def load_user(Oid):
+    ip_addr = request.remote_addr
+    usr = db.session.query(User).where(User.Oid == Oid).one_or_none()
+    usr.get_roles(ip_addr)
+    return usr
 
 # Метод аутентификации пользователя и редирект на страницы в зависимости от роли
-
-
-@app.route('/Auth/GetPass/PassNumber=<string:passnumber>')
-def Auth(passnumber):
-    try:
-        ip_addr = request.remote_addr  # Получение IP-адресса пользователя
-        sql_GetDeviceType = f"""SELECT DeviceType.[Name]
-                        FROM Device, DeviceType
-                        WHERE Device.DeviceId = '{ip_addr}' AND
-                                Device.DeviceType = DeviceType.Oid
-                        """
-        device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
-        if device_type == "Терминал":
-            for key in list(user_dict.keys()):
-                if user_dict[key].CardNumber == passnumber:
-                    login_user(user_dict[key])  
-            if (current_user.role == 'Оператор'):
-                return redirect('/operator')
-            elif (current_user.role == 'Наладчик'):
-                return redirect('/adjuster')
-            elif (current_user.role == {0: 'Наладчик'}):
-                return redirect('/adjuster')
-            elif (current_user.role == {0: 'Оператор'}):
-                return redirect('/operator')
-            else:
-                return redirect('/menu')
+@app.route('/Auth/GetPass/PassNumber=<string:cardnumber>')
+def Auth(cardnumber):
+    ip_addr = request.remote_addr
+    if not current_user.is_authenticated:
+        usr = db.session.query(User).where(User.CardNumber == cardnumber).one_or_none()
+        usr.get_roles(ip_addr)
+        if usr != None:
+            login_user(usr)
+            return redirect_by_role(current_user.Roles, current_tpa[ip_addr])
         else:
-            return redirect('/')
-    except:
-        logger.exception()
+            return redirect("/")
+    else:
+        return redirect_by_role(current_user.Roles, current_tpa[ip_addr])
+    
+
 
 # Метод вызываемый при переходе на роутинг требующий авторизации будучи не авторизованным
-
-
 @app.route('/login')
 def login():
     return render_template('Show_error.html', error="Нет доступа, авторизируйтесь с помощью пропуска", ret='/', current_tpa=current_tpa[request.remote_addr])
 
 # Метод выхода из аккаунта с откреплением от терминала
-
-
 @app.route('/logout')
 @login_required
 def logout():
-    terminal = request.remote_addr
-    sqlRemoveSaveUser = f"""
-            DECLARE @user uniqueidentifier
-            DECLARE @device uniqueidentifier
-            /* Сам пользователь */
-            SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{current_user.username}')
-            /* Устройство на котором работает пользователь */
-            SET @device = (SELECT [Device].Oid FROM [Device] WHERE DeviceId = '{terminal}')
-        	DELETE FROM LastSavedRole WHERE LastSavedRole.Device = @device AND 
-            LastSavedRole.SavedRole = (SELECT SavedRole.Oid 
-                                    FROM SavedRole 
-                                    WHERE SavedRole.[User] = @user AND 
-                                            SavedRole.Device = @device)
-            DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
-    """
-    SQLManipulator.SQLExecute(sqlRemoveSaveUser)
-    if current_user.id != None:
-        user_dict.pop(str(current_user.id))
-        logout_user()
-        return redirect('/')
-    else:
-        error = """Попытка выхода из сесии пользователя из другой вкладки что запрещено."""
-        return render_template('Show_error.html', error=error, ret='/menu',current_tpa=current_tpa[terminal])
+    ip_addr = request.remote_addr
+    saved_role = db.session.query(LastSavedRole).where(
+        LastSavedRole.Device == db.session.query(Device.Oid).where(
+            Device.DeviceId == ip_addr
+            ).one_or_none()[0]
+    ).where(
+        LastSavedRole.SavedRole == db.session.query(SavedRole.Oid).where(
+            SavedRole.User == current_user.Oid
+        ).where(
+            SavedRole.Device == db.session.query(Device.Oid).where(
+                Device.DeviceId == ip_addr
+            ).one_or_none()[0] 
+        ).one_or_none()[0]
+    ).one_or_none()
+    if saved_role != None:
+        db.session.delete(saved_role)
+        db.session.commit()
+    logout_user()
+    return redirect('/')
 
 # Метод выхода из аккаунта без открепления от терминала
-
-
 @app.route('/logoutWithoutDeleteRoles')
 @login_required
 def logoutWithoutDeleteRoles():
-    if current_user.id != None:
-        user_dict.pop(str(current_user.id))  
     logout_user()
     return redirect('/')
 
 # Метод возвращающий текущего оператора и наладчика на устройстве
-# Запрос на этот роутинг выполняется их кода JS в index_template.html
-
-
+# Запрос на этот роутинг выполняется из кода JS в index_template.html
 @app.route('/getOperatorAndAdjuster')
 def ReturnOperatorAndAdjuster():
     ip = request.remote_addr
-    sql = f"""
-        DECLARE @device uniqueidentifier
-        SET @device = (SELECT Device.Oid FROM Device WHERE DeviceId = '{ip}')
-        SELECT (Employee.LastName +' '+ Employee.FirstName + ' ' + Employee.MiddleName) as ФИО
-                ,[Role].[Name] AS Роль
-        FROM Employee, [Role], LastSavedRole, SavedRole, [User]
-
-        WHERE LastSavedRole.Device = @device AND
-            SavedRole.Oid = LastSavedRole.SavedRole AND
-            SavedRole.[Role] = [Role].Oid AND
-            [User].Oid = SavedRole.[User] AND
-            Employee.Oid = [User].Employee
-      """
-    sqlresult = SQLManipulator.SQLExecute(sql)
     OperatorAdjusterAtTerminals = {'Оператор': '', 'Наладчик': ''}
-    operator = ''
-    adjuster = ''
-    if(len(sqlresult) != 0):
-        for employee in sqlresult:
-            if employee[1] == 'Наладчик':
-                adjuster = employee[0]
-            if employee[1] == 'Оператор':
-                operator = employee[0]
+    roles_emp_at_device = (db.session.query(Employee.LastName,
+                                           Employee.FirstName,
+                                           Employee.MiddleName,
+                                           Role.Name)
+                                           .select_from(LastSavedRole, SavedRole, Employee, Role, User)
+                                           .where(LastSavedRole.Device == \
+                                                db.session.query(Device.Oid).where(Device.DeviceId == ip).one_or_none()[0])
+                                           .where(SavedRole.Oid == LastSavedRole.SavedRole)
+                                           .where(Role.Oid == SavedRole.Role)
+                                           .where(User.Oid == SavedRole.User)
+                                           .where(Employee.Oid == User.Employee)
+                                           .all())
+    if roles_emp_at_device is not None:
+        operator = ''
+        adjuster = ''
+        for employee in roles_emp_at_device:
+            if employee[3] == 'Наладчик':
+                adjuster = f'{roles_emp_at_device[0][0]} {roles_emp_at_device[0][1]} {roles_emp_at_device[0][2]}'
+            if employee[3] == 'Оператор':
+                operator = f'{roles_emp_at_device[0][0]} {roles_emp_at_device[0][1]} {roles_emp_at_device[0][2]}'
         OperatorAdjusterAtTerminals['Оператор'] = operator
         OperatorAdjusterAtTerminals['Наладчик'] = adjuster
     return json.dumps(OperatorAdjusterAtTerminals, ensure_ascii=False, indent=4)
 
 # Метод сокета срабатывающий при соединении
-
-
 @socketio.on(message='GetDeviceType')
 def socket_connected(data):
     ip_addr = request.remote_addr
-    sql_GetDeviceType = f"""SELECT DeviceType.[Name]
-                           FROM Device, DeviceType
-                           WHERE Device.DeviceId = '{ip_addr}' AND
-                                 Device.DeviceType = DeviceType.Oid
-                        """
-    device_type = SQLManipulator.SQLExecute(sql_GetDeviceType)[0][0]
-    if(device_type == 'Веб'):
+    device_type = (db.session.query(DeviceType.Name)
+                    .select_from(DeviceType, Device)
+                    .where(Device.DeviceId == ip_addr)
+                    .where(DeviceType.Oid == Device.DeviceType)
+                    .one_or_none())
+    if(device_type[0] == 'Веб'):
         data = 'Веб'
     else:
         data = 'Терминал'
@@ -766,8 +414,6 @@ def socket_connected(data):
 def UpdateMainWindowData(data):
     ip_addr = request.remote_addr
     errors = []
-    current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
-    current_tpa[ip_addr][2].data_from_shifttask()
     if current_tpa[ip_addr][2].shift != '':
         shift = current_tpa[ip_addr][2].shift.split('(')[0][:-1]
     else:
@@ -775,6 +421,9 @@ def UpdateMainWindowData(data):
     if len(current_tpa[ip_addr][2].errors) > 0:
         errors = current_tpa[ip_addr][2].errors
     try:
+        for tpa in TpaList[ip_addr]:
+            if tpa[0] == current_tpa[ip_addr][0]:
+                current_tpa[ip_addr] = tpa
         MWData = {
             ip_addr: {
                 "PF": str(current_tpa[ip_addr][2].pressform),
@@ -800,7 +449,7 @@ def UpdateMainWindowData(data):
             socketio.emit("GetMainWindowData", data=json.dumps(
                 MWData, ensure_ascii=False, indent=4))
     except Exception as error:
-        app.logger.error(f"[{datetime.now()}] {error}")
+        app.logger.error(f"[{datetime.now()}] <UpdateMainWindowData> {error}")
         pass
 
 
@@ -808,20 +457,17 @@ def UpdateMainWindowData(data):
 def GetExecutePlan(data):
     try:
         ip_addr = request.remote_addr
-        get_last_closure_sql = f"""
-            SELECT TOP (1)
-                [StartDate]
-                ,[CountFact]
-                ,[CycleFact]
-                ,[EndDate]
-            FROM [MES_Iplast].[dbo].[ProductionData] WHERE ShiftTask = '{current_tpa[ip_addr][2].shift_task_oid[0]}'
-        """
-        get_last_closure = SQLManipulator.SQLExecute(get_last_closure_sql)
+        get_last_closure = (db.session.query(ProductionData.StartDate,
+                                            ProductionData.CountFact,
+                                            ProductionData.CycleFact,
+                                            ProductionData.EndDate)
+                                            .where(ProductionData.ShiftTask == current_tpa[ip_addr][2].shift_task_oid[0])
+                                            .first())
         remaining_quantity = current_tpa[ip_addr][2].production_plan[0] - \
-            get_last_closure[0][1]
-        production_time = (get_last_closure[0][2] / 60)
+            get_last_closure[1]
+        production_time = (get_last_closure[2] / 60)
         minutes_to_plan_end = remaining_quantity * production_time
-        old_diff_time = datetime.now() - get_last_closure[0][3]
+        old_diff_time = datetime.now() - get_last_closure[3]
         end_date = (
             datetime.now() + timedelta(minutes=float(minutes_to_plan_end))) - old_diff_time
         socketio.emit("GetExecutePlan", data=json.dumps(
@@ -834,49 +480,21 @@ def UpTubsStatus(data):
     ip_addr = request.remote_addr
     active_tpa = []
     current_machine = current_tpa[ip_addr][0]
-    tub_dict = {"Active":active_tpa,"CurrentTpa":current_machine}
+    tub_dict = {"Active":active_tpa,"CurrentTpa":str(current_machine)}
     for tpa in TpaList[ip_addr]:
-        tpa['WorkStatus'] = tpa['Controller'].Check_Downtime(tpa['Oid'])
-        if tpa['WorkStatus'] == True:
-            active_tpa.append(tpa['Oid'])
+        tpa[3] = tpa[2].Check_Downtime(tpa[0])
+        if tpa[3] == True:
+            active_tpa.append(str(tpa[0]))
     socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
-
-def Get_Tpa_Status(tpaoid):
-    if tpaoid == None or tpaoid == '':
-        return False
-    sql = f"""
-        SELECT TOP(1) [Date],Controller,[RFIDEquipmentBinding].RFIDEquipment
-        FROM [MES_Iplast].[dbo].[RFIDClosureData], Equipment, [RFIDEquipmentBinding]
-        WHERE 
-            Equipment.Oid = '{tpaoid}' AND
-            [RFIDEquipmentBinding].Equipment = Equipment.Oid AND
-            [RFIDClosureData].Controller = [RFIDEquipmentBinding].RFIDEquipment
-        ORDER BY Date DESC
-    """
-    last_closure_date = SQLManipulator.SQLExecute(sql)
-    if len(last_closure_date) > 0:
-        last_closure_date = last_closure_date[0][0]
-        current_date = datetime.now()
-        last_closure_date = last_closure_date
-        seconds = (current_date - last_closure_date).total_seconds()
-        if seconds >= 400:
-            return False
-        else:
-            return True
-    else:
-        return False
     
 @socketio.on(message='GetStickerInfo')
 def GetStickerInfo(data):
     ip_addr = request.remote_addr
-
-    sql_GetStickerInfo = f""" SELECT [Prod].[Name], [SInfo].[StickerCount]
-                                FROM [MES_Iplast].[dbo].[StickerInfo] AS [SInfo]
-                                LEFT JOIN [MES_Iplast].[dbo].[Product] AS [Prod] ON [Prod].[Oid] = [SInfo].[Product]
-                                WHERE [Equipment] = '{current_tpa[ip_addr][0]}' """
-                                
-    stickerData = SQLManipulator.SQLExecute(sql_GetStickerInfo)
-    
+    stickerData = (db.session.query(Product.Name, 
+                                    StickerInfo.StickerCount)
+                                    .join(Product).filter(Product.Oid == StickerInfo.Product)
+                                    .where(StickerInfo.Equipment == current_tpa[ip_addr][0])
+                                    .all())
     if len(stickerData) != 0:
         data = {'Product': stickerData[0][0], 'Count': stickerData[0][1]}
     else:
@@ -889,7 +507,7 @@ def GetStickerInfo(data):
 def SendNotify(data):
     try:
         ip_addr = request.remote_addr
-        if (current_user.id != None):
+        if (current_user.Oid != None):
             if ((current_user.ReadingAllDocs == False) and
                 (current_user.Showed_notify == False)):
                 socketio.emit("ShowNotify", json.dumps(

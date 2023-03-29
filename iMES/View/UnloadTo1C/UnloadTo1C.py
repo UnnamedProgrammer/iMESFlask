@@ -1,9 +1,23 @@
-from iMES import app
-from iMES.Model.BaseObjectModel import BaseObjectModel
+from sqlalchemy import extract
+from iMES import app, db
+from datetime import date
+
+from iMES.Model.DataBaseModels.EquipmentModel import Equipment
+from iMES.Model.DataBaseModels.MaterialModel import Material
+from iMES.Model.DataBaseModels.ProductModel import Product
+from iMES.Model.DataBaseModels.ProductWasteModel import ProductWaste
+from iMES.Model.DataBaseModels.ProductWeightModel import ProductWeight
+from iMES.Model.DataBaseModels.ProductionDataModel import ProductionData
+from iMES.Model.DataBaseModels.ShiftModel import Shift
+from iMES.Model.DataBaseModels.NomenclatureGroupModel import NomenclatureGroup
+from iMES.Model.DataBaseModels.ProductSpecificationModel import ProductSpecification
+
 import json
 
-@app.route('/1CUnlouding/Date=<string:date>/STNumber=<string:stnum>')
-def UnloudingTo1C(date,stnum):
+from iMES.Model.DataBaseModels.ShiftTaskModel import ShiftTask
+
+@app.route('/1CUnlouding/Date=<string:date_time>/STNumber=<string:stnum>')
+def UnloudingTo1C(date_time,stnum):
     # Убираем лишние нули так как в базе номер сменки без нулей
     data = []
     ordinal = ''
@@ -15,105 +29,65 @@ def UnloudingTo1C(date,stnum):
             break
     ordinal = stnum[slc:]
     # Ищем в базе смену в зависимости от даты
-    shift = BaseObjectModel.SQLExecute(f"""
-        SELECT [Oid], Note
-        FROM [MES_Iplast].[dbo].[Shift] WHERE 
-            DATENAME(YEAR, [StartDate]) = DATENAME(YEAR, CAST('{date}' AS datetime)) AND
-            DATENAME(MONTH, [StartDate]) = DATENAME(MONTH,CAST('{date}' AS datetime)) AND
-            DATENAME(DAY, [StartDate]) = DATENAME(DAY, CAST('{date}' AS datetime))
-    """)
+    date_time = date(int(date_time[:-4]),int(date_time[4:-2]),int(date_time[6:]))
+    shift = (db.session.query(Shift.Oid, Shift.Note)
+             .filter(extract('year', Shift.StartDate) == date_time.year)
+             .filter(extract('month', Shift.StartDate) == date_time.month)
+             .filter(extract('day', Shift.StartDate) == date_time.day).all())
     # Если нашли смену то ищем сменные задания с заданным номером и сменой
     if len(shift) > 0:
         full_task_list = []
         if len(shift) == 1:
-            shift_tasks = BaseObjectModel.SQLExecute(f"""
-                SELECT [Oid], 
-                    Shift,
-                    Equipment, 
-                    Product,
-                    Specification,
-                    [ProductCount],
-                    [Cycle],
-                    [Weight],
-                    [SocketCount],
-                    Shift
-                FROM [MES_Iplast].[dbo].[ShiftTask]
-                WHERE Ordinal = {ordinal} AND
-                        Shift = '{shift[0][0]}'
-            """)
+            shift_tasks = (db.session.query(ShiftTask.Oid,
+                                            ShiftTask.Shift,
+                                            ShiftTask.Equipment,
+                                            ShiftTask.Product,
+                                            ShiftTask.Specification,
+                                            ShiftTask.ProductCount,
+                                            ShiftTask.Cycle,
+                                            ShiftTask.Weight,
+                                            ShiftTask.Weight,
+                                            ShiftTask.SocketCount,
+                                            )
+                                            .where(ShiftTask.Ordinal == ordinal)
+                                            .where(ShiftTask.Shift == shift[0][0])
+                                            .all())
             full_task_list = shift_tasks
-        else:
-            shift_tasks1 = BaseObjectModel.SQLExecute(f"""
-                SELECT [Oid], 
-                    Shift,
-                    Equipment, 
-                    Product,
-                    Specification,
-                    [ProductCount],
-                    [Cycle],
-                    [Weight],
-                    [SocketCount],
-                    Shift
-                FROM [MES_Iplast].[dbo].[ShiftTask]
-                WHERE Ordinal = {ordinal} AND
-                        Shift = '{shift[0][0]}'
-            """)
-            shift_tasks2 = BaseObjectModel.SQLExecute(f"""
-                SELECT [Oid], 
-                    Shift,
-                    Equipment, 
-                    Product,
-                    Specification,
-                    [ProductCount],
-                    [Cycle],
-                    [Weight],
-                    [SocketCount],
-                    Shift
-                FROM [MES_Iplast].[dbo].[ShiftTask]
-                WHERE Ordinal = {ordinal} AND
-                        Shift = '{shift[1][0]}'
-            """)
-            full_task_list = shift_tasks1 + shift_tasks2
         # Проходим по каждому сменному заданию и ищем все данные связанные с ним
         pd = []
         count = 0
         for task in full_task_list:
             # Поиск номенклатуры ТПА
-            nomenclature_code = BaseObjectModel.SQLExecute(
-                f"""
-                    SELECT NG.[Name], NG.[Code]
-	                FROM NomenclatureGroup AS NG, Equipment
-                    WHERE Equipment.Oid = '{task[2]}' AND
-                    NG.Oid = Equipment.NomenclatureGroup
-                """
-            )
+            nomenclature_code = \
+                (db.session.query(NomenclatureGroup.Name,
+                                  NomenclatureGroup.Name)
+                                  .select_from(NomenclatureGroup, Equipment)
+                                  .where(Equipment.Oid == task[2])
+                                  .where(NomenclatureGroup.Oid == Equipment.NomenclatureGroup)
+                                  .all())
+                                  
             # Поиск продукта сменки
-            product = BaseObjectModel.SQLExecute(
-                f"""
-                    SELECT [Oid]
-                        ,[Code]
-                        ,[Name]
-                        ,[Article]
-                    FROM [MES_Iplast].[dbo].[Product]
-                    WHERE Oid = '{task[3]}'
-                """
-            )
+            product = (db.session.query(Product.Oid,
+                                       Product.Code,
+                                       Product.Name,
+                                       Product.Article)
+                                       .select_from(Product)
+                                       .where(Product.Oid == task[3]).all())
 
             # Поиск данных по произведенному продукту
-            production_data = BaseObjectModel.SQLExecute(f"""
-                    SELECT [Oid]
-                        ,[ShiftTask]
-                        ,[RigEquipment]
-                        ,[Status]
-                        ,[StartDate]
-                        ,[EndDate]
-                        ,[CountFact]
-                        ,[CycleFact]
-                        ,[WeightFact]
-                        ,[SpecificationFact]
-                    FROM [MES_Iplast].[dbo].[ProductionData] WHERE
-                        ShiftTask = '{task[0]}'
-                """)
+            production_data = (db.session.query(ProductionData.Oid,
+                                               ProductionData.ShiftTask,
+                                               ProductionData.RigEquipment,
+                                               ProductionData.Status,
+                                               ProductionData.StartDate,
+                                               ProductionData.EndDate,
+                                               ProductionData.CountFact,
+                                               ProductionData.CycleFact,
+                                               ProductionData.WeightFact,
+                                               ProductionData.SpecificationFact)
+                                               .select_from(ProductionData)
+                                               .where(ProductionData.ShiftTask == task[0])
+                                               .all())
             
             if len(product) > 0:
                 pass
@@ -121,34 +95,19 @@ def UnloudingTo1C(date,stnum):
                 return f'В сменном задании {task[0]} не указан продукт.'
                 
             if len(nomenclature_code) > 0:
-                spec = BaseObjectModel.SQLExecute(
-                    f"""
-                        SELECT TOP (1000) [Oid]
-                            ,[Code]
-                            ,[Name]
-                            ,[Product]
-                            ,[UseFactor]
-                            ,[IsActive]
-                        FROM [MES_Iplast].[dbo].[ProductSpecification]
-                        WHERE Oid = '{task[4]}'
-                    """
-                )
+                spec = (db.session.query(ProductSpecification.Oid,
+                                         ProductSpecification.Code,
+                                         ProductSpecification.Name,
+                                         ProductSpecification.Product,
+                                         ProductSpecification.UseFactor,
+                                         ProductSpecification.isActive)
+                                         .select_from(ProductSpecification)
+                                         .where(ProductSpecification.Oid == task[4])
+                                         .all())
                 if len(spec) > 0:
                     pass
                 else:
                     return f'В сменном задании {task[0]} неизвестная спецификация.'
-
-                # Получаем наименование смены
-                get_shift = BaseObjectModel.SQLExecute(
-                    f"""
-                    SELECT [Oid]
-                        ,[StartDate]
-                        ,[EndDate]
-                        ,[Note]
-                    FROM [MES_Iplast].[dbo].[Shift] 
-                    WHERE Oid = '{task[9]}'   
-                    """
-                )
 
                 # Вставляем трафарет данных по сменному задания
                 data.append({'oid':nomenclature_code[0][1],
@@ -159,7 +118,7 @@ def UnloudingTo1C(date,stnum):
                              'specification_code': spec[0][1],
                              'plan': str(task[5]),
                              'weight': str(task[7]),
-                             'shift': get_shift[0][3],
+                             'shift': shift[0][1],
                              'cycle': str(task[6]),
                              'production_data': []})
 
@@ -167,65 +126,55 @@ def UnloudingTo1C(date,stnum):
                     # Ищем все данные привязанные к production data
                     for pd in production_data:
                         # Получаем ПФ
-                        rig_equipment = BaseObjectModel.SQLExecute(
-                            f"""
-                                SELECT TOP (1000) [Oid]
-                                    ,[Code]
-                                    ,[Name]
-                                    ,[EquipmentType]
-                                    ,[Area]
-                                    ,[NomenclatureGroup]
-                                    ,[InventoryNumber]
-                                    ,[SyncId]
-                                FROM [MES_Iplast].[dbo].[Equipment]
-                                WHERE Oid = '{pd[2]}'
-                            """
-                        )
+                        rig_equipment = (db.session.query(Equipment.Oid,
+                                                         Equipment.Code,
+                                                         Equipment.Name,
+                                                         Equipment.EquipmentType,
+                                                         Equipment.Area,
+                                                         Equipment.NomenclatureGroup,
+                                                         Equipment.InventoryNumber,
+                                                         Equipment.SyncId)
+                                                         .select_from(Equipment)
+                                                         .where(Equipment.Oid == pd[2])
+                                                         .all())
                         # Получаем фактическую спецификацию
-                        spec_fact = BaseObjectModel.SQLExecute(
-                            f"""
-                                SELECT TOP (1000) [Oid]
-                                    ,[Code]
-                                    ,[Name]
-                                    ,[Product]
-                                    ,[UseFactor]
-                                    ,[IsActive]
-                                FROM [MES_Iplast].[dbo].[ProductSpecification]
-                                WHERE Oid = '{pd[9]}' 
-                            """
-                        )
+                        spec_fact = (db.session.query(ProductSpecification.Oid,
+                                                      ProductSpecification.Code,
+                                                      ProductSpecification.Name,
+                                                      ProductSpecification.Product,
+                                                      ProductSpecification.UseFactor,
+                                                      ProductSpecification.isActive)
+                                                      .select_from(ProductSpecification)
+                                                      .where(ProductSpecification.Oid == pd[9])
+                                                      .all())
                         # Заполняем лист отходов брака
                         wastes_list = []
-                        prod_wastes = BaseObjectModel.SQLExecute(
-                            f"""
-                                SELECT [Oid]
-                                    ,[ProductionData]
-                                    ,[Material]
-                                    ,[Type]
-                                    ,[Weight]
-                                    ,[Count]
-                                    ,[Downtime]
-                                    ,[Note]
-                                    ,[CreateDate]
-                                    ,[Creator]
-                                FROM [MES_Iplast].[dbo].[ProductWaste]
-                                WHERE ProductionData = '{pd[0]}'
-                            """
-                        )
+                        prod_wastes = \
+                            (db.session.query(ProductWaste.Oid,
+                                            ProductWaste.ProductionData,
+                                            ProductWaste.Material,
+                                            ProductWaste.Type,
+                                            ProductWaste.Weight,
+                                            ProductWaste.Count,
+                                            ProductWaste.Downtime,
+                                            ProductWaste.Note,
+                                            ProductWaste.CreateDate,
+                                            ProductWaste.Creator)
+                                            .select_from(ProductWaste)
+                                            .where(ProductWaste.ProductionData == pd[0])
+                                            .all())
+
                         if len(prod_wastes) > 0:
                             for waste in prod_wastes:
                                 if waste[2] != None:
-                                    material_data = BaseObjectModel.SQLExecute(
-                                        f"""
-                                            SELECT TOP (1000) [Oid]
-                                                ,[Code]
-                                                ,[Name]
-                                                ,[Article]
-                                                ,[Type]
-                                            FROM [MES_Iplast].[dbo].[Material]
-                                            WHERE Oid = '{waste[2]}'  
-                                        """
-                                    )
+                                    material_data = (db.session.query(Material.Oid,
+                                                                     Material.Code,
+                                                                     Material.Name,
+                                                                     Material.Article,
+                                                                     Material.Type)
+                                                                     .select_from(Material)
+                                                                     .where(Material.Oid == waste[2])
+                                                                     .all())
                                     if len(material_data) > 0 or waste[2] == None:
                                         typew = ''
                                         if waste[3] == 0:
@@ -255,17 +204,15 @@ def UnloudingTo1C(date,stnum):
                                         return f'Неизвестная запись в [Material]'
                         # Заполняем данные по введёному весу
                         prod_weight_list = []
-                        prod_weight = BaseObjectModel.SQLExecute(
-                            f"""
-                                SELECT [Oid]
-                                    ,[ProductionData]
-                                    ,[Weight]
-                                    ,[CreateDate]
-                                    ,[Creator]
-                                FROM [MES_Iplast].[dbo].[ProductWeight]
-                                WHERE ProductionData = '{pd[0]}'   
-                            """
-                        )
+                        prod_weight = \
+                            (db.session.query(ProductWeight.Oid,
+                                            ProductWeight.ProductionData,
+                                            ProductWeight.CreateDate,
+                                            ProductWeight.CreateDate,
+                                            ProductWeight.Creator)
+                                            .select_from(ProductWeight)
+                                            .where(ProductWeight.ProductionData == pd[0])
+                                            .all())
                         if len(prod_weight) > 0:
                             for weight in prod_weight:
                                 prod_weight_list.append({

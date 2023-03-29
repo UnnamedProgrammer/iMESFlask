@@ -1,56 +1,66 @@
-from iMES import app
+import sqlalchemy
+from iMES import app, db
 from flask import request, redirect
 from iMES import current_tpa
 from iMES import socketio
 from flask_login import login_required, current_user
+from iMES.Model.DataBaseModels.MaterialModel import Material
+from iMES.Model.DataBaseModels.ProductModel import Product
+from iMES.Model.DataBaseModels.ProductWasteModel import ProductWaste
+from iMES.Model.DataBaseModels.ProductionDataModel import ProductionData
+from iMES.Model.DataBaseModels.ShiftTaskModel import ShiftTask
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
-from iMES.Model.SQLManipulator import SQLManipulator
-from iMES import user_dict
+from iMES.functions.rewrite_role import rewrite_role
 import json
 from datetime import datetime
+from iMES.Model.DataBaseModels.DowntimeFailureModel import DowntimeFailure as DF
+from iMES.Model.DataBaseModels.TakenMeasuresModel import TakenMeasures as TM
+from iMES.Model.DataBaseModels.MalfunctionDescriptionModel import MalfunctionDescription as MDesc
+from iMES.Model.DataBaseModels.MalfunctionCauseModel import MalfunctionCause as MCause
+from iMES.Model.DataBaseModels.UserModel import User
+from iMES.Model.DataBaseModels.EmployeeModel import Employee
+from iMES.Model.DataBaseModels.DowntimeTypeModel import DowntimeType
+from iMES.Model.DataBaseModels.ShiftModel import Shift
+
+
 
 # Метод возвращает окно наладчика
-
-
 @app.route('/adjuster')
 @login_required
 def adjuster():
-    if current_user.id != None:
-        user_dict[str(current_user.id)].interface = "Наладчик"
+    rewrite_role('Наладчик')
     return CheckRolesForInterface('Наладчик', 'adjuster/adjuster.html')
 
 # Простои, неполадки и чеклисты
-
-
 @app.route('/adjuster/journal')
 @login_required
 def adjusterJournal():
     ip_addr = request.remote_addr
-    
-    # Получение журнала простоев
-    sql_GetDowntimeJournal = f""" SELECT [DF].[Oid],[DF].[Equipment],
-                                        [DF].[StartDate],
-                                        [DF].[EndDate],
-                                    	[MCause].[Name] AS [Cause],
-                                        [MDesc].[Name] AS [Description],
-                                        [TM].[Name] AS [TakenMeasures],
-                                    	[DF].[Note],[DF].[CreateDate],
-                                        [UserName].[LastName],[UserName].[FirstName],[UserName].[MiddleName]
-                                    FROM [MES_Iplast].[dbo].[DowntimeFailure] AS [DF]
-                                    LEFT JOIN [MES_Iplast].[dbo].[MalfunctionCause] AS [MCause] ON [DF].[MalfunctionCause] = [MCause].[Oid]
-                                    LEFT JOIN [MES_Iplast].[dbo].[MalfunctionDescription] AS [MDesc] ON [DF].[MalfunctionDescription] = [MDesc].[Oid]
-                                    LEFT JOIN [MES_Iplast].[dbo].[TakenMeasures] AS [TM] ON [DF].[TakenMeasures] = [TM].[Oid]
-                                    LEFT JOIN [MES_Iplast].[dbo].[User] AS [User] ON [DF].[Creator] = [User].[Oid]
-                                    LEFT JOIN [MES_Iplast].[dbo].[Employee] AS [UserName] ON [User].[Employee] = [UserName].[Oid]
-                                    WHERE [DF].[Equipment] = '{current_tpa[ip_addr][0]}'
-                                    ORDER BY [StartDate] DESC """
-    downtimeJournal = SQLManipulator.SQLExecute(sql_GetDowntimeJournal)
-    
-    return CheckRolesForInterface('Наладчик', 'adjuster/journal.html', downtimeJournal)
+    df = (db.session.query(DF.Oid,
+                            DF.Equipment,
+                            DF.StartDate,
+                            DF.EndDate,
+                            MCause.Name,
+                            MDesc.Name,
+                            TM.Name,
+                            DF.Note,
+                            DF.CreateDate,
+                            Employee.LastName,
+                            Employee.FirstName,
+                            Employee.MiddleName)
+                            .select_from(DF, Employee, User)
+                            .outerjoin(MCause)
+                            .outerjoin(MDesc)
+                            .outerjoin(TM)
+                            .outerjoin(Employee)
+                            .where(User.Oid == DF.Creator)
+                            .where(DF.Equipment == current_tpa[ip_addr][0])
+                            .order_by(DF.StartDate.desc()))
+
+
+    return CheckRolesForInterface('Наладчик', 'adjuster/journal.html', df)
 
 # Фиксация простоя
-
-
 @app.route('/adjuster/journal/idleEnter')
 @login_required
 def adjusterIdleEnter():
@@ -63,77 +73,97 @@ def adjusterIdleEnter():
     ip_addr = request.remote_addr
         
     downtimeData = [idleOid, start, end, idles]
-    
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
     # Получение типа простоев
-    sql_GetDowntimeType = f""" SELECT [Oid],[Name],[Status],[SyncId]
-                                FROM [MES_Iplast].[dbo].[DowntimeType]
-                                WHERE [Status] = '1' 
-                                ORDER BY [Name] """
-    downtimeType = SQLManipulator.SQLExecute(sql_GetDowntimeType)
+    downtimeType = (db.session.query(DowntimeType.Oid,
+                                    DowntimeType.Name,
+                                    DowntimeType.Status,
+                                    DowntimeType.SyncId)
+                                    .select_from(DowntimeType)
+                                    .where(DowntimeType.Status == 1)
+                                    .order_by(DowntimeType.Name).all())
     
     # Получение справочника причин неисправности
-    sql_GetMalfunctionCause = f""" SELECT [Oid],[Name],[Status]
-                                    FROM [MES_Iplast].[dbo].[MalfunctionCause]
-                                    ORDER BY [Name] """
-    malfunctionCause = SQLManipulator.SQLExecute(sql_GetMalfunctionCause)
+    malfunctionCause = (db.session.query(MCause.Oid,
+                                        MCause.Name,
+                                        MCause.Status)
+                                        .select_from(MCause)
+                                        .order_by(MCause.Name)
+                                        .all())
+
 
     # Получение справочника описаний неисправности
-    sql_GetMalfunctionDescription = f""" SELECT [Oid],[Name],[Status]
-                                            FROM [MES_Iplast].[dbo].[MalfunctionDescription]
-                                            ORDER BY [Name] """
-    malfunctionDescription = SQLManipulator.SQLExecute(sql_GetMalfunctionDescription)
+    malfunctionDescription = (db.session.query(MDesc.Oid, 
+                                               MDesc.Name, 
+                                               MDesc.Status)
+                                               .select_from(MDesc)
+                                               .order_by(MDesc.Name)
+                                               .all())
                                             
     # Получение справочника предпринятых мер
-    sql_GetTakenMeasures = f""" SELECT [Oid],[Name],[Status]
-                                FROM [MES_Iplast].[dbo].[TakenMeasures]
-                                ORDER BY [Name] """
-    takenMeasures = SQLManipulator.SQLExecute(sql_GetTakenMeasures)
+    takenMeasures = (db.session.query(TM.Oid,
+                                     TM.Name,
+                                     TM.Status)
+                                     .select_from(TM)
+                                     .order_by(TM.Name)
+                                     .all())
     
     # Получаем данные о текущем продукте и производственных данных
-    sql_GetCurrentProduct = f"""SELECT DISTINCT ProductionData.Oid, Product.Name 
-                                FROM ShiftTask INNER JOIN
-                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
-                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
-    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+    current_product = (db.session.query(ProductionData.Oid, 
+                                        Product.Name)
+                                        .select_from(ProductionData, Product, ShiftTask)
+                                        .where(ShiftTask.Shift == shift.Oid)
+                                        .where(ShiftTask.Equipment == current_tpa[ip_addr][0])
+                                        .where(Product.Oid == ShiftTask.Product)
+                                        .where(ProductionData.ShiftTask == ShiftTask.Oid)
+                                        .where(ProductionData.Status == 1)
+                                        .all())
 
     # Получаем данные о всех существующих отходах
-    sql_GetAllWastes = f"""SELECT Oid, Name  
-                            FROM Material WHERE Type = 1
-                            ORDER BY [Name] """
-    all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
+    all_wastes = (db.session.query(Material.Oid,
+                                   Material.Name)
+                                   .select_from(Material)
+                                   .order_by(Material.Name)
+                                   .all())
     
     # Получаем уже введенные отходы
-    sql_GetExistingWastes = f""" SELECT [ProductWaste].[Oid], [Material].[Name], [ProductWaste].[Weight], [ProductWaste].[CreateDate]
-                                        FROM [ShiftTask]
-                                        INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                            AND [Shift].[StartDate] <= GETDATE()
-                                            AND [Shift].[EndDate] >= GETDATE()
-                                        INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                            AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                        INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                        INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                        INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
-                                        INNER JOIN [Material] ON [ProductWaste].[Material] = [Material].[Oid]
-                                        WHERE [ProductWaste].[Type] = 0
-                                        AND [ProductWaste].[Downtime] IS NULL"""
-    existing_wastes = SQLManipulator.SQLExecute(sql_GetExistingWastes)
+    existing_wastes = (db.session.query(ProductWaste.Oid, 
+                                        Material.Name,
+                                        ProductWaste.Weight, 
+                                        ProductWaste.CreateDate)
+                                        .select_from(ProductWaste,
+                                                     Material, 
+                                                     ShiftTask, 
+                                                     ProductionData)
+                                        .where(ShiftTask.Shift == shift.Oid)
+                                        .where(ShiftTask.Equipment == current_tpa[ip_addr][0])
+                                        .where(ProductionData.ShiftTask == ShiftTask.Oid)
+                                        .where(ProductionData.Status == 1)
+                                        .where(ProductWaste.ProductionData == ProductionData.Oid)
+                                        .where(ProductWaste.Type == 0)
+                                        .where(Material.Oid == ProductWaste.Material)
+                                        .all()
+                                        )
     
     # Получаем уже введенный брак
-    sql_GetExistingDefect = f""" SELECT [ProductWaste].[Oid], [Product].[Name], [ProductWaste].[Weight], [ProductWaste].[Count], [ProductWaste].[CreateDate]
-                                        FROM [ShiftTask]
-                                        INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                            AND [Shift].[StartDate] <= GETDATE()
-                                            AND [Shift].[EndDate] >= GETDATE()
-                                        INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                            AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                        INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                        INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                        INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
-                                        WHERE [ProductWaste].[Type] = 1
-                                        AND [ProductWaste].[Downtime] IS NULL """
-    existing_defect = SQLManipulator.SQLExecute(sql_GetExistingDefect)
+    existing_defect = (db.session.query(ProductWaste.Oid, 
+                                        Product.Name,
+                                        ProductWaste.Weight, 
+                                        ProductWaste.Count,
+                                        ProductWaste.CreateDate)
+                                        .select_from(ProductWaste, 
+                                                     ShiftTask, 
+                                                     ProductionData,
+                                                     Product)
+                                        .where(ShiftTask.Shift == shift.Oid)
+                                        .where(ShiftTask.Equipment == current_tpa[ip_addr][0])
+                                        .where(ProductionData.ShiftTask == ShiftTask.Oid)
+                                        .where(ProductionData.Status == 1)
+                                        .where(ProductWaste.ProductionData == ProductionData.Oid)
+                                        .where(ProductWaste.Type == 1)
+                                        .where(Product.Oid == ShiftTask.Product)
+                                        .all()
+                                        )
     
     return CheckRolesForInterface('Наладчик', 
                                   'adjuster/idles/idleEnter.html', [
@@ -161,29 +191,29 @@ def idleEnterFixing(data):
     if data['idleEnd'] != '':
         formated_endDate = datetime.strptime(data['idleEnd'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S')
         # Добавление новой записи в DowntimeFailure (зафиксированный простой)
-        SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
-                                        SET [DowntimeType] = '{data['idleType']}',
-                                            [MalfunctionCause] = '{data['idleCause']}',
-                                            [MalfunctionDescription] = '{data['idleDescription']}',
-                                            [TakenMeasures] = '{data['idleTakenMeasures']}',
-                                            [Note] = '{data['idleNote']}',
-                                            [CreateDate] = GETDATE(),
-                                            [Creator] = '{data['creatorOid']}',
-                                            [EndDate] = '{formated_endDate}',
-                                            [ValidClosures] = {validClosures}
-                                        WHERE [Oid] = '{data['idleOid']}' """)
+        downtime_failure = db.session.query(DF).where(DF.Oid == data['idleOid']).one_or_none()
+        if downtime_failure is not None:
+            downtime_failure.DowntimeType = data['idleType']
+            downtime_failure.MalfunctionCause = data['idleCause']
+            downtime_failure.MalfunctionDescription = data['idleDescription']
+            downtime_failure.TakenMeasures = data['idleTakenMeasures']
+            downtime_failure.Note = data['idleNote']
+            downtime_failure.CreateDate = datetime.now()
+            downtime_failure.Creator = current_user.Oid
+            downtime_failure.EndDate = formated_endDate
+            downtime_failure.ValidClosures = validClosures
     else:
-        SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
-                                SET [DowntimeType] = '{data['idleType']}',
-                                    [MalfunctionCause] = '{data['idleCause']}',
-                                    [MalfunctionDescription] = '{data['idleDescription']}',
-                                    [TakenMeasures] = '{data['idleTakenMeasures']}',
-                                    [Note] = '{data['idleNote']}',
-                                    [CreateDate] = GETDATE(),
-                                    [Creator] = '{data['creatorOid']}',
-                                    [EndDate] = NULL,
-                                    [ValidClosures] = {validClosures}
-                                WHERE [Oid] = '{data['idleOid']}' """)
+        downtime_failure = db.session.query(DF).where(DF.Oid == data['idleOid']).one_or_none()
+        if downtime_failure is not None:
+            downtime_failure.DowntimeType = data['idleType']
+            downtime_failure.MalfunctionCause = data['idleCause']
+            downtime_failure.MalfunctionDescription = data['idleDescription']
+            downtime_failure.TakenMeasures = data['idleTakenMeasures']
+            downtime_failure.Note = data['idleNote']
+            downtime_failure.CreateDate = datetime.now()
+            downtime_failure.Creator = current_user.Oid
+            downtime_failure.EndDate = None
+            downtime_failure.ValidClosures = validClosures
     
     # Добавление нового отхода и привязки к простою
     idle_key_list = list(data.keys())
@@ -191,93 +221,119 @@ def idleEnterFixing(data):
         if len(data['newWaste']) != 0:  
             for i in range(len(data['newWaste'])):
                 newWaste = data['newWaste'][i][0].split(',')
-                SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
-                                                    ([ProductionData],[Material],[Type],[Weight],
-                                                    [Downtime],[CreateDate],[Creator])
-                                                VALUES 
-                                                    ('{newWaste[0]}', '{newWaste[1]}', 0, '{newWaste[2]}',
-                                                    '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
-    
+                product_waste = ProductWaste()
+                product_waste.ProductionData = newWaste[0]
+                product_waste.Material = newWaste[1]
+                product_waste.Type = 0
+                product_waste.Weight = newWaste[2]
+                product_waste.Downtime = data['idleOid']
+                product_waste.CreateDate = datetime.now()
+                product_waste.Creator = data['creatorOid']
+                db.session.add(product_waste)
+
     # Добавление нового брака и привязки к простою
     if 'newDefect' in idle_key_list:        
         if len(data['newDefect']) != 0:  
             for i in range(len(data['newDefect'])):
                 newDefect = data['newDefect'][i].split(',')
-                SQLManipulator.SQLExecute(f""" INSERT INTO [MES_Iplast].[dbo].[ProductWaste]
-                                                    ([ProductionData],[Type],[Weight],[Count],
-                                                    [Downtime],[CreateDate],[Creator])
-                                                VALUES 
-                                                    ('{newDefect[0]}', 1, '{newDefect[1]}', '{newDefect[2]}',
-                                                    '{data['idleOid']}', GETDATE(), '{data['creatorOid']}') """)
+                defect = ProductWaste()
+                defect.ProductionData = newDefect[0]
+                defect.Type = 1
+                defect.Weight = newDefect[1]
+                defect.Count = newDefect[2]
+                defect.Downtime = data['idleOid']
+                defect.CreateDate = datetime.now()
+                defect.Creator = data['creatorOid']
+                db.session.add(defect)
 
     # Привязку существующего отхода к простою
     if 'existingWaste' in idle_key_list:
         if len(data['existingWaste']) != 0:
             for i in range(len(data['existingWaste'])):
-                SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]   
-                                                SET [Downtime] = '{data['idleOid']}'
-                                                WHERE [Oid] = '{data['existingWaste'][i]}' """)
+                exists_waste = db.session.query(ProductWaste).where(
+                    ProductWaste.Oid == data['existingWaste'][i]).one_or_none()
+                if exists_waste is not None:
+                    exists_waste.Downtime = data['idleOid']
         
     # Привязку существующего брака к простою
     if 'existingDefect' in idle_key_list:
         if len(data['existingDefect']) != 0:
             for i in range(len(data['existingDefect'])):
-                SQLManipulator.SQLExecute(f""" UPDATE [MES_Iplast].[dbo].[ProductWaste]
-                                                SET [Downtime] = '{data['idleOid']}'
-                                                WHERE [Oid] = '{data['existingDefect'][i]}' """)
+                exists_defect = db.session.query(ProductWaste).where(
+                    ProductWaste.Oid == data['existingDefect'][i]).one_or_none()
+                if exists_defect is not None:
+                    exists_defect.Downtime = data['idleOid']
+
     for idle in idles:
         if idle['Oid'] != data['idleOid']:
-            SQLManipulator.SQLExecute(
-                f"""
-                DELETE FROM DowntimeFailure 
-                    WHERE Oid = '{idle['Oid']}' 
-                """
-            )
+            bad_idle = db.session.query(DF).where(
+                DF.Oid == idle['Oid']).one_or_none()
+            if bad_idle is not None:
+                db.session.delete(bad_idle)
+    db.session.commit()
     socketio.emit("IdleEntered", data=json.dumps({ip_addr: ''}),ensure_ascii=False, indent=4)
 
 @app.route('/adjuster/journal/idleView')
 @login_required
 def adjusterIdleView():
     idleOid = request.args.getlist('oid')
-
-    sql_GetIdleData = f""" SELECT   [DF].[Oid],[DF].[StartDate], [DF].[EndDate], [Type].[Name],
-                                    [Cause].[Name] AS [Cause], [Desc].[Name] AS [Desc], [TakenMeasures].[Name], [Note],                             
-                                    [Employee].[FirstName],[Employee].[LastName],[Employee].[MiddleName],[DF].[ValidClosures]
-                            FROM [MES_Iplast].[dbo].[DowntimeFailure] AS [DF]
-                            LEFT JOIN [MES_Iplast].[dbo].[DowntimeType] AS [Type] ON [DF].[DowntimeType] = [Type].[Oid]
-                            LEFT JOIN [MES_Iplast].[dbo].[MalfunctionCause] AS [Cause] ON [DF].[MalfunctionCause] = [Cause].[Oid]
-                            LEFT JOIN [MES_Iplast].[dbo].[MalfunctionDescription] AS [Desc] ON [DF].[MalfunctionDescription] = [Desc].[Oid]
-                            LEFT JOIN [MES_Iplast].[dbo].[TakenMeasures] AS [TakenMeasures] ON [DF].[TakenMeasures] = [TakenMeasures].[Oid]
-                            LEFT JOIN [MES_Iplast].[dbo].[User] AS [User] ON [DF].[Creator] = [User].[Oid]
-                            LEFT JOIN [MES_Iplast].[dbo].[Employee] AS [Employee] ON [User].[Employee] = [Employee].[Oid]
-                            WHERE [DF].[Oid] = '{idleOid[0]}' """
-    idleData = SQLManipulator.SQLExecute(sql_GetIdleData)
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+    idle_data = (db.session.query(DF.Oid, 
+                                  DF.StartDate, 
+                                  DF.EndDate,
+                                  DowntimeType.Name,
+                                  MCause.Name,
+                                  MDesc.Name,
+                                  TM.Name,
+                                  DF.Note,
+                                  Employee.FirstName,
+                                  Employee.LastName,
+                                  Employee.MiddleName,
+                                  DF.ValidClosures)
+                                  .select_from(DF)
+                                  .where(DF.Oid == idleOid[0])
+                                  .join(DowntimeType)
+                                  .join(MCause)
+                                  .join(MDesc)
+                                  .join(TM)
+                                  .join(User).filter(User.Oid == DF.Creator)
+                                  .join(Employee).filter(User.Employee == Employee.Oid)
+                                  .one_or_none())
+    if idle_data is not None:
+        idle_wastes = (db.session.query(Material.Name, 
+                                        Product.Name,
+                                        ProductWaste.Weight, 
+                                        ProductWaste.Count,
+                                        ProductWaste.CreateDate)
+                                        .select_from(ProductWaste, 
+                                                     ShiftTask, 
+                                                     ProductionData,
+                                                     Product,
+                                                     Material)
+                                        .where(ShiftTask.Shift == shift.Oid)
+                                        .where(ProductionData.ShiftTask == ShiftTask.Oid)
+                                        .where(ProductWaste.ProductionData == ProductionData.Oid)
+                                        .where(Product.Oid == ShiftTask.Product)
+                                        .outerjoin(Material)
+                                        .where(ProductWaste.Downtime == idleOid[0])
+                                        .all()
+                                        )
+        if idle_wastes is None:
+            idle_wastes = []
+    else:
+        return redirect("/adjuster/journal")
     
-    sql_GetIdleWastes = f"""    SELECT [Material].[Name], [Product].[Name], [PW].[Weight], [PW].[Count], [PW].[CreateDate]
-                                FROM [MES_Iplast].[dbo].[ProductWaste] AS [PW]
-                                LEFT JOIN [MES_Iplast].[dbo].[Material] AS [Material] ON [PW].[Material] = [Material].[Oid]
-                                LEFT JOIN [MES_Iplast].[dbo].[ProductionData] AS [PD] ON [PW].[ProductionData] = [PD].[Oid]
-                                LEFT JOIN [MES_Iplast].[dbo].[ShiftTask] AS [ST] ON [PD].[ShiftTask] = [ST].[Oid]
-                                LEFT JOIN [MES_Iplast].[dbo].[Product] AS [Product] ON [ST].[Product] = [Product].[Oid]
-                                WHERE [PW].[Downtime] = '{idleOid[0]}' """
-                                
-    idleWastes = SQLManipulator.SQLExecute(sql_GetIdleWastes)
-    
-    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleView.html', [idleData, idleWastes])
+    return CheckRolesForInterface('Наладчик', 'adjuster/idles/idleView.html', [idle_data, idle_wastes])
 
 @app.route('/adjuster/journal/save_idle')
 @login_required
 def save_idle_comment():
     idleOid = request.args.getlist('oid')[0]
     comment = request.args.getlist('comment')[0]
-    SQLManipulator.SQLExecute(
-        f"""
-            UPDATE [MES_Iplast].[dbo].[DowntimeFailure]
-            SET [Note] = '{comment}'
-            WHERE [Oid] = '{idleOid}'
-    
-        """
-    )
+    idle = db.session.query(DF).where(DF.Oid == idleOid).one_or_none()
+    if idle is not None:
+        idle.Note = comment
+        db.session.commit()
     return redirect('/adjuster/journal')
 
 # Сырье до конца выпуска
@@ -327,26 +383,37 @@ def adjusterRawMaterials():
 @login_required
 def adjusterWasteDefectFix():
     ip_addr = request.remote_addr
-
-    # Получаем данные о текущих отходах и браке
-    sql_GetCurrentProductWaste = f"""   SELECT [Material].[Name] AS [Material], [Product].[Name] AS [Product],[ProductWaste].[Type], [ProductWaste].[Count],
-                                        	[ProductWaste].[Weight], [ProductWaste].[Note], [ProductWaste].[Downtime],
-                                        	[ProductWaste].[CreateDate],[Employee].[LastName],[Employee].[FirstName],
-                                        	[Employee].[MiddleName],  ProductWaste.Oid
-                                        FROM [ShiftTask]
-                                        INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                        	AND [Shift].[StartDate] <= GETDATE() AND [Shift].[EndDate] >= GETDATE()
-                                        INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                        	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                        INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                        INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                        INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
-                                        LEFT JOIN [Material] ON [ProductWaste].[Material] = [Material].[Oid]
-                                        INNER JOIN [User] ON [ProductWaste].[Creator] = [User].[Oid]
-                                        INNER JOIN [Employee] ON [User].[Employee] = [Employee].[Oid]
-                                        ORDER BY [ProductWaste].[CreateDate] DESC """
-                                        
-    current_product_waste = SQLManipulator.SQLExecute(sql_GetCurrentProductWaste)
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+    # Получаем данные о текущих отходах и браке                       
+    current_product_waste = (db.session.query(
+                                            Material.Name,
+                                            Product.Name,
+                                            ProductWaste.Type,
+                                            ProductWaste.Count,
+                                            ProductWaste.Weight,
+                                            ProductWaste.Note,
+                                            ProductWaste.Downtime,
+                                            ProductWaste.CreateDate,
+                                            Employee.LastName,
+                                            Employee.FirstName,
+                                            Employee.MiddleName,
+                                            ProductWaste.Oid)
+                                            .select_from(ProductWaste, 
+                                                         Material, 
+                                                         ShiftTask, 
+                                                         ProductionData, 
+                                                         User, 
+                                                         Employee, 
+                                                         Product)
+                                            .outerjoin(Material)
+                                            .where(ShiftTask.Equipment == current_tpa[ip_addr][0])
+                                            .where(ShiftTask.Shift == shift.Oid)
+                                            .where(ProductionData.ShiftTask == ShiftTask.Oid)
+                                            .where(ProductWaste.ProductionData == ProductionData.Oid)
+                                            .where(Product.Oid == ShiftTask.Product)
+                                            .where(User.Oid == ProductWaste.Creator)
+                                            .where(Employee.Oid == User.Employee)
+                                            .all())
 
     return CheckRolesForInterface('Наладчик', 'adjuster/wasteDefectFix.html', [current_product_waste])
 
@@ -358,9 +425,9 @@ def handle_waste_note_change(data):
     entered_waste_note = str(data[1])
 
     # Обновляем запись отхода или брака в таблице ProductWaste
-    SQLManipulator.SQLExecute(f"""UPDATE ProductWaste
-                                    SET Note = '{entered_waste_note}'
-                                    WHERE Oid = '{selected_waste_oid}'""")
+    waste = db.session.query(ProductWaste).where(ProductWaste.Oid == selected_waste_oid)
+    waste.Note = entered_waste_note
+    db.session.commit()
 
 
 # Сменное задание
@@ -370,8 +437,6 @@ def adjusterShiftTask():
     return CheckRolesForInterface('Наладчик', 'adjuster/ShiftTask.html')
 
 # Фиксация изменений в тех. системе
-
-
 @app.route('/adjuster/techSystem')
 @login_required
 def adjusterTechSystem():

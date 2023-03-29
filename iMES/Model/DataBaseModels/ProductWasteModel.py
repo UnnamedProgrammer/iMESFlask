@@ -13,7 +13,7 @@ class ProductWaste(db.Model):
     Type = db.Column(BIT, nullable=False)
     Weight = db.Column(DECIMAL, nullable=True)
     Count = db.Column(DECIMAL, nullable=True)
-    Downtime = mapped_column(ForeignKey('DowntimeFailure.Oid'), nullable=True)
+    Downtime = mapped_column(ForeignKey('DowntimeFailure.Oid'), server_default=text("NULL"),nullable=True)
     Note = db.Column(db.String(1000), nullable=True)
     CreateDate = db.Column(DATETIME, nullable=False)
     Creator = mapped_column(ForeignKey('User.Oid'), nullable=False)

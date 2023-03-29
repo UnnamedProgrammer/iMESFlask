@@ -1,21 +1,30 @@
-from iMES import app
-from iMES import socketio
-from flask_login import login_required
+from iMES import app, db, socketio, current_tpa
+from flask_login import login_required, current_user
+from iMES.Model.DataBaseModels.EmployeeModel import Employee
+from iMES.Model.DataBaseModels.EquipmentModel import Equipment
+from iMES.Model.DataBaseModels.StickerInfoModel import StickerInfo
 from iMES.functions.CheckRolesForInterface import CheckRolesForInterface
-from iMES.Model.SQLManipulator import SQLManipulator
-from iMES import user_dict
-from iMES import current_tpa
-from flask_login import current_user
 from flask import request
 import json
+from iMES.functions.rewrite_role import rewrite_role
+from datetime import datetime
+
+from iMES.Model.DataBaseModels.ProductWeightModel import ProductWeight
+from iMES.Model.DataBaseModels.ProductModel import Product
+from iMES.Model.DataBaseModels.ProductionDataModel import ProductionData
+from iMES.Model.DataBaseModels.ShiftModel import Shift
+from iMES.Model.DataBaseModels.ShiftTaskModel import ShiftTask
+from iMES.Model.DataBaseModels.UserModel import User
+from iMES.Model.DataBaseModels.ProductWasteModel import ProductWaste
+from iMES.Model.DataBaseModels.MaterialModel import Material
+from iMES.Model.DataBaseModels.DowntimeFailureModel import DowntimeFailure
 
 
 # Отображение окна оператора
 @app.route('/operator')
 @login_required
 def operator():
-    if current_user.id != None:
-        user_dict[str(current_user.id)].interface = "Оператор"
+    rewrite_role('Оператор')
     return CheckRolesForInterface('Оператор', 'operator/operator.html')
 
 
@@ -24,54 +33,73 @@ def operator():
 @login_required
 def tableWeight():
     ip_addr = request.remote_addr
-    # Получаем данные о введенных за смену весов изделия
-    sql_GetProductWeight = f""" SELECT	[Product].[Oid],
-                                		[Product].[Name],
-                                		[ProductWeight].[Weight],
-                                		[ProductWeight].[CreateDate],
-                                		[Employee].[LastName],
-                                		[Employee].[FirstName],
-                                		[Employee].[MiddleName]
-                                FROM [ShiftTask]
-                                INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                	AND [Shift].[StartDate] <= GETDATE()
-                                	AND [Shift].[EndDate] >= GETDATE()
-                                INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                INNER JOIN [ProductWeight] ON [ProductWeight].[ProductionData] = [ProductionData].[Oid]
-                                INNER JOIN [User] ON [ProductWeight].[Creator] = [User].[Oid]
-                                INNER JOIN [Employee] ON [User].[Employee] = [Employee].[Oid]
-                                ORDER BY [CreateDate] """
-    product_weight = SQLManipulator.SQLExecute(sql_GetProductWeight)
+    weight_list = []
+    productions_data = []
+    # Определяем текущую смену
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+    # Находим все сменные задания по ТПА
+    all_st_of_shift = (
+                        db.session.query(ShiftTask)
+                        .where(ShiftTask.Shift == shift.Oid)
+                        .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
+                        .all()
+                       )
+    # Находим данные по производству продукции на данный момент
+    for st in all_st_of_shift:
+        pd = db.session.query(ProductionData).where(ProductionData.ShiftTask == st.Oid).one_or_none()
+        if pd is not None:
+            productions_data.append(pd)
+    
+    if len(productions_data) > 0:
+        # Ищем записи введённого веса закреплённые по данным по производству
+        for pd in productions_data:
+            product_weight = \
+                (db.session.query(
+                    Product.Oid, 
+                    Product.Name, 
+                    ProductWeight.Weight,
+                    ProductWeight.CreateDate,
+                    Employee.LastName,
+                    Employee.FirstName,
+                    Employee.MiddleName)
+                    .select_from(ProductWeight)
+                    .join(User)
+                    .join(Employee)
+                    .join(ProductionData)
+                    .join(ShiftTask)
+                    .join(Product)
+                    .where(ProductWeight.ProductionData == pd.Oid)
+                    .all()
+                )
+            for pw in product_weight:
+                weight_list.append(pw)
 
-    # Проверяем был ли введен вес изделий в текущую смену
-    # Если был, то записываем данные в кортежи в нужном формате для отображения на странице
-    if product_weight:
+    # Формируем массив записей с нужным форматированием значений
+    if weight_list:
         table_info = list()
-        for product_weight_quantity in range(len(product_weight)):
-            table_info.append([product_weight[product_weight_quantity][0],product_weight[product_weight_quantity][1], f'{product_weight[product_weight_quantity][2]:.3f}', str(
-                                product_weight[product_weight_quantity][3].strftime('%d.%m.%Y %H:%M:%S')), 
-                                f'{product_weight[product_weight_quantity][4]} {product_weight[product_weight_quantity][5]} {product_weight[product_weight_quantity][6]}'])
+        for i in range(len(weight_list)):
+            table_info.append([weight_list[i][0],
+                               weight_list[i][1], 
+                               f'{weight_list[i][2]:.3f}', 
+                               str(weight_list[i][3].strftime('%d.%m.%Y %H:%M:%S')), 
+                               f'{weight_list[i][4]} {weight_list[i][5]} {weight_list[i][6]}'])
     # Если за смену вес никто не вводил, то формируем пустой массив
     else:
         table_info = list()
 
     # Получаем данные о текущем продукте и производственных данных
-    sql_GetCurrentProduct = f"""SELECT Product.Name, ProductionData.Oid
-                                        FROM ShiftTask INNER JOIN 
-                                        Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-                                        Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
-                                        Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                        ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
-    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
-    if len(current_product) > 0:
-        pass
-    else:
-        current_product = []
+    products = []
+    for st in all_st_of_shift:
+        product = (db.session.query(Product.Name, ProductionData.Oid)
+                    .where(ProductionData.ShiftTask == st.Oid)
+                    .where(Product.Oid == st.Product)
+                    .one_or_none()
+                  )
+        if product is not None:
+            if product[0] not in products:
+                products.append(product)
 
-    return CheckRolesForInterface('Оператор', 'operator/tableWeight.html', [table_info, current_tpa[ip_addr], current_product])
+    return CheckRolesForInterface('Оператор', 'operator/tableWeight.html', [table_info, current_tpa[ip_addr], products])
 
 # Кнопка ввода веса изделия во всплывающей клавиатуре была нажата
 @socketio.on('product_weight_entering')
@@ -79,44 +107,64 @@ def handle_entered_product_weight(data):
     entered_weight = float(data[0])
     production_data = str(data[1])
 
-    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
-    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
-
     # Создаем запись введенного изделия в таблице ProductWeight
-    sql_PostProductWeight = f"""INSERT INTO ProductWeight (Oid, ProductionData, Weight, CreateDate, Creator)
-                                VALUES (NEWID(), '{production_data}', {entered_weight}, GETDATE(), '{current_User[0][0]}');"""
-    SQLManipulator.SQLExecute(sql_PostProductWeight)
+    prod_w = ProductWeight()
+    prod_w.ProductionData = production_data
+    prod_w.Weight = entered_weight
+    prod_w.CreateDate = datetime.now()
+    prod_w.Creator = current_user.Oid
+    db.session.add(prod_w)
+    db.session.commit()
 
 # Получение данных о введенном весе для печати
 @socketio.on(message='GetWeightSticker')
 def GetWeightSticker(data):
     ip_addr = request.remote_addr
+    weight_list = []
+    productions_data = []
+    # Определяем текущую смену
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+    all_st_of_shift = (
+                    db.session.query(ShiftTask)
+                    .where(ShiftTask.Shift == shift.Oid)
+                    .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
+                    .all()
+                    )
+    # Находим данные по производству продукции на данный момент
+    for st in all_st_of_shift:
+        pd = db.session.query(ProductionData).where(ProductionData.ShiftTask == st.Oid).one_or_none()
+        if pd is not None:
+            productions_data.append(pd)
 
-    sql_GetWeightSticker = f""" SELECT  [Product].[Name],
-                                    	[ProductWeight].[Weight],
-                                    	[ProductWeight].[CreateDate]
-                                    FROM [ShiftTask]
-                                    INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                    	AND [Shift].[StartDate] <= GETDATE()
-                                    	AND [Shift].[EndDate] >= GETDATE()
-                                    INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                    	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                    INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                    INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                    INNER JOIN [ProductWeight] ON [ProductWeight].[ProductionData] = [ProductionData].[Oid]
-                                    ORDER BY [CreateDate] """
-                                
-    weightStickerData = SQLManipulator.SQLExecute(sql_GetWeightSticker)
+    if len(productions_data) > 0:
+        # Ищем записи введённого веса закреплённые по данным по производству
+        for pd in productions_data:
+            product_weight = \
+                (db.session.query(
+                    Product.Name, 
+                    ProductWeight.Weight,
+                    ProductWeight.CreateDate)
+                    .select_from(ProductWeight)
+                    .join(User)
+                    .join(Employee)
+                    .join(ProductionData)
+                    .join(ShiftTask)
+                    .join(Product)
+                    .where(ProductWeight.ProductionData == pd.Oid)
+                    .all()
+                )
+            for pw in product_weight:
+                weight_list.append(pw)
 
     data = {}
     keys = []
-    for weight in weightStickerData:
+    for weight in weight_list:
         if not weight[0] in keys:
             keys.append(weight[0])
             data[weight[0]] = []
                
     for key in keys:
-        for weight in weightStickerData:
+        for weight in weight_list:
             if weight[0] == key:
                 data[key].append([float(weight[1]),weight[2].strftime('%H:%M:%S')])
     
@@ -128,130 +176,185 @@ def GetWeightSticker(data):
 @app.route('/operator/tableWasteDefect')
 def tableWasteDefect():
     ip_addr = request.remote_addr
+    waste_list = []
+    productions_data = []
+    # Определяем текущую смену
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+    # Находим все сменные задания по ТПА
+    all_st_of_shift = (
+                        db.session.query(ShiftTask)
+                        .where(ShiftTask.Shift == shift.Oid)
+                        .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
+                        .all()
+                       )
+    # Находим данные по производству продукции на данный момент
+    for st in all_st_of_shift:
+        pd = db.session.query(ProductionData).where(
+            ProductionData.ShiftTask == st.Oid).where(
+                ProductionData.StartDate != None).one_or_none()
+        if pd is not None:
+            productions_data.append(pd)
+    
+    if len(productions_data) > 0:
+        # Ищем записи введённого брака или отхода закреплённые по данным по производству
+        for pd in productions_data:
+            product_waste = \
+                (db.session.query(
+                    ProductWaste.Material, 
+                    Product.Name, 
+                    ProductWaste.Type,
+                    ProductWaste.Count,
+                    ProductWaste.Weight,
+                    ProductWaste.Note,
+                    ProductWaste.CreateDate,
+                    Employee.LastName,
+                    Employee.FirstName,
+                    Employee.MiddleName)
+                    .select_from(ProductWaste)
+                    .join(User)
+                    .join(Employee)
+                    .join(ProductionData)
+                    .join(ShiftTask)
+                    .join(Product)
+                    .where(ProductWaste.ProductionData == pd.Oid)
+                    .all()
+                )
+            for pw in product_waste:
+                waste_list.append(pw)
 
-    # Получаем данные о текущих отходах и браке
-    sql_GetCurrentProductWaste = f"""   SELECT   [ProductWaste].[Material], [Product].[Name],
-                                                [ProductWaste].[Type], [ProductWaste].[Count],
-                                                [ProductWaste].[Weight],[ProductWaste].[Note],
-                                                [ProductWaste].[CreateDate], [Employee].[LastName],
-                                                [Employee].[FirstName], [Employee].[MiddleName]
-                                        FROM [ShiftTask]
-                                        INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                            AND [Shift].[StartDate] <= GETDATE()
-                                            AND [Shift].[EndDate] >= GETDATE()
-                                        INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                            AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                        INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                        INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                        INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
-                                        INNER JOIN [User] ON [ProductWaste].[Creator] = [User].[Oid]
-                                        INNER JOIN [Employee] ON [User].[Employee] = [Employee].[Oid]
-                                        ORDER BY [ProductWaste].[CreateDate] DESC"""
-    current_product_waste = SQLManipulator.SQLExecute(sql_GetCurrentProductWaste)
+
 
     # Проверяем были ли введены отходы и/или брак в текущую смену
     # Если был, то записываем данные в кортежи в нужном формате для отображения на странице
-    if current_product_waste:
+    current_material = [['']]
+    if waste_list:
         waste_defect_info = list()
 
-        for product_waste_quantity in range(len(current_product_waste)):
+        for i in range(len(waste_list)):
 
-            if current_product_waste[product_waste_quantity][0] != None or current_product_waste[product_waste_quantity][2] == 0:
-                sql_GetCurrentMaterial  = f"""SELECT Name FROM Material WHERE Material.Oid = '{current_product_waste[product_waste_quantity][0]}'"""
-                current_material = SQLManipulator.SQLExecute(sql_GetCurrentMaterial)
-                
-            else:
-                current_material = [['']]
+            if waste_list[i][0] != None or waste_list[i][2] == 0:
+                current_material = db.session.query(Material.Name).where(Material.Oid == waste_list[i][0]).one_or_none()
+                if current_material is None:
+                    current_material = [['']]
 
-
-            waste_defect_info.append([current_product_waste[product_waste_quantity][1], current_product_waste[product_waste_quantity][2],
-                                current_material[0][0], f'{current_product_waste[product_waste_quantity][3]:.0f}' if current_product_waste[product_waste_quantity][3] else '', 
-                                f'{current_product_waste[product_waste_quantity][4]:.3f}', current_product_waste[product_waste_quantity][5] if current_product_waste[product_waste_quantity][5] else '',
-                                str(current_product_waste[product_waste_quantity][6].strftime('%d.%m.%Y %H:%M:%S')), 
-                                f'{current_product_waste[product_waste_quantity][7]} {current_product_waste[product_waste_quantity][8]} {current_product_waste[product_waste_quantity][9]}'])
+            waste_defect_info.append([waste_list[i][1], 
+                                      waste_list[i][2],
+                                      current_material[0],
+                                      f'{waste_list[i][3]:.0f}' if waste_list[i][3] else '',
+                                      f'{waste_list[i][4]:.3f}', waste_list[i][5] if waste_list[i][5] else '',
+                                      str(waste_list[i][6].strftime('%d.%m.%Y %H:%M:%S')),
+                                      f'{waste_list[i][7]} {waste_list[i][8]} {waste_list[i][9]}'
+                                    ])
     # Если за смену вес никто не вводил, то формируем пустой массив
     else:
         waste_defect_info = list()
 
-    # Получаем данные о текущем продукте и производственных данных
-    sql_GetCurrentProduct = f"""SELECT DISTINCT ProductionData.Oid, Product.Name 
-                                FROM ShiftTask INNER JOIN
-                                Shift ON ShiftTask.Shift = Shift.Oid AND Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE() INNER JOIN
-                                Product ON ShiftTask.Product = Product.Oid INNER JOIN
-                                Equipment ON ShiftTask.Equipment = Equipment.Oid AND Equipment.Oid = '{current_tpa[ip_addr][0]}' INNER JOIN
-                                ProductionData ON ShiftTask.Oid = ProductionData.ShiftTask WHERE ProductionData.Status = 1"""
-    current_product = SQLManipulator.SQLExecute(sql_GetCurrentProduct)
+    products = []
+    for st in all_st_of_shift:
+        product = (db.session.query(ProductionData.Oid, Product.Name)
+                    .where(ProductionData.ShiftTask == st.Oid)
+                    .where(Product.Oid == st.Product)
+                    .where(ProductionData.StartDate != None)
+                    .one_or_none()
+                  )
+        if product is not None:
+            if product[0] not in products:
+                products.append(product)
     
     # Получаем данные о всех существующих отходах
-    sql_GetAllWastes = f"""SELECT Oid, Name  
-    FROM Material WHERE Type = 1
-    ORDER BY Name"""
-    all_wastes = SQLManipulator.SQLExecute(sql_GetAllWastes)
+    all_wastes = db.session.query(Material.Oid, Material.Name).where(Material.Type == 1).order_by(Material.Name).all()
 
-    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', [waste_defect_info, current_product, all_wastes])
+    return CheckRolesForInterface('Оператор', 'operator/tableWasteDefect/tableWasteDefect.html', [waste_defect_info, products, all_wastes])
 
 
 # Кнопка ввода веса отходов во всплывающей клавиатуре была нажата
 @socketio.on('product_wastes')
 def handle_entered_product_wastes(data):
+    # Получили данные по отходу из сокета
     production_data = str(data[0])
     material_oid = str(data[1])
     entered_waste_weight = float(data[2])
-
-    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
-    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
-
     # Создаем запись введенного отхода в таблице ProductWaste
-    sql_PostProductWaste = f"""INSERT INTO ProductWaste (Oid, ProductionData, Material, Type, Weight, CreateDate, Creator)
-                                VALUES (NEWID(), '{production_data}', '{material_oid}', 0, {entered_waste_weight}, GETDATE(), '{current_User[0][0]}');"""
-    SQLManipulator.SQLExecute(sql_PostProductWaste)
+    new_pd_waste = ProductWaste()
+    new_pd_waste.ProductionData = production_data
+    new_pd_waste.Material = material_oid
+    new_pd_waste.Type = 0
+    new_pd_waste.Weight = entered_waste_weight
+    new_pd_waste.CreateDate = datetime.now()
+    new_pd_waste.Creator = current_user.Oid
+    db.session.add(new_pd_waste)
+    db.session.commit()
 
 
 # Кнопка ввода брака во всплывающей клавиатуре была нажата
 @socketio.on('product_defect')
 def handle_entered_product_wastes(data):
+    # Получили данные по браку из сокета
     production_data = str(data[0])
     entered_defect_weight = float(data[1])
     entered_defect_count = float(data[2])
 
-    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
-    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
-
-    # Создаем запись введенного отхода в таблице ProductWaste
-    sql_PostProductWaste = f"""INSERT INTO ProductWaste (Oid, ProductionData, Type, Weight, Count, CreateDate, Creator)
-                                VALUES (NEWID(), '{production_data}', 1, {entered_defect_weight}, {entered_defect_count}, GETDATE(), '{current_User[0][0]}');"""
-    SQLManipulator.SQLExecute(sql_PostProductWaste)
+    # Создаем запись введенного брака в таблице ProductWaste
+    new_pd_waste = ProductWaste()
+    new_pd_waste.ProductionData = production_data
+    new_pd_waste.Count = entered_defect_count
+    new_pd_waste.Type = 1
+    new_pd_waste.Weight = entered_defect_weight
+    new_pd_waste.CreateDate = datetime.now()
+    new_pd_waste.Creator = current_user.Oid
+    db.session.add(new_pd_waste)
+    db.session.commit()
 
 # Получение данных о введенных отходах для печати
 @socketio.on(message='GetWasteSticker')
 def GetWasteSticker(data):
     ip_addr = request.remote_addr
+    waste_list = []
+    productions_data = []
+    # Определяем текущую смену
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+    all_st_of_shift = (
+                    db.session.query(ShiftTask)
+                    .where(ShiftTask.Shift == shift.Oid)
+                    .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
+                    .all()
+                    )
+    # Находим данные по производству продукции на данный момент
+    for st in all_st_of_shift:
+        pd = db.session.query(ProductionData).where(ProductionData.ShiftTask == st.Oid).one_or_none()
+        if pd is not None:
+            productions_data.append(pd)
 
-    sql_GetWasteSticker = f""" SELECT [Product].[Name], [ProductWaste].[Weight]
-                                FROM [ShiftTask]
-                                INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                	AND [Shift].[StartDate] <= GETDATE()
-                                	AND [Shift].[EndDate] >= GETDATE()
-                                INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
-                                WHERE [ProductWaste].[Type] = 0
-                                ORDER BY Name """
-                                
-    wasteStickerData = SQLManipulator.SQLExecute(sql_GetWasteSticker)
+    if len(productions_data) > 0:
+        # Ищем записи введённых отходов закреплённые по данным по производству
+        for pd in productions_data:
+            product_weight = \
+                (db.session.query(
+                    Product.Name, 
+                    ProductWaste.Weight)
+                    .select_from(ProductWaste)
+                    .join(User)
+                    .join(Employee)
+                    .join(ProductionData)
+                    .join(ShiftTask)
+                    .join(Product)
+                    .where(ProductWaste.ProductionData == pd.Oid)
+                    .where(ProductWaste.Type == 0)
+                    .all()
+                )
+            for pw in product_weight:
+                waste_list.append(pw)
 
     data = {}
     keys = []
     total = 0
-    for waste in wasteStickerData:
+    for waste in waste_list:
         if not waste[0] in keys:
             keys.append(waste[0])
             data[waste[0]] = []
                
     for key in keys:
-        for waste in wasteStickerData:
+        for waste in waste_list:
             if waste[0] == key:
                 total += float(waste[1])
                 data[key] = [total]
@@ -264,33 +367,54 @@ def GetWasteSticker(data):
 @socketio.on(message='GetDefectSticker')
 def GetDefectSticker(data):
     ip_addr = request.remote_addr
+    waste_list = []
+    productions_data = []
+    # Определяем текущую смену
+    shift = db.session.query(Shift).order_by(Shift.StartDate.desc()).first()
+    all_st_of_shift = (
+                    db.session.query(ShiftTask)
+                    .where(ShiftTask.Shift == shift.Oid)
+                    .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
+                    .all()
+                    )
+    # Находим данные по производству продукции на данный момент
+    for st in all_st_of_shift:
+        pd = db.session.query(ProductionData).where(ProductionData.ShiftTask == st.Oid).one_or_none()
+        if pd is not None:
+            productions_data.append(pd)
 
-    sql_GetDefectSticker = f""" SELECT [Product].[Name], [ProductWaste].[Weight], [ProductWaste].[Count]
-                                FROM [ShiftTask]
-                                INNER JOIN [Shift] ON [ShiftTask].[Shift] = [Shift].[Oid]
-                                	AND [Shift].[StartDate] <= GETDATE()
-                                	AND [Shift].[EndDate] >= GETDATE()
-                                INNER JOIN [Equipment] ON [ShiftTask].[Equipment] = [Equipment].[Oid]
-                                	AND [Equipment].[Oid] = '{current_tpa[ip_addr][0]}'
-                                INNER JOIN [Product] ON [ShiftTask].[Product] = [Product].[Oid]
-                                INNER JOIN [ProductionData] ON [ShiftTask].[Oid] = [ProductionData].[ShiftTask]
-                                INNER JOIN [ProductWaste] ON [ProductionData].[Oid] = [ProductWaste].[ProductionData]
-                                WHERE [ProductWaste].[Type] = 1
-                                ORDER BY Name """
-                                
-    defectStickerData = SQLManipulator.SQLExecute(sql_GetDefectSticker)
+    if len(productions_data) > 0:
+        # Ищем записи введённого брака закреплённые по данным по производству
+        for pd in productions_data:
+            product_weight = \
+                (db.session.query(
+                    Product.Name, 
+                    ProductWaste.Weight,
+                    ProductWaste.Count)
+                    .select_from(ProductWaste)
+                    .join(User)
+                    .join(Employee)
+                    .join(ProductionData)
+                    .join(ShiftTask)
+                    .join(Product)
+                    .where(ProductWaste.ProductionData == pd.Oid)
+                    .where(ProductWaste.Type == 1)
+                    .all()
+                )
+            for pw in product_weight:
+                waste_list.append(pw)
 
     data = {}
     keys = []
     totalWeight = 0
     totalCount = 0
-    for defect in defectStickerData:
+    for defect in waste_list:
         if not defect[0] in keys:
             keys.append(defect[0])
             data[defect[0]] = []
                
     for key in keys:
-        for defect in defectStickerData:
+        for defect in waste_list:
             if defect[0] == key:
                 totalWeight += float(defect[1])
                 totalCount += float(defect[2])
@@ -314,50 +438,40 @@ def OperatorShiftTask():
 def OperatorChangeLabel():
     ip_addr = request.remote_addr
     
-    # Получаем данные о текущих продуктах за смену и название смены
-    current_product_name = SQLManipulator.SQLExecute(
-        f"""
-            SELECT [Product].Name, Product.Oid, [StickerCount]
-            FROM [MES_Iplast].[dbo].[StickerInfo], Product
-            WHERE Product.Oid = [StickerInfo].Product AND
-            [StickerInfo].Equipment = '{current_tpa[ip_addr][2].tpa}'
-        """
-    )
+    current_product_name = [(db.session.query(Product.Name, 
+                                            Product.Oid, 
+                                            StickerInfo.StickerCount
+                                            ).where(Product.Oid == StickerInfo.Product)
+                                             .where(StickerInfo.Equipment == current_tpa[ip_addr][2].tpa)).one_or_none()]
     current_product = []
-    if len(current_product_name) > 0:
+    if current_product_name is not None:
         pass
     else:
         current_product_name = [(' ', ' ', ' ')]
     with open('st.json', 'r', encoding='utf-8-sig') as file_json:
         json_file = json.load(file_json)[0]
-        if current_tpa[ip_addr][2].WorkCenter == "":
-            for task in json_file['Order']:
-                if (((task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter) or
-                    (task['oid'] == current_tpa[ip_addr][2].TpaNomenclatureCode)) and
-                    (current_tpa[ip_addr][2].TpaNomenclatureCode != "")):
-                    current_tpa[ip_addr][2].WorkCenter = task['WorkCenter']
-                    break
-
         for task in json_file['Order']:
             if (((task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter) or
                 (task['oid'] == current_tpa[ip_addr][2].TpaNomenclatureCode)) and
                 (current_tpa[ip_addr][2].TpaNomenclatureCode != "")):
-                product = SQLManipulator.SQLExecute(f"""
-                    SELECT Oid, Name FROM Product WHERE Code = '{task["ProductCode"]}'
-                """)
-                if len(product) > 0:
-                    current_product.append(list(product[0]))
+                current_tpa[ip_addr][2].WorkCenter = task['WorkCenter']
+                break
+        for task in json_file['Order']:
+            if ((task['WorkCenter'] == current_tpa[ip_addr][2].WorkCenter) or
+                (task['oid'] == current_tpa[ip_addr][2].TpaNomenclatureCode)):
+                product = (db.session.query(
+                    Product.Oid, Product.Name).select_from(Product)
+                                              .where(Product.Code == task["ProductCode"])
+                                              .one_or_none())
+                if product is not None:
+                    current_product.append(list(product))
         file_json.close()
     current_product_duplicate = [] 
     for i in range(0, len(current_product)):
         if current_product[i] not in current_product_duplicate:
             current_product_duplicate.append(current_product[i])
     current_product = current_product_duplicate
-    # Получаем данные о текущей смене
-    sql_GetCurrentShift = f"""SELECT Note FROM Shift WHERE Shift.StartDate <= GETDATE() AND Shift.EndDate >= GETDATE()"""
-    current_shift = SQLManipulator.SQLExecute(sql_GetCurrentShift)
-
-    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html', [current_product, current_shift[0][0], current_product_name])
+    return CheckRolesForInterface('Оператор', 'operator/changeLabel.html', [current_product, current_product_name])
 
 
 # Кнопка сохранить на странице изменение этикетки была нажата
@@ -367,20 +481,27 @@ def handle_sticker_info_change(data):
 
     entered_product = str(data[0])
     entered_sticker_count = int(data[1])
-
-    sql_GetCurrentUser = f"""SELECT [User].Oid FROM [User] WHERE [User].CardNumber = '{current_user.CardNumber}'"""
-    current_User = SQLManipulator.SQLExecute(sql_GetCurrentUser)
-
+    stinfo_is_instance = False
     # Проверяем, существует ли запись текущей ТПА в таблице StickerInfo
-    if SQLManipulator.SQLExecute(f"SELECT Equipment FROM StickerInfo WHERE Equipment = '{current_tpa[ip_addr][0]}'"):
+    sticker_info = db.session.query(StickerInfo).where(StickerInfo.Equipment == current_tpa[ip_addr][0]).one_or_none()
+    if sticker_info != None:
+        stinfo_is_instance = current_tpa[ip_addr][0] == str(sticker_info.Equipment).upper()
+    if stinfo_is_instance:
         # Обновляем запись этикетки в таблице StickerInfo
-        SQLManipulator.SQLExecute(f"""UPDATE StickerInfo
-                                        SET Product = '{entered_product}', StickerCount = '{entered_sticker_count}'
-                                        WHERE Equipment = '{current_tpa[ip_addr][0]}'""")
+        sticker_info.Product = entered_product
+        sticker_info.StickerCount = entered_sticker_count
+        sticker_info.Equipment = current_tpa[ip_addr][0]
+        db.session.commit()
     else:
         # Создаем запись введенной этикетки в таблице StickerInfo
-        SQLManipulator.SQLExecute(f"""INSERT INTO StickerInfo (Oid, Equipment, Product, StickerCount, CreateDate, Creator)
-                                    VALUES (NEWID(), '{current_tpa[ip_addr][0]}', '{entered_product}', {entered_sticker_count}, GETDATE(), '{current_User[0][0]}');""")
+        new_sticker_info = StickerInfo()
+        new_sticker_info.Equipment = current_tpa[ip_addr][0]
+        new_sticker_info.Product = entered_product
+        new_sticker_info.StickerCount = entered_sticker_count
+        new_sticker_info.CreateDate = datetime.now()
+        new_sticker_info.Creator = current_user.Oid
+        db.session.add(new_sticker_info)
+        db.session.commit()
 
 
 # Схема упаковки

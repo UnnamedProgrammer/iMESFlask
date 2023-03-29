@@ -1,99 +1,35 @@
-from iMES import app
-from flask import request, redirect, render_template
-from flask_login import login_required, current_user, logout_user
-from iMES.Model.SQLManipulator import SQLManipulator
-from iMES import current_tpa, user_dict
+from iMES import app, db
+from flask import request, redirect
+from flask_login import login_required, current_user
+from iMES.Model.DataBaseModels.LastSavedRoleModel import LastSavedRole
+from iMES.Model.DataBaseModels.SavedRoleModel import SavedRole
+from iMES.Model.DataBaseModels.DeviceModel import Device
+
+
+
 # Процедура кнопки "Выход с сохранением"
 # Закрепляет пользователя за выбранной ролью
-
-
 @app.route('/exitwithsave')
 @login_required
 def ExitWithSave():
-    ip_addr = request.remote_addr  # Получение IP-адресса пользователя
-    current_tpa[ip_addr][2].data_from_shifttask()
-    sql = f"""
-    SELECT Interface.[Name]
-    FROM [MES_Iplast].[dbo].[Relation_UserRole], [User],[Role],Interface,Relation_RoleInterface
-    WHERE [User].CardNumber = '{current_user.CardNumber}' AND 
-        [Relation_UserRole].[User] = [User].Oid AND
-        [Relation_UserRole].[Role] = [Role].Oid AND
-        [Role].Oid = Relation_RoleInterface.[Role] AND
-        Relation_RoleInterface.Interface = Interface.Oid
-    """
-    terminal = request.remote_addr
-    sqlUserInterfaces = []
-    sqlUserInterfaces = SQLManipulator.SQLExecute(sql)
-    Interfaces = []
-    for Interface in sqlUserInterfaces:
-        Interfaces.append(Interface[0])
-    
-    if current_user.interface in Interfaces:
-        sql = f"""
-                DECLARE @newrole uniqueidentifier
-                DECLARE @oldrole uniqueidentifier
-                DECLARE @user uniqueidentifier
-                DECLARE @savedrole uniqueidentifier
-                DECLARE @device uniqueidentifier
-                DECLARE @olduser uniqueidentifier
-                DECLARE @newsavedrole uniqueidentifier
-                /* Новая роль пользователя */
-                SET @newrole = (SELECT Role.Oid FROM Role WHERE Role.Name = '{current_user.interface}')
-                /* Сам пользователь */
-                SET @user = (SELECT [User].Oid FROM [User] WHERE [User].UserName = '{current_user.username}')
-                /* Устройство на котором работает пользователь */
-                SET @device = (SELECT [Device].Oid FROM [Device] WHERE DeviceId = '{terminal}')
-                /*Ищем последнюю сохранённую роль пользователя*/
-                SET @savedrole = (
-                    SELECT SavedRole.Oid
-                    FROM SavedRole 
-                    WHERE SavedRole.Device = @device AND SavedRole.[Role] = @newrole
-                )
-                IF @savedrole IS NULL
-                BEGIN
-                    DELETE FROM LastSavedRole WHERE LastSavedRole.Device = @device AND 
-                    LastSavedRole.SavedRole = (SELECT SavedRole.Oid 
-                                            FROM SavedRole 
-                                            WHERE SavedRole.[User] = @user AND 
-                                                    SavedRole.Device = @device)
-                    DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
-                    INSERT INTO SavedRole (Oid,[User],[Role],Device) VALUES (NEWID(),@user,@newrole,@device)
-                    SET @newsavedrole = (SELECT SavedRole.Oid 
-                                        FROM SavedRole 
-                                        WHERE SavedRole.[User] = @user AND 
-                                            SavedRole.[Role] = @newrole AND 
-                                            SavedRole.Device = @device)
-                    INSERT INTO LastSavedRole (Device,SavedRole) VALUES (@device,@newsavedrole)
-                    RETURN
-                END
-                IF @savedrole IS NOT NULL
-                BEGIN
-                    DELETE FROM LastSavedRole WHERE LastSavedRole.Device = @device AND 
-                    LastSavedRole.SavedRole = (SELECT SavedRole.Oid 
-                                            FROM SavedRole 
-                                            WHERE SavedRole.[User] = @user AND 
-                                                    SavedRole.Device = @device)
-                    DELETE FROM SavedRole WHERE SavedRole.[User] = @user AND SavedRole.Device = @device
-                    DELETE FROM LastSavedRole WHERE LastSavedRole.SavedRole = @savedrole
-                    DELETE FROM SavedRole WHERE SavedRole.[Role] = @newrole AND 
-                                                SavedRole.Device = @device
-                    INSERT INTO SavedRole (Oid,[User],[Role],Device) VALUES (NEWID(),@user,@newrole,@device)
-                    SET @newsavedrole = (SELECT SavedRole.Oid 
-                                        FROM SavedRole 
-                                        WHERE SavedRole.[User] = @user AND 
-                                            SavedRole.[Role] = @newrole AND 
-                                            SavedRole.Device = @device)
-                    INSERT INTO LastSavedRole (Device,SavedRole) VALUES (@device,@newsavedrole)
-                    RETURN
-                END
-            """
-        SQLManipulator.SQLExecute(sql)
-    else:
-        return render_template('Show_error.html', error="Недостаточно прав для данного интерфейса", ret='/menu',current_tpa=current_tpa[ip_addr])
-    if current_user.id != None:
-        user_dict.pop(str(current_user.id))      
-        logout_user()
-        return redirect('/')
-    else:
-        error = """Попытка выхода из сесии пользователя из другой вкладки что запрещено."""
-        return render_template('Show_error.html', error=error, ret='/menu',current_tpa=current_tpa[ip_addr])
+    ip_addr = request.remote_addr
+    old_last_save_role = db.session.query(LastSavedRole).where(
+            LastSavedRole.Device == db.session.query(Device.Oid).where(
+                Device.DeviceId == ip_addr
+        ).one_or_none()[0]
+    ).one_or_none()
+    if old_last_save_role == None:
+        last_saved_role = LastSavedRole()
+        last_saved_role.Device = db.session.query(Device.Oid).where(
+            Device.DeviceId == ip_addr
+        ).one_or_none()[0]
+        last_saved_role.SavedRole = db.session.query(SavedRole.Oid).where(
+            SavedRole.User == current_user.Oid
+        ).where(
+            SavedRole.Device == db.session.query(Device.Oid).where(
+                Device.DeviceId == ip_addr
+            ).one_or_none()[0]
+        ).one_or_none()[0]
+        db.session.add(last_saved_role)
+        db.session.commit()
+    return redirect("/")

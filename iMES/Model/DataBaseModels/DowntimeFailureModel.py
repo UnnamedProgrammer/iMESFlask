@@ -3,7 +3,7 @@ from sqlalchemy.dialects.mssql import UNIQUEIDENTIFIER, DATETIME, INTEGER
 from sqlalchemy import text, ForeignKey
 from sqlalchemy.orm import mapped_column
 
-class DowntimeFailure():
+class DowntimeFailure(db.Model):
     __tablename__ = "DowntimeFailure"
     Oid = db.Column(UNIQUEIDENTIFIER, primary_key=True, server_default=text("newid()"), nullable=False)
     Equipment = mapped_column(ForeignKey('Equipment.Oid'), nullable=False)
@@ -16,4 +16,4 @@ class DowntimeFailure():
     Note = db.Column(db.String(1000), nullable=True)
     CreateDate = db.Column(DATETIME, nullable=False)
     Creator = mapped_column(ForeignKey('User.Oid'), nullable=True)
-    ValidClousers = db.Column(INTEGER, nullable=True)
+    ValidClosures = db.Column(INTEGER, nullable=True)

@@ -48,8 +48,8 @@
                         </div>
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Наладчик</span>
-                            <input class="idle-data" type="hidden" data-data="{{ current_user.id }}">
-                            <input type="text" class="form-control form-control_idle" value="{{ current_user.name }}" placeholder="Ф.И.О Наладчика" readonly>
+                            <input class="idle-data" type="hidden" data-data="{{ current_user.Oid }}">
+                            <input type="text" class="form-control form-control_idle" value="{{ current_user.get_name() }}" placeholder="Ф.И.О Наладчика" readonly>
                         </div>
                     </div>
                     <div class="input-group mb-2">

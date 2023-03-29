@@ -1,11 +1,16 @@
-from iMES import app
+from iMES import app, db
 from iMES import socketio
 from flask import render_template, request
 from iMES import current_tpa,TpaList
-from iMES.Model.SQLManipulator import SQLManipulator
+from iMES.Model.DataBaseModels.EquipmentModel import Equipment
+from iMES.Model.DataBaseModels.EquipmentTypeModel import EquipmentType
+from iMES.Model.DataBaseModels.ProductionDataModel import ProductionData
+from iMES.Model.DataBaseModels.RFIDClosureDataModel import RFIDClosureData
+from iMES.Model.DataBaseModels.RFIDEquipmentBindingModel import RFIDEquipmentBinding
+from iMES.Model.DataBaseModels.RFIDEquipmentModel import RFIDEquipment
 from flask_login import login_required
 import datetime, json
-from iMES import ProductDataMonitoring
+from iMES.daemons import ProductDataMonitoring
 
 
 @app.route("/bindPressForms")
@@ -14,12 +19,11 @@ def bindPressForms():
     ip_addr = request.remote_addr
     device_tpa = TpaList[ip_addr]
     # Вытаскиваем Oid и названия существующих пресс-форм
-    sql_GetPressForms = """SELECT Equipment.Oid, Equipment.Name
-                                                FROM Equipment 
-                                                INNER JOIN EquipmentType on Equipment.EquipmentType = EquipmentType.Oid 
-                                                WHERE EquipmentType.Name = 'Пресс-форма' 
-                                                ORDER BY Equipment.Name"""
-    press_forms = SQLManipulator.SQLExecute(sql_GetPressForms)
+    press_forms = (db.session.query(Equipment.Oid, Equipment.Name)
+                         .select_from(Equipment)
+                         .join(EquipmentType).filter(EquipmentType.Oid == Equipment.EquipmentType)
+                         .where(EquipmentType.Name == 'Пресс-форма')
+                         .order_by(Equipment.Name).all())
     current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
     current_tpa[ip_addr][2].Check_pressform()
     return render_template("/bind_press_form/bind_press_form.html", device_tpa=device_tpa, current_tpa=current_tpa[ip_addr], press_forms=press_forms)
@@ -32,29 +36,33 @@ def handle_selected_press_forms(data):
 
     if current_tpa[ip_addr][2].controller != 'Empty':
         # Вытаскиваем Oid метки из последнего смыкания контроллера
-        sql_GetLabelOid = f"""SELECT TOP (1) [Label]
-                                            FROM [MES_Iplast].[dbo].[RFIDClosureData] 
-                                            WHERE Controller='{current_tpa[ip_addr][2].controller}' 
-                                            ORDER BY Date DESC"""
-        label = SQLManipulator.SQLExecute(sql_GetLabelOid)
+        label = (db.session.query(RFIDClosureData.Label)
+                 .select_from(RFIDClosureData)
+                 .where(RFIDClosureData.Controller == current_tpa[ip_addr][2].controller)
+                 .order_by(RFIDClosureData.Date.desc())
+                 .first())
 
         # Проверяем создана ли привязка метки к прессофрме
-        control_label_binding = SQLManipulator.SQLExecute(f"""
-            SELECT [Oid]
-            FROM [MES_Iplast].[dbo].[RFIDEquipmentBinding] 
-            WHERE RFIDEquipment = '{label[0][0]}'
-        """)
+        control_label_binding = (db.session.query(RFIDEquipmentBinding.Oid)
+                                 .select_from(RFIDEquipmentBinding)
+                                 .where(RFIDEquipmentBinding.RFIDEquipment == label[0])
+                                 .all())
         if len(control_label_binding) > 0:
             # Ищем старую запись по Oid метки из последнего смыкания и перезаписываем значение на Oid новой метки
-            SQLManipulator.SQLExecute(f"""UPDATE RFIDEquipmentBinding
-                                            SET Equipment = '{selected_press_form}'
-                                            WHERE RFIDEquipment = '{label[0][0]}'""")
+            old_label_REB = db.session.query(RFIDEquipmentBinding).where(RFIDEquipmentBinding.RFIDEquipment == label[0]).one_or_none()
+            if old_label_REB is not None:
+                old_label_REB.Equipment = selected_press_form
+                db.session.commit()
         else:
             # Создаём новую привязку метки и прессформы
-            SQLManipulator.SQLExecute(f"""
-                INSERT INTO [RFIDEquipmentBinding] (Oid,RFIDEquipment,Equipment,InstallDate,RemoveDate,State)
-                VALUES (NEWID(),'{label[0][0]}','{selected_press_form}',GETDATE(),NULL,1)
-            """)
+            new_REB = RFIDEquipmentBinding()
+            new_REB.RFIDEquipment = label[0]
+            new_REB.Equipment = selected_press_form
+            new_REB.InstallDate = datetime.datetime.now()
+            new_REB.RemoveDate = None
+            new_REB.State = 1
+            db.session.add(new_REB)
+            db.session.commit()
     
     else:
         app.logger.critical(f"[{datetime.datetime.now()}] Нет привязки контроллера к ТПА ({current_tpa[ip_addr][2].tpa})")
@@ -64,9 +72,8 @@ def handle_selected_press_forms(data):
             ProductDataMonitoring.tpalist[i][3]['ShiftTask'] = []
             for shift_task in copy_shift_task:
                 try:
-                    ProductDataMonitoring.SQLExecute(f"""
-                        DELETE FROM ProductionData WHERE ShiftTask = '{shift_task[0]}'
-                    """)
+                    db.session.query(ProductionData).where(ProductionData.ShiftTask == shift_task[0]).delete()
+                    db.session.commit()
                 except:
                     pass
             break

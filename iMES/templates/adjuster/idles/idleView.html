@@ -19,8 +19,8 @@
     {% set downtimeData = somedata[0] %}
     {% set downtimeWastes = somedata[1] %}
 
-    {% if downtimeData[0][2] != None %}
-        {% set idleTime = downtimeData[0][2] - downtimeData[0][1] %}
+    {% if downtimeData[2] != None %}
+        {% set idleTime = downtimeData[2] - downtimeData[1] %}
     {% endif %}
 
     <div class="notice notice-error" style="display: none;">
@@ -29,7 +29,7 @@
     <div class="view">
         <div class="view-header"> ФИКСАЦИЯ ПРОСТОЯ </div>
         <div class="view-body_idleEnter">
-            <input type="hidden" id="idleOid" value="{{downtimeData[0][0]}}">
+            <input type="hidden" id="idleOid" value="{{downtimeData[0]}}">
             <form action="" class="idle-form" id="idleEnterForm">
                 <div class="idle-form__body mt-2">
                     <div class="row">
@@ -39,32 +39,32 @@
                         </div>
                         <div class="input-group mb-2 input-group_double">
                             <span class="input-group-text input-group-text_idle input-group-text_green">Наладчик</span>
-                            <input type="text" class="form-control form-control_idle" value="{{ downtimeData[0][9] }} {{ downtimeData[0][8] }} {{ downtimeData[0][10] }}" placeholder="Ф.И.О Наладчика" readonly>
+                            <input type="text" class="form-control form-control_idle" value="{{ downtimeData[9] }} {{ downtimeData[8] }} {{ downtimeData[10] }}" placeholder="Ф.И.О Наладчика" readonly>
                         </div>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Тип простоя</span> 
-                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][3] }}" readonly>
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[3] }}" readonly>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Причина неисправности</span> 
-                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][4] }}" readonly>
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[4] }}" readonly>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Описание неисправности</span>
-                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][5] }}" readonly>  
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[5] }}" readonly>  
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Предпринятые меры</span>
-                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[0][6] }}" readonly>
+                        <input type="text" class="form-control form-control_idle idle-data" value="{{ downtimeData[6] }}" readonly>
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Комментарий</span>
-                        <input type="text" class="form-control form-control_idle idle-data use-keyboard-input" value="{{ downtimeData[0][7] }}" readonly id="comment">
+                        <input type="text" class="form-control form-control_idle idle-data use-keyboard-input" value="{{ downtimeData[7] }}" readonly id="comment">
                     </div>
                     <div class="input-group mb-2">
                         <span class="input-group-text input-group-text_idle input-group-text_blue">Годные смыкания</span>
-                        <input type="text" class="form-control form-control_idle idle-data" id="idleValidClousersData" value="{% if downtimeData[0][11] == None %} {{ 0 }} {% else %} {{ downtimeData[0][11] }} {% endif %}" placeholder="Введите годные смыкания...">
+                        <input type="text" class="form-control form-control_idle idle-data" id="idleValidClousersData" value="{% if downtimeData[11] == None %} {{ 0 }} {% else %} {{ downtimeData[11] }} {% endif %}" placeholder="Введите годные смыкания...">
                     </div>
                     <div class="idle-form__body_waste mt-4">
                         <div class="idle_enteredData px-3 mt-1 jsScroll">  
