@@ -22,7 +22,7 @@ class TpaErrorsChecker():
         self.current_downtime_oids: list = []
         self.system_user = (db.session.query(User.Oid).where(User.UserName == 'mes.system').one_or_none())
         if self.system_user is not None:
-            pass
+            self.system_user = self.system_user[0]
         else:
             self.system_user = None
         self.error_string_const = "УКАЖИТЕ ПРИЧИНУ ПРОСТОЯ."
