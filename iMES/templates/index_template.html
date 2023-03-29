@@ -23,7 +23,7 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
     </script>
-    <input type="hidden" id="current_user" value="{{ current_user.get_name() }}">
+    <input type="hidden" id="current_user" value="{% if current_user.is_authenticated %} {{ current_user.get_name() }} {% endif %}">
     {% block navbar %} {% endblock %}
     <div class="notice notice-error" style="display: none;">
         Ошибка!
