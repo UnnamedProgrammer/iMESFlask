@@ -23,11 +23,11 @@ if (not os.path.exists('log/')):
 file_log = logging.FileHandler(
     "log/"+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log",encoding='cp1251')
 console_out = logging.StreamHandler()
-logging.basicConfig(handlers=(file_log,), level=logging.INFO)
+logging.basicConfig(handlers=(file_log,), level=logging.ERROR)
 
 try:
     log = logging.getLogger('werkzeug')
-    log.setLevel(logging.INFO)
+    log.setLevel(logging.ERROR)
 except:
     pass
 
