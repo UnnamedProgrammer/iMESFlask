@@ -102,7 +102,7 @@ def update_tpa(tpa, tpadata):
     tpadata.append(
         {
             'TpaOid': tpa[2].tpa,
-            'Name': tpa['Name'],
+            'Name': tpa[1],
             'EamState': None,
             'MesState': state,
             'PressForm': pressform,
