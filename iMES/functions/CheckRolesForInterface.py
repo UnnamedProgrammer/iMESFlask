@@ -6,6 +6,7 @@ from iMES import current_tpa
 from iMES.Model.DataBaseModels.Relation_RoleInterfaceModel import Relation_RoleInterface
 from iMES.Model.DataBaseModels.InterfaceModel import Interface
 from iMES.Model.DataBaseModels.RoleModel import Role
+from iMES.functions.device_tpa import device_tpa
 
 # Метод предназначенный для проверки доступных интерфейсов в зависимости от роли пользователя
 def CheckRolesForInterface(RequiredInterface, DirectPageTemplate, somedata=""):
@@ -22,6 +23,7 @@ def CheckRolesForInterface(RequiredInterface, DirectPageTemplate, somedata=""):
         if interface is not None:
             available_interfaces.append(interface.Name)
     if RequiredInterface in available_interfaces:
-        return render_template(f"{DirectPageTemplate}", device_tpa=TpaList[ip_addr], current_tpa=current_tpa[ip_addr], somedata=somedata)
+        device_tpas = device_tpa(ip_addr)
+        return render_template(f"{DirectPageTemplate}", device_tpa=device_tpas, current_tpa=current_tpa[ip_addr], somedata=somedata)
     else:
         return render_template('Show_error.html', error="Недостаточно прав для данного интерфейса", ret='/', current_tpa=current_tpa[ip_addr])

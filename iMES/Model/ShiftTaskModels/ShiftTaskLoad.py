@@ -489,8 +489,8 @@ class ShiftTaskLoader():
                                                               .where(NomenclatureGroup.Code == EP['NomenclatureGroupCode'])
                                                               .where(Equipment.NomenclatureGroup == NomenclatureGroup.Oid)
                                                               .where(Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D')
-                                                              .all[0][0])
-                        rig_equipment_oid = (db.session.query(Equipment.Oid).where(Equipment.Code == ep["EquipmentPerformance"]).all()[0][0])
+                                                              .all[0])
+                        rig_equipment_oid = (db.session.query(Equipment.Oid).where(Equipment.Code == ep["EquipmentPerformance"]).all()[0])
                         total_socket_count = ep["TotalSocketCount"]
 
                         finded_ep = (db.session.query(EquipmentPerformance.Oid)

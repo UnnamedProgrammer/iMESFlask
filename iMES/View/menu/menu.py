@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from iMES import current_tpa
 from iMES import TpaList
 from iMES.functions.redirect_by_role import redirect_by_role
-
+from iMES.functions.device_tpa import device_tpa
 # Метод отображения меню либо редиректа в зависимости от роли
 
 
@@ -13,11 +13,11 @@ from iMES.functions.redirect_by_role import redirect_by_role
 def menu():
     # Редиректим согласно роли
     ip_addr = request.remote_addr
-    device_tpa = TpaList[ip_addr]
+    device_tpas = device_tpa(ip_addr)
     current_user.get_roles(ip_addr)
     if current_user.Roles['SavedRoles'] is not None:
         return redirect_by_role(current_user.Roles, current_tpa[ip_addr])
     else:
         return render_template("menu.html",
-                            device_tpa=device_tpa,
+                            device_tpa=device_tpas,
                             current_tpa=current_tpa[request.remote_addr])

@@ -5,7 +5,7 @@ from iMES.Model.DataBaseModels.DeviceModel import Device
 from iMES.Model.DataBaseModels.EquipmentModel import Equipment
 from iMES.Model.DataBaseModels.Relation_DeviceEquipmentModel import Relation_DeviceEquipment
 from iMES.Model.DataBaseModels.RFIDEquipmentBindingModel import RFIDEquipmentBinding
-from iMES import app, db, TpaList, current_tpa, tpasresultapi, tpasapi
+from iMES import app, db, TpaList, tpasresultapi
 
 from time import sleep
 from threading import Thread
@@ -25,39 +25,29 @@ with app.app_context():
 # Проход по всем ТПА, задание начальных значений, и присвоение
 # класса-контроллера для ТПА
 with app.app_context():
-    for device in Devices:
-        with app.app_context():
-            tpas = Equipment.query.where(
-                Relation_DeviceEquipment.Device == device.Oid).where(
-                    Equipment.Oid == Relation_DeviceEquipment.Equipment).all()
-            tpasresult = []
-            for tpa in tpas:
-                controller = TpaController(app,tpa.Oid, db)
-                tpasresult.append([str(tpa.Oid), tpa.Name, controller, False])
-
-            TpaList[device.DeviceId] = tpasresult
-            current_tpa[device.DeviceId] = TpaList[device.DeviceId][0]
-
-    # Создание списка ТПА для API mes-ns
-        tpasapi = (db.session.query(Equipment)
+    with app.app_context():
+        tpas = (db.session.query(Equipment)
                                     .select_from(Equipment, RFIDEquipmentBinding)
                                     .where(Equipment.NomenclatureGroup != None)
                                     .where(Equipment.Area == 'A0DCF91A-6196-4BDE-8541-B76FBCB9F7AC')
                                     .where(Equipment.EquipmentType == 'CC019258-D8D7-4286-B2CD-706FA0A2DC9D')
                                     .where(RFIDEquipmentBinding.Equipment == Equipment.Oid)
                                     .all())
+        tpasresult = []
+        for tpa in tpas:
+            controller = TpaController(app,tpa.Oid, db)
+            TpaList.append([str(tpa.Oid), tpa.Name, controller, False])
 
-    for tpa in tpasapi:
-        controller = TpaController(app,str(tpa.Oid).upper(), db)
-        tpasresultapi.append([str(tpa.Oid), tpa.Name, controller, False])
+        for tpa in tpas:
+            controller = TpaController(app,str(tpa.Oid).upper(), db)
+            tpasresultapi.append([str(tpa.Oid), tpa.Name, controller, False])
 
 def UpdateTpa():
     while True:
-        for ip in TpaList.keys():
-            for tpa in TpaList[ip]:
-                tpa[2].Check_Downtime(tpa[0])
-                tpa[2].update_pressform()
-                tpa[2].data_from_shifttask()
+        for tpa in TpaList:
+            tpa[2].Check_Downtime(tpa[0])
+            tpa[2].update_pressform()
+            tpa[2].data_from_shifttask()
         sleep(30)
 
 def UpdateTpaMESNS():

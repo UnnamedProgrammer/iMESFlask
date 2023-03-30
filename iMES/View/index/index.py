@@ -14,6 +14,7 @@ from iMES.Model.DataBaseModels.ShiftModel import Shift
 from iMES.Model.DataBaseModels.ShiftTaskModel import ShiftTask
 from iMES.Model.DataBaseModels.StickerInfoModel import StickerInfo
 from iMES.functions.redirect_by_role import redirect_by_role
+from iMES.functions.device_tpa import device_tpa
 import json
 from datetime import datetime, timedelta
 import urllib3
@@ -31,34 +32,35 @@ urllib3.disable_warnings()
 def index():
     ip_addr = request.remote_addr  # Получение IP-адресса пользователя
     # Проверяем нахожиться ли клиент в списке с привязанными к нему ТПА
-    device_tpa = {}
-    if ip_addr in TpaList.keys():
-        # Выгружаем список привязанных ТПА к клиенту
-        device_tpa = TpaList[ip_addr]
+    device_tpas = None
+    # Выгружаем список привязанных ТПА к клиенту
+    device_tpas = device_tpa(ip_addr)
 
-        # Запрос определяющий тип устройства клиента из бд, веб или терминал
-        device_type = db.session.query(DeviceType).where(
-            Device.DeviceId == ip_addr).where(
-                DeviceType.Oid == Device.DeviceType).one_or_none()
+    # Запрос определяющий тип устройства клиента из бд, веб или терминал
+    device_type = db.session.query(DeviceType).where(
+        Device.DeviceId == ip_addr).where(
+            DeviceType.Oid == Device.DeviceType).one_or_none()
 
-        # Если устройство является веб то находим пользователя привязаннаго за устройством
-        # И автоматически авторизуем его по наименованию устройства
-        if device_type is not None:
-            if device_type.Name == 'Веб':
-                if not current_user.is_authenticated:        
-                    usr = db.session.query(User).where(
-                        Device.DeviceId == ip_addr).where(
-                            User.UserName == Device.Name).one_or_none()
-                    usr.get_roles(ip_addr)
-                    if usr is not None:
-                        login_user(usr)
-                    else:
-                        pass
-        else:
-            return "Undefinded device, access denied."
+    # Если устройство является веб то находим пользователя привязаннаго за устройством
+    # И автоматически авторизуем его по наименованию устройства
+    if device_type is not None:
+        if device_type.Name == 'Веб':
+            if not current_user.is_authenticated:        
+                usr = db.session.query(User).where(
+                    Device.DeviceId == ip_addr).where(
+                        User.UserName == Device.Name).one_or_none()
+                usr.get_roles(ip_addr)
+                if usr is not None:
+                    login_user(usr)
+                else:
+                    pass
+    else:
+        return "Undefinded device, access denied."
+    if current_tpa == None or current_tpa == {}:
+        current_tpa[ip_addr] = device_tpas[0]
     # Рендерим страницу
     return render_template("index.html",
-                           device_tpa=device_tpa,
+                           device_tpa=device_tpas,
                            current_tpa=current_tpa[ip_addr])
 
 
@@ -67,7 +69,7 @@ def index():
 def ChangeTPA():
     ip_addr = request.remote_addr
     need_tpa = request.args.getlist('oid')[0]
-    for tpa in TpaList[ip_addr]:
+    for tpa in TpaList:
         current = str(tpa[0])
         if current == need_tpa:
             current_tpa[ip_addr] = tpa
@@ -83,215 +85,216 @@ def GetGraphData(data):
     plan =[]
     trend = []
     # Начало и конец смены
-    if ((current_tpa[ip_addr][2].shift_oid != '') and 
-        (current_tpa[ip_addr][2].tpa != '') and
-        (current_tpa[ip_addr][2].shift_oid != '')):
-        ShiftInfo = (db.session.query(ShiftTask.Oid,
-                                     Shift.StartDate,
-                                     Shift.EndDate,
-                                     ShiftTask.ProductCount,
-                                     ShiftTask.Cycle,
-                                     ShiftTask.Shift,
-                                     ShiftTask.Product)
-                                     .select_from(ShiftTask, Shift)
-                                     .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
-                                     .where(ShiftTask.Shift == current_tpa[ip_addr][2].shift_oid)
-                                     .where(Shift.Oid == ShiftTask.Shift)
-                                     .all()
-                                     )
-        try:
-            if (len(ShiftInfo) > 0):
-                StartShift = ShiftInfo[0][1]
-                EndShift = ShiftInfo[0][2]
+    if ip_addr in current_tpa.keys():
+        if ((current_tpa[ip_addr][2].shift_oid != '') and 
+            (current_tpa[ip_addr][2].tpa != '') and
+            (current_tpa[ip_addr][2].shift_oid != '')):
+            ShiftInfo = (db.session.query(ShiftTask.Oid,
+                                        Shift.StartDate,
+                                        Shift.EndDate,
+                                        ShiftTask.ProductCount,
+                                        ShiftTask.Cycle,
+                                        ShiftTask.Shift,
+                                        ShiftTask.Product)
+                                        .select_from(ShiftTask, Shift)
+                                        .where(ShiftTask.Equipment == current_tpa[ip_addr][2].tpa)
+                                        .where(ShiftTask.Shift == current_tpa[ip_addr][2].shift_oid)
+                                        .where(Shift.Oid == ShiftTask.Shift)
+                                        .all()
+                                        )
+            try:
+                if (len(ShiftInfo) > 0):
+                    StartShift = ShiftInfo[0][1]
+                    EndShift = ShiftInfo[0][2]
 
-                # Вытягиваем возможные сменные задания
-                shift_tasks = (db.session.query(ShiftTask.ProductCount,
-                                                ShiftTask.Cycle,
-                                                ShiftTask.Product,
-                                                ShiftTask.Specification,
-                                                ShiftTask.SocketCount)
-                                                .select_from(ShiftTask)
-                                                .where(ShiftTask.Equipment == current_tpa[ip_addr][0])
-                                                .where(ShiftTask.Shift == current_tpa[ip_addr][2].shift_oid)
-                                                .all())
-                # Определяем очередь сменных заданий
-                task_queue = []
-                pressform = ProductDataMonitoring.GetTpaPressFrom(
-                    current_tpa[ip_addr][0])
-                equipment_performance = ProductDataMonitoring.GetEquipmentPerformance(
-                    current_tpa[ip_addr][0], pressform)
-                if equipment_performance == None:
-                    total_socket_count = shift_tasks[0][4]
-                else:
-                    total_socket_count = equipment_performance[4]
-
-                insert_flag = False
-                for i in range(0, len(shift_tasks)):
-                    insert_flag = False
-                    empty_slots = total_socket_count
-                    if len(task_queue) == 0:
-                        if shift_tasks[i][4] <= total_socket_count:
-                            task_queue.append([shift_tasks[i]])
-                        continue
+                    # Вытягиваем возможные сменные задания
+                    shift_tasks = (db.session.query(ShiftTask.ProductCount,
+                                                    ShiftTask.Cycle,
+                                                    ShiftTask.Product,
+                                                    ShiftTask.Specification,
+                                                    ShiftTask.SocketCount)
+                                                    .select_from(ShiftTask)
+                                                    .where(ShiftTask.Equipment == current_tpa[ip_addr][0])
+                                                    .where(ShiftTask.Shift == current_tpa[ip_addr][2].shift_oid)
+                                                    .all())
+                    # Определяем очередь сменных заданий
+                    task_queue = []
+                    pressform = ProductDataMonitoring.GetTpaPressFrom(
+                        current_tpa[ip_addr][0])
+                    equipment_performance = ProductDataMonitoring.GetEquipmentPerformance(
+                        current_tpa[ip_addr][0], pressform)
+                    if equipment_performance == None:
+                        total_socket_count = shift_tasks[0][4]
                     else:
-                        for task in task_queue:
-                            if len(task) == 1:
-                                if ((shift_tasks[i][0] == task[0][0]) and
-                                    (shift_tasks[i][1] == task[0][1]) and
-                                    (shift_tasks[i][2] == task[0][2]) and
-                                    (shift_tasks[i][4] == task[0][4]) and
-                                    (empty_slots != 0) and 
-                                    (task[0][4] != total_socket_count)):
-                                    if (shift_tasks[i][4] <= empty_slots):
-                                        empty_slots -= int(shift_tasks[i][4])
-                                        task.append(shift_tasks[i])
-                                        insert_flag = True
-                                    break
-                        if insert_flag == False:
+                        total_socket_count = equipment_performance[4]
+
+                    insert_flag = False
+                    for i in range(0, len(shift_tasks)):
+                        insert_flag = False
+                        empty_slots = total_socket_count
+                        if len(task_queue) == 0:
                             if shift_tasks[i][4] <= total_socket_count:
                                 task_queue.append([shift_tasks[i]])
+                            continue
+                        else:
+                            for task in task_queue:
+                                if len(task) == 1:
+                                    if ((shift_tasks[i][0] == task[0][0]) and
+                                        (shift_tasks[i][1] == task[0][1]) and
+                                        (shift_tasks[i][2] == task[0][2]) and
+                                        (shift_tasks[i][4] == task[0][4]) and
+                                        (empty_slots != 0) and 
+                                        (task[0][4] != total_socket_count)):
+                                        if (shift_tasks[i][4] <= empty_slots):
+                                            empty_slots -= int(shift_tasks[i][4])
+                                            task.append(shift_tasks[i])
+                                            insert_flag = True
+                                        break
+                            if insert_flag == False:
+                                if shift_tasks[i][4] <= total_socket_count:
+                                    task_queue.append([shift_tasks[i]])
 
-                # Масив занимаемого времени выполнения сменных заданий           
-                time_to_every_task = []
+                    # Масив занимаемого времени выполнения сменных заданий           
+                    time_to_every_task = []
 
-                # Время окончания сменного задания
-                task_start = (db.session.query(Shift.StartDate)
-                                .order_by(Shift.StartDate.desc()).first())
-                if len(task_start) > 0:
-                    task_start = task_start[0]
+                    # Время окончания сменного задания
+                    task_start = (db.session.query(Shift.StartDate)
+                                    .order_by(Shift.StartDate.desc()).first())
+                    if len(task_start) > 0:
+                        task_start = task_start[0]
 
-                #Вычисляем время затрачиваемое на каждое сменное задание
-                start = task_start
-                for task in task_queue:
-                    one_cycle = timedelta(seconds=task[0][1])
-                    end = None
-                    for i in range(0, int(task[0][0])):
-                        task_start += one_cycle
-                        end = task_start
-                    time_to_every_task.append([start, end, task[0][4]])
-                    start = end
+                    #Вычисляем время затрачиваемое на каждое сменное задание
+                    start = task_start
+                    for task in task_queue:
+                        one_cycle = timedelta(seconds=task[0][1])
+                        end = None
+                        for i in range(0, int(task[0][0])):
+                            task_start += one_cycle
+                            end = task_start
+                        time_to_every_task.append([start, end, task[0][4]])
+                        start = end
+                        
+                    # Формирование плана
+                    FromStartDate = StartShift # начало смены
+                    # Начальная точка графика
+                    plan.append({"y": '0', "x": FromStartDate.strftime(
+                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
                     
-                # Формирование плана
-                FromStartDate = StartShift # начало смены
-                # Начальная точка графика
-                plan.append({"y": '0', "x": FromStartDate.strftime(
-                    "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                
-                # Флаг выхода из цикла когда сумма даты и дельты превышает конец
-                cycle_exit_flag = False
-                # План последнего сменного задания
-                last_plan = 0
-                # Счетчик смыканий
-                count = 0
-                for task in task_queue:
-                    # Цикл на одно смыкание
-                    plan_delta = timedelta(seconds=task[0][1])
-                    sockets = 0
-                    if len(task) > 0:
-                        for tk in task:
-                            sockets += tk[4]
-                    else:
-                        sockets = task[4]
-                    # Формируем точки складывая дельту и дату после каждого смыкания
-                    for plan_clouser in range(last_plan, last_plan + task[0][0]):
-                        count += 1
-                        FromStartDate += plan_delta
-                        plan.append({"y": plan_clouser, "x": FromStartDate.strftime(
-                            "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                        if EndShift <= FromStartDate: 
-                            cycle_exit_flag = True                  
-                            break
-                    if cycle_exit_flag:
-                        # Убераем то что вошло в ночную смену
-                        if (EndShift < FromStartDate):
-                            plan = plan[:-1]
-                            plan[len(plan)-1]['x'] = EndShift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                            plan[len(plan)-1]['y'] = count
-                        break 
-                    last_plan = last_plan + task[0][0] 
-                
-                # Получаем совершённые смыкания
-                clousers = (db.session.query(RFIDClosureData.Oid,
-                                            RFIDClosureData.Controller,
-                                            RFIDClosureData.Label,
-                                            RFIDClosureData.Date,
-                                            RFIDClosureData.Cycle,
-                                            RFIDClosureData.Status,
-                                            Shift.Note)
-                                            .select_from(RFIDClosureData, Shift)
-                                            .where(RFIDClosureData.Controller == \
-                                                db.session.query(RFIDEquipmentBinding.RFIDEquipment)
-                                                                    .select_from(RFIDEquipmentBinding)
-                                                                    .where(RFIDEquipmentBinding.Equipment == current_tpa[ip_addr][2].tpa).one_or_none()[0])
-                                            .where(Shift.Oid == db.session.query(Shift.Oid).order_by(Shift.StartDate.desc()).first()[0])
-                                            .where(RFIDClosureData.Date >= Shift.StartDate)
-                                            .where(RFIDClosureData.Date <= Shift.EndDate)
-                                            .where(RFIDClosureData.Status == 1)
-                                            .order_by(RFIDClosureData.Date.asc())
-                                            .all())
-                # Получаем временные промежутки простоев и годные смыкания
-                idles_db = (db.session.query(DowntimeFailure.Oid,
-                                            DowntimeFailure.StartDate,
-                                            DowntimeFailure.EndDate,
-                                            DowntimeFailure.ValidClosures)
-                                            .select_from(DowntimeFailure, Shift)
-                                            .where(DowntimeFailure.Equipment == current_tpa[ip_addr][2].tpa)
-                                            .where(DowntimeFailure.EndDate is not None)
-                                            .where(Shift.Oid == \
-                                                db.session.query(Shift.Oid).select_from(Shift).order_by(Shift.StartDate.desc()).first()[0])
-                                            .where(DowntimeFailure.StartDate >= Shift.StartDate)
-                                            .all())
-                idle_catch = False
-                checked_idles = []
-                trend.append({"y": '0', "x": StartShift.strftime(
-                    "%Y-%m-%d %H:%M:%S.%f")[:-3]})
-                if len(clousers) > 0:
-                    clousers = tuple(clousers)
+                    # Флаг выхода из цикла когда сумма даты и дельты превышает конец
+                    cycle_exit_flag = False
+                    # План последнего сменного задания
+                    last_plan = 0
+                    # Счетчик смыканий
                     count = 0
-                    # Перебираем простои если есть вхождение смыкания в простой
-                    # То после конца простоя указываем годные
-                    if len(idles_db) > 0:
-                        for close in clousers:
-                            idle_catch = False
-                            for idle in idles_db:
-                                if idle[0] not in checked_idles:
-                                    if StartShift <= idle[1] and idle[1] <= EndShift:
-                                        if close[3] >= idle[1]:
-                                            if idle[3] != None:                                      
-                                                count += int(idle[3])*current_tpa[
-                                                    ip_addr][2].socket_count
-                                                trend.append({"x":str(close[3].strftime(
-                                                    "%Y-%m-%d %H:%M:%S.%f"))[:-3],
-                                                    "y":count})
-                                                idle_catch = True
-                                                checked_idles.append(idle[0])
-                                            else:
-                                                count += 0
-                                                trend.append({"x":str(close[3].strftime(
-                                                    "%Y-%m-%d %H:%M:%S.%f"))[:-3],
-                                                    "y":count})
-                                                idle_catch = True
-                                                checked_idles.append(idle[0]) 
-                            if idle_catch != True:
-                                count += 1*current_tpa[ip_addr][2].socket_count
-                                trend.append({"x":str(close[3].strftime(
-                                    "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y":count})
-                    else:
-                        for close in clousers:
-                            for task_time in time_to_every_task:
-                                if task_time[0] <= close[3] <= task_time[1]:
-                                    count += 1 * task_time[2]
-                                    trend.append({"x": str(close[3].strftime(
-                                        "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y": count})
-                                    continue
-            socketio.emit('receiveTrendPlanData',
-                            data=json.dumps({ip_addr:
-                                            {'plan':plan,
-                                            'trend':trend}},
-                                            ensure_ascii=False,
-                                            indent=4))
-        except Exception as err:
-            app.logger.error(f"[{datetime.now()}] <GetGraphData> {err}")
+                    for task in task_queue:
+                        # Цикл на одно смыкание
+                        plan_delta = timedelta(seconds=task[0][1])
+                        sockets = 0
+                        if len(task) > 0:
+                            for tk in task:
+                                sockets += tk[4]
+                        else:
+                            sockets = task[4]
+                        # Формируем точки складывая дельту и дату после каждого смыкания
+                        for plan_clouser in range(last_plan, last_plan + task[0][0]):
+                            count += 1
+                            FromStartDate += plan_delta
+                            plan.append({"y": plan_clouser, "x": FromStartDate.strftime(
+                                "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+                            if EndShift <= FromStartDate: 
+                                cycle_exit_flag = True                  
+                                break
+                        if cycle_exit_flag:
+                            # Убераем то что вошло в ночную смену
+                            if (EndShift < FromStartDate):
+                                plan = plan[:-1]
+                                plan[len(plan)-1]['x'] = EndShift.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                                plan[len(plan)-1]['y'] = count
+                            break 
+                        last_plan = last_plan + task[0][0] 
+                    
+                    # Получаем совершённые смыкания
+                    clousers = (db.session.query(RFIDClosureData.Oid,
+                                                RFIDClosureData.Controller,
+                                                RFIDClosureData.Label,
+                                                RFIDClosureData.Date,
+                                                RFIDClosureData.Cycle,
+                                                RFIDClosureData.Status,
+                                                Shift.Note)
+                                                .select_from(RFIDClosureData, Shift)
+                                                .where(RFIDClosureData.Controller == \
+                                                    db.session.query(RFIDEquipmentBinding.RFIDEquipment)
+                                                                        .select_from(RFIDEquipmentBinding)
+                                                                        .where(RFIDEquipmentBinding.Equipment == current_tpa[ip_addr][2].tpa).one_or_none()[0])
+                                                .where(Shift.Oid == db.session.query(Shift.Oid).order_by(Shift.StartDate.desc()).first()[0])
+                                                .where(RFIDClosureData.Date >= Shift.StartDate)
+                                                .where(RFIDClosureData.Date <= Shift.EndDate)
+                                                .where(RFIDClosureData.Status == 1)
+                                                .order_by(RFIDClosureData.Date.asc())
+                                                .all())
+                    # Получаем временные промежутки простоев и годные смыкания
+                    idles_db = (db.session.query(DowntimeFailure.Oid,
+                                                DowntimeFailure.StartDate,
+                                                DowntimeFailure.EndDate,
+                                                DowntimeFailure.ValidClosures)
+                                                .select_from(DowntimeFailure, Shift)
+                                                .where(DowntimeFailure.Equipment == current_tpa[ip_addr][2].tpa)
+                                                .where(DowntimeFailure.EndDate is not None)
+                                                .where(Shift.Oid == \
+                                                    db.session.query(Shift.Oid).select_from(Shift).order_by(Shift.StartDate.desc()).first()[0])
+                                                .where(DowntimeFailure.StartDate >= Shift.StartDate)
+                                                .all())
+                    idle_catch = False
+                    checked_idles = []
+                    trend.append({"y": '0', "x": StartShift.strftime(
+                        "%Y-%m-%d %H:%M:%S.%f")[:-3]})
+                    if len(clousers) > 0:
+                        clousers = tuple(clousers)
+                        count = 0
+                        # Перебираем простои если есть вхождение смыкания в простой
+                        # То после конца простоя указываем годные
+                        if len(idles_db) > 0:
+                            for close in clousers:
+                                idle_catch = False
+                                for idle in idles_db:
+                                    if idle[0] not in checked_idles:
+                                        if StartShift <= idle[1] and idle[1] <= EndShift:
+                                            if close[3] >= idle[1]:
+                                                if idle[3] != None:                                      
+                                                    count += int(idle[3])*current_tpa[
+                                                        ip_addr][2].socket_count
+                                                    trend.append({"x":str(close[3].strftime(
+                                                        "%Y-%m-%d %H:%M:%S.%f"))[:-3],
+                                                        "y":count})
+                                                    idle_catch = True
+                                                    checked_idles.append(idle[0])
+                                                else:
+                                                    count += 0
+                                                    trend.append({"x":str(close[3].strftime(
+                                                        "%Y-%m-%d %H:%M:%S.%f"))[:-3],
+                                                        "y":count})
+                                                    idle_catch = True
+                                                    checked_idles.append(idle[0]) 
+                                if idle_catch != True:
+                                    count += 1*current_tpa[ip_addr][2].socket_count
+                                    trend.append({"x":str(close[3].strftime(
+                                        "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y":count})
+                        else:
+                            for close in clousers:
+                                for task_time in time_to_every_task:
+                                    if task_time[0] <= close[3] <= task_time[1]:
+                                        count += 1 * task_time[2]
+                                        trend.append({"x": str(close[3].strftime(
+                                            "%Y-%m-%d %H:%M:%S.%f"))[:-3], "y": count})
+                                        continue
+                socketio.emit('receiveTrendPlanData',
+                                data=json.dumps({ip_addr:
+                                                {'plan':plan,
+                                                'trend':trend}},
+                                                ensure_ascii=False,
+                                                indent=4))
+            except Exception as err:
+                app.logger.error(f"[{datetime.now()}] <GetGraphData> {err}")
 
 # Метод создания пользователя для сессии при прикладываении пропуска.
 # Отправляет устройству на котором прикладывается пропуск команду
@@ -414,43 +417,44 @@ def socket_connected(data):
 def UpdateMainWindowData(data):
     ip_addr = request.remote_addr
     errors = []
-    if current_tpa[ip_addr][2].shift != '':
-        shift = current_tpa[ip_addr][2].shift.split('(')[0][:-1]
-    else:
-        shift = ''
-    if len(current_tpa[ip_addr][2].errors) > 0:
-        errors = current_tpa[ip_addr][2].errors
-    try:
-        for tpa in TpaList[ip_addr]:
-            if tpa[0] == current_tpa[ip_addr][0]:
-                current_tpa[ip_addr] = tpa
-        MWData = {
-            ip_addr: {
-                "PF": str(current_tpa[ip_addr][2].pressform),
-                "Product": current_tpa[ip_addr][2].product,
-                "Plan": current_tpa[ip_addr][2].production_plan,
-                "Fact": current_tpa[ip_addr][2].product_fact,
-                "PlanCycle": str(current_tpa[ip_addr][2].cycle),
-                "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
-                "PlanWeight": current_tpa[ip_addr][2].plan_weight,
-                "AverageWeight": current_tpa[ip_addr][2].average_weight,
-                "Shift": str(shift),
-                "Wastes": current_tpa[ip_addr][2].wastes,
-                "Defectives": current_tpa[ip_addr][2].defectives,
-                "Errors": errors
-            },
-            'Reason': ""
-        }
-        if data['data'] == "AfterSwitchPF":
-            MWData['Reason'] = "AfterSwitchPF"
-            socketio.emit("GetMainWindowData", data=json.dumps(
-                MWData, ensure_ascii=False, indent=4))
+    if ip_addr in current_tpa.keys():
+        if current_tpa[ip_addr][2].shift != '':
+            shift = current_tpa[ip_addr][2].shift.split('(')[0][:-1]
         else:
-            socketio.emit("GetMainWindowData", data=json.dumps(
-                MWData, ensure_ascii=False, indent=4))
-    except Exception as error:
-        app.logger.error(f"[{datetime.now()}] <UpdateMainWindowData> {error}")
-        pass
+            shift = ''
+        if len(current_tpa[ip_addr][2].errors) > 0:
+            errors = current_tpa[ip_addr][2].errors
+        try:
+            for tpa in TpaList:
+                if str(tpa[0]) == current_tpa[ip_addr][0]:
+                    current_tpa[ip_addr] = tpa
+            MWData = {
+                ip_addr: {
+                    "PF": str(current_tpa[ip_addr][2].pressform),
+                    "Product": current_tpa[ip_addr][2].product,
+                    "Plan": current_tpa[ip_addr][2].production_plan,
+                    "Fact": current_tpa[ip_addr][2].product_fact,
+                    "PlanCycle": str(current_tpa[ip_addr][2].cycle),
+                    "FactCycle": str(current_tpa[ip_addr][2].cycle_fact),
+                    "PlanWeight": current_tpa[ip_addr][2].plan_weight,
+                    "AverageWeight": current_tpa[ip_addr][2].average_weight,
+                    "Shift": str(shift),
+                    "Wastes": current_tpa[ip_addr][2].wastes,
+                    "Defectives": current_tpa[ip_addr][2].defectives,
+                    "Errors": errors
+                },
+                'Reason': ""
+            }
+            if data['data'] == "AfterSwitchPF":
+                MWData['Reason'] = "AfterSwitchPF"
+                socketio.emit("GetMainWindowData", data=json.dumps(
+                    MWData, ensure_ascii=False, indent=4))
+            else:
+                socketio.emit("GetMainWindowData", data=json.dumps(
+                    MWData, ensure_ascii=False, indent=4))
+        except Exception as error:
+            app.logger.error(f"[{datetime.now()}] <UpdateMainWindowData> {error}")
+            pass
 
 
 @socketio.on(message="GetExecutePlan")
@@ -479,13 +483,14 @@ def GetExecutePlan(data):
 def UpTubsStatus(data):
     ip_addr = request.remote_addr
     active_tpa = []
-    current_machine = current_tpa[ip_addr][0]
-    tub_dict = {"Active":active_tpa,"CurrentTpa":str(current_machine)}
-    for tpa in TpaList[ip_addr]:
-        tpa[3] = tpa[2].Check_Downtime(tpa[0])
-        if tpa[3] == True:
-            active_tpa.append(str(tpa[0]))
-    socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
+    if ip_addr in current_tpa.keys():
+        current_machine = current_tpa[ip_addr][0]
+        tub_dict = {"Active":active_tpa,"CurrentTpa":str(current_machine)}
+        for tpa in TpaList:
+            tpa[3] = tpa[2].Check_Downtime(tpa[0])
+            if tpa[3] == True:
+                active_tpa.append(str(tpa[0]))
+        socketio.emit("TubsStatus", data=json.dumps({ip_addr: tub_dict}),ensure_ascii=False, indent=4)
     
 @socketio.on(message='GetStickerInfo')
 def GetStickerInfo(data):

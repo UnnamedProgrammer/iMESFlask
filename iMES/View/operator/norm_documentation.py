@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 from iMES.Model.DirectumInterationModule import DirectumIntegration
 from iMES.Model.DataBaseModels.DocumentReadStatusModel import DocumentReadStatus
 from iMES.Model.DataBaseModels.DocumentationModel import Documentation
+from iMES.functions.device_tpa import device_tpa
 
 @app.route("/NormDocumentation")
 @login_required
@@ -27,11 +28,14 @@ def Norm_Documentation():
             Directum.DirectumGetDocument(doc_link_modify, "normative_documetation")
             doc_names.append(doc_name)
             doc_links.append(f"/NormDocumentation/id={doc_link_modify}")
-    return render_template("operator/NormDocumentation.html", current_tpa=current_tpa[ip_addr],
-                                                              device_tpa=TpaList[request.remote_addr],
+    if ip_addr in current_tpa.keys():        
+        return render_template("operator/NormDocumentation.html", current_tpa=current_tpa[ip_addr],
+                                                              device_tpa=device_tpa(ip_addr),
                                                               doc_names=doc_names,
                                                               doc_links=doc_links,
                                                               archive=archive)
+    else:
+        return redirect("/")
 
 @app.route("/NormDocumentation/id=<string:id>")
 @login_required
@@ -73,8 +77,11 @@ def DocsArchive():
             Directum.DirectumGetDocument(doc_link_modify, "normative_documetation")
             doc_names.append(doc_name)
             doc_links.append(f"/NormDocumentation/id={doc_link_modify}")
-    return render_template("operator/NormDocumentation.html", current_tpa=current_tpa[ip_addr],
-                                                            device_tpa=TpaList[request.remote_addr],
-                                                            doc_names=doc_names,
-                                                            doc_links=doc_links,
-                                                            archive=archive)
+    if ip_addr in current_tpa.keys():
+        return render_template("operator/NormDocumentation.html", current_tpa=current_tpa[ip_addr],
+                                                                device_tpa=device_tpa(ip_addr),
+                                                                doc_names=doc_names,
+                                                                doc_links=doc_links,
+                                                                archive=archive)
+    else:
+        return redirect("/")

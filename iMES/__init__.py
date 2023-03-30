@@ -55,8 +55,12 @@ connection_url = URL.create(
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 app.config['SQLALCHEMY_DATABASE_URI']=connection_url
-app.config['SQLALCHEMY_POOL_SIZE'] = 500
-app.config['SQLALCHEMY_MAX_OVERFLOW'] = 500
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+                                            "max_overflow": 15,
+                                            "pool_pre_ping": True,
+                                            "pool_recycle": 60 * 60,
+                                            "pool_size": 30,
+                                          }
 app.config['SECRET_KEY'] = 'ded06adc-f231-4c99-8932-42b2e2592ba2'
 
 socketio = SocketIO(app, async_mode='threading',ping_interval=120)
@@ -72,7 +76,7 @@ user_dict = {}
 
 # Переменные текущего ТПА и всех ТПА
 current_tpa = {}
-TpaList = {}
+TpaList = []
 
 # Переменные для API
 tpasresultapi = []

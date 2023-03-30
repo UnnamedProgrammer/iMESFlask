@@ -1,6 +1,6 @@
 from iMES import app, db
 from iMES import socketio
-from flask import render_template, request
+from flask import redirect, render_template, request
 from iMES import current_tpa,TpaList
 from iMES.Model.DataBaseModels.EquipmentModel import Equipment
 from iMES.Model.DataBaseModels.EquipmentTypeModel import EquipmentType
@@ -11,13 +11,14 @@ from iMES.Model.DataBaseModels.RFIDEquipmentModel import RFIDEquipment
 from flask_login import login_required
 import datetime, json
 from iMES.daemons import ProductDataMonitoring
+from iMES.functions.device_tpa import device_tpa
 
 
 @app.route("/bindPressForms")
 @login_required
 def bindPressForms():
     ip_addr = request.remote_addr
-    device_tpa = TpaList[ip_addr]
+    device_tpas = device_tpa(ip_addr)
     # Вытаскиваем Oid и названия существующих пресс-форм
     press_forms = (db.session.query(Equipment.Oid, Equipment.Name)
                          .select_from(Equipment)
@@ -26,7 +27,10 @@ def bindPressForms():
                          .order_by(Equipment.Name).all())
     current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
     current_tpa[ip_addr][2].Check_pressform()
-    return render_template("/bind_press_form/bind_press_form.html", device_tpa=device_tpa, current_tpa=current_tpa[ip_addr], press_forms=press_forms)
+    if ip_addr in current_tpa.keys():
+        return render_template("/bind_press_form/bind_press_form.html", device_tpa=device_tpas, current_tpa=current_tpa[ip_addr], press_forms=press_forms)
+    else:
+        return redirect("/menu")
 
 
 @socketio.on('press_form_binding')

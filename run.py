@@ -11,12 +11,12 @@ if __name__ == "__main__":
     app.logger.info(f"[{datetime.now()}] Запуск мониторинга сменных заданий.")
     iMES.daemons.ShiftTaskMonitoring.Start()
     app.logger.info(f"[{datetime.now()}] Обновление информации по оборудованию.")
-    for ip in tqdm(TpaList.keys()):
-        for tpa in TpaList[ip]:
-            tpa[2].Check_Downtime(tpa[0])
-            tpa[2].update_pressform()
-            tpa[2].data_from_shifttask()
-    for tpa in tpasresultapi:
+    for tpa in tqdm(TpaList):
+        tpa[2].Check_Downtime(tpa[0])
+        tpa[2].update_pressform()
+        tpa[2].data_from_shifttask()
+    app.logger.info(f"[{datetime.now()}] Обновление информации по оборудованию для API.")
+    for tpa in tqdm(tpasresultapi):
             tpa[2].Check_Downtime(tpa[0])
             tpa[2].update_pressform()
             tpa[2].data_from_shifttask()
