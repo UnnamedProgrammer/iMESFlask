@@ -52,9 +52,9 @@ def get_graph_data_by_ctpa(current_tpa: TpaController, ip_addr=None):
                 # Определяем очередь сменных заданий
                 task_queue = []
                 pressform = ProductDataMonitoring.GetTpaPressFrom(
-                    current_tpa[ip_addr][0])
+                    current_tpa.tpa)
                 equipment_performance = ProductDataMonitoring.GetEquipmentPerformance(
-                    current_tpa[ip_addr][0], pressform)
+                    current_tpa.tpa, pressform)
                 if equipment_performance == None:
                     total_socket_count = shift_tasks[0][4]
                 else:
