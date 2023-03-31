@@ -188,13 +188,13 @@ class ShiftTaskLoader():
                                     insert_spec.Code = spec1C_code
                                     insert_spec.Name = specification_1C['Spec']
                                     insert_spec.Product = product[0][0]
-                                    insert_spec.UseFactor = float(specification_1C['UserFactor'])
+                                    insert_spec.UseFactor = float(specification_1C['UseFactor'])
                                     insert_spec.isActive = isActive
                                     db.session.add(insert_spec)
                                     db.session.commit()
-                                except:
+                                except Exception as error:
                                     self.app.logger.error(
-                                        f"[{datetime.datetime.now()}] <CheckingRequiredValuesInTheDataBase> Cпецификация {ShiftTask.Specification} уже есть в базе данных, поиск был по записи {ShiftTask.Specification}")
+                                        f"[{datetime.datetime.now()}] <CheckingRequiredValuesInTheDataBase> {str(error)}")
                                 break
                         self.app.logger.info(f"  Проверка наличия спецификации {ShiftTask.Specification} в базе данных")
                         if len(specification) > 0:
