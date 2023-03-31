@@ -91,4 +91,4 @@ from iMES.View.index import index
 from iMES.View.menu.bind_press_form import bind_press_form
 from iMES.View.UnloadTo1C import UnloadTo1C
 from iMES.View.GetNormDocumentation import GetNormDocumentation
-from iMES.View.api import mes_ns_api
+from iMES.View.api import mes_ns_api, mes_ns_wastes

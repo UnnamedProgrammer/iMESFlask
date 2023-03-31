@@ -317,6 +317,9 @@ def load_user(Oid):
 @app.route('/Auth/GetPass/PassNumber=<string:cardnumber>')
 def Auth(cardnumber):
     ip_addr = request.remote_addr
+    if ip_addr not in current_tpa.keys():
+        device_tpas = device_tpa(ip_addr)
+        current_tpa[ip_addr] = device_tpas[0]
     if not current_user.is_authenticated:
         usr = db.session.query(User).where(User.CardNumber == cardnumber).one_or_none()
         usr.get_roles(ip_addr)
