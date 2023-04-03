@@ -326,7 +326,7 @@ def Auth(cardnumber):
         if usr != None:
             login_user(usr)
             app.logger.info(
-                f"[{datetime.now()}] Авторизация пользователя {User.UserName}, сотрудник {User.get_name()}, номер карты {User.CardNumber}.")
+                f"[{datetime.now()}] Авторизация пользователя {usr.UserName}, сотрудник {usr.get_name()}, номер карты {usr.CardNumber}.")
             return redirect_by_role(current_user.Roles, current_tpa[ip_addr])
         else:
             return redirect("/")
