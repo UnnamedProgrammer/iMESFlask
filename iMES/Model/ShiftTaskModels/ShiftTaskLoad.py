@@ -438,7 +438,7 @@ class ShiftTaskLoader():
                 insert_new_shift_task = ShiftTask()
                 insert_new_shift_task.Shift = shiftOid
                 insert_new_shift_task.Equipment = equipment_oid
-                insert_new_shift_task.Ordinal = task.Ordinal
+                insert_new_shift_task.Ordinal = int(task.Ordinal)
                 insert_new_shift_task.Product = product
                 insert_new_shift_task.Specification = specification
                 insert_new_shift_task.Traits = task.Traits

@@ -30,7 +30,7 @@ try:
     log.setLevel(logging.ERROR)
 except:
     pass
-
+ 
 # Чтение конфига
 config = configparser.ConfigParser()
 config.read("iMES/config.cfg")
