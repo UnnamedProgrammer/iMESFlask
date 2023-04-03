@@ -434,7 +434,9 @@ class ShiftTaskLoader():
             specification = db.session.query(ProductSpecification.Oid).where(
                         ProductSpecification.Code == task.Specification).all()[0][0]   
             if not get_tasks_flag:
-                self.app.logger.info("Вставка сменного задания №" + task.Ordinal)                
+                self.app.logger.info("Вставка сменного задания №" + task.Ordinal)
+                if ',' in task.ProductCount: 
+                    task.ProductCount = task.ProductCount.split(',')[0]               
                 insert_new_shift_task = ShiftTask()
                 insert_new_shift_task.Shift = shiftOid
                 insert_new_shift_task.Equipment = equipment_oid
