@@ -69,14 +69,20 @@ def DocsArchive():
         ).all()
     if len(Docs) > 0:
         Directum = DirectumIntegration()
-        Directum.Authorization()
-        for doc in Docs:
-            doc_link = db.session.query(Documentation.DocURL).where(Documentation.Oid == doc[0]).one_or_none()[0]
-            doc_link_modify = doc_link[36:].replace(" ", "")
-            doc_name = Directum.DirectumGetDocumentName(doc_link_modify)
-            Directum.DirectumGetDocument(doc_link_modify, "normative_documetation")
-            doc_names.append(doc_name)
-            doc_links.append(f"/NormDocumentation/id={doc_link_modify}")
+        Auth = Directum.Authorization()
+        if (Auth == True):
+            for doc in Docs:
+                doc_link = db.session.query(Documentation.DocURL).where(Documentation.Oid == doc[0]).one_or_none()[0]
+                doc_link_modify = doc_link[36:].replace(" ", "")
+                doc_name = Directum.DirectumGetDocumentName(doc_link_modify)
+                Directum.DirectumGetDocument(doc_link_modify, "normative_documetation")
+                doc_names.append(doc_name)
+                doc_links.append(f"/NormDocumentation/id={doc_link_modify}")
+        else:
+            if ip_addr in current_tpa.keys():
+                return render_template("Show_error.html", error=Auth,
+                        ret="/operator", device_tpa=device_tpa(ip_addr),
+                        current_tpa=current_tpa[request.remote_addr])
     if ip_addr in current_tpa.keys():
         return render_template("operator/NormDocumentation.html", current_tpa=current_tpa[ip_addr],
                                                                 device_tpa=device_tpa(ip_addr),
