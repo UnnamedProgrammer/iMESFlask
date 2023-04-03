@@ -48,6 +48,7 @@ def UpdateTpa():
             tpa[2].Check_Downtime(tpa[0])
             tpa[2].update_pressform()
             tpa[2].data_from_shifttask()
+            tpa[2].Check_pressform()
         sleep(30)
 
 def UpdateTpaMESNS():
@@ -56,6 +57,7 @@ def UpdateTpaMESNS():
             tpa[2].Check_Downtime(tpa[0])
             tpa[2].update_pressform()
             tpa[2].data_from_shifttask()
+            tpa[2].Check_pressform()
         sleep(30) 
 
 UpdateTpaThread = Thread(target=UpdateTpa, args=())

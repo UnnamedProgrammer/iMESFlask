@@ -165,7 +165,7 @@ class TpaErrorsChecker():
                                                     .all())
                     if len(rig_from_ep) > 0:
                         self.need_pressform_oid = rig_from_ep[0][0]
-                        if self.pressform_oid == rig_from_ep[0][0]:
+                        if str(self.pressform_oid).upper() == rig_from_ep[0][0]:
                             self.__remove_error_message(self.error_pressform_string_const)
                             self.pressform_error = False
                         else:

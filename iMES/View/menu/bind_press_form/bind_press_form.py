@@ -26,7 +26,6 @@ def bindPressForms():
                          .where(EquipmentType.Name == 'Пресс-форма')
                          .order_by(Equipment.Name).all())
     current_tpa[ip_addr][2].pressform = current_tpa[ip_addr][2].update_pressform()
-    current_tpa[ip_addr][2].Check_pressform()
     if ip_addr in current_tpa.keys():
         return render_template("/bind_press_form/bind_press_form.html", device_tpa=device_tpas, current_tpa=current_tpa[ip_addr], press_forms=press_forms)
     else:
@@ -83,6 +82,8 @@ def handle_selected_press_forms(data):
             break
     ProductDataMonitoring.GetShiftTaskByEquipmentPerformance(current_tpa[ip_addr][2].tpaoid)
     ProductDataMonitoring.OnceMonitoring()
+    current_tpa[ip_addr][2].update_pressform()
+    current_tpa[ip_addr][2].Check_pressform()
     socketio.emit('ChangePF',
                     data=json.dumps({ip_addr:{'status':'OK'}},
                     ensure_ascii=False, indent=4))
