@@ -56,7 +56,7 @@ def index():
                     pass
     else:
         return "Undefinded device, access denied."
-    if current_tpa == None or current_tpa == {}:
+    if ip_addr not in current_tpa.keys():
         current_tpa[ip_addr] = device_tpas[0]
     # Рендерим страницу
     return render_template("index.html",
