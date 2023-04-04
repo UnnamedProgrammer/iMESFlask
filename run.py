@@ -24,4 +24,4 @@ if __name__ == "__main__":
     iMES.daemons.UpdateTpaThread.start()
     iMES.daemons.UpdateMESNSThread.start()
     app.logger.info(f"[{datetime.now()}] Запуск сервера.")
-    socketio.run(app, host=host, port=port, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='192.168.168.63', port=port, allow_unsafe_werkzeug=True)

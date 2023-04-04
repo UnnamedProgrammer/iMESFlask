@@ -13,15 +13,18 @@ def CheckRolesForInterface(RequiredInterface, DirectPageTemplate, somedata=""):
     ip_addr = request.remote_addr
     available_interfaces = []
     for role in current_user.Roles['Roles']:
-        interface = db.session.query(Interface.Name).where(
-            Interface.Oid == db.session.query(
-                Relation_RoleInterface.Interface).where(
-                    Relation_RoleInterface.Role == db.session.query(Role.Oid).where(
-                        Role.Name == role
-                    ).one_or_none()[0]
-            ).one_or_none()[0]).one_or_none()
-        if interface is not None:
-            available_interfaces.append(interface.Name)
+        try:
+            interface = db.session.query(Interface.Name).where(
+                Interface.Oid == db.session.query(
+                    Relation_RoleInterface.Interface).where(
+                        Relation_RoleInterface.Role == db.session.query(Role.Oid).where(
+                            Role.Name == role
+                        ).one_or_none()[0]
+                ).one_or_none()[0]).one_or_none()
+            if interface is not None:
+                available_interfaces.append(interface.Name)
+        except:
+            continue
     if RequiredInterface in available_interfaces:
         device_tpas = device_tpa(ip_addr)
         return render_template(f"{DirectPageTemplate}", device_tpa=device_tpas, current_tpa=current_tpa[ip_addr], somedata=somedata)
