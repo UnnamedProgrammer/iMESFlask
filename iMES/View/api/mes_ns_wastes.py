@@ -17,7 +17,7 @@ def mes_ns_wastes():
             selected_tpa = tpa
             break
     if (selected_tpa is not None):
-        if selected_tpa[2].shift_task_oid[0] != '':
+        if selected_tpa[2].shift_task_oid != '':
             production_data = db.session.query(ProductionData).where(
                 ProductionData.ShiftTask == selected_tpa[2].shift_task_oid[0]).first()
             wastes_list = db.session.query(ProductWaste).where(
