@@ -13,7 +13,7 @@ def mes_ns_wastes():
     selected_tpa = None
     wastes_json = {}
     for tpa in TpaList:
-        if str(tpa[0]) == tpa_oid:
+        if str(tpa[0]) == tpa_oid.lower():
             selected_tpa = tpa
             break
     if (selected_tpa is not None):
